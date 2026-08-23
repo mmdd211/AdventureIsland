@@ -1,0 +1,28 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/portal.gd" id="1_script"]
+
+[sub_resource type="RectangleShape2D" id="1_shape"]
+size = Vector2(60, 80)
+
+[node name="Portal" type="Area2D"]
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("1_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1_shape")
+
+[node name="Visual" type="ColorRect" parent="."]
+offset_left = -30.0
+offset_top = -40.0
+offset_right = 30.0
+offset_bottom = 40.0
+color = Color(0.3, 0.6, 1, 0.8)
+
+[node name="Frame" type="ColorRect" parent="Visual"]
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+color = Color(0.2, 0.4, 0.8, 1)

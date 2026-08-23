@@ -1,0 +1,323 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/debug_ui.tscn" id="2_debug"]
+[ext_resource type="Script" path="res://scripts/systems/camera_follow.gd" id="3_camera"]
+[ext_resource type="PackedScene" path="res://scenes/monsters/basic_enemy.tscn" id="4_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/systems/coin.tscn" id="5_coin"]
+[ext_resource type="PackedScene" path="res://scenes/systems/portal.tscn" id="6_portal"]
+[ext_resource type="PackedScene" path="res://scenes/systems/death_zone.tscn" id="7_death"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_hud.tscn" id="8_hud"]
+
+[sub_resource type="RectangleShape2D" id="5_edge_wall"]
+size = Vector2(10, 30)
+
+[sub_resource type="RectangleShape2D" id="1_ground"]
+size = Vector2(600, 30)
+
+[sub_resource type="RectangleShape2D" id="2_platform"]
+size = Vector2(150, 15)
+
+[sub_resource type="RectangleShape2D" id="3_small_platform"]
+size = Vector2(100, 12)
+
+[sub_resource type="RectangleShape2D" id="4_wall"]
+size = Vector2(30, 600)
+
+[node name="TestLevel" type="Node2D"]
+
+[node name="Background" type="ColorRect" parent="."]
+offset_left = -100.0
+offset_top = -100.0
+offset_right = 2200.0
+offset_bottom = 700.0
+color = Color(0.529, 0.808, 0.922, 1)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 300)
+script = ExtResource("3_camera")
+
+[node name="Ground1" type="StaticBody2D" parent="."]
+position = Vector2(300, 500)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground1"]
+shape = SubResource("1_ground")
+
+[node name="Visual" type="ColorRect" parent="Ground1"]
+offset_left = -300.0
+offset_top = -15.0
+offset_right = 300.0
+offset_bottom = 15.0
+color = Color(0.298, 0.686, 0.314, 1)
+
+[node name="Grass1" type="ColorRect" parent="Ground1"]
+offset_left = -300.0
+offset_top = -15.0
+offset_right = 300.0
+offset_bottom = -10.0
+color = Color(0.2, 0.7, 0.2, 1)
+
+[node name="Ground2" type="StaticBody2D" parent="."]
+position = Vector2(1000, 500)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground2"]
+shape = SubResource("1_ground")
+
+[node name="Visual" type="ColorRect" parent="Ground2"]
+offset_left = -300.0
+offset_top = -15.0
+offset_right = 300.0
+offset_bottom = 15.0
+color = Color(0.298, 0.686, 0.314, 1)
+
+[node name="Grass1" type="ColorRect" parent="Ground2"]
+offset_left = -300.0
+offset_top = -15.0
+offset_right = 300.0
+offset_bottom = -10.0
+color = Color(0.2, 0.7, 0.2, 1)
+
+[node name="Ground3" type="StaticBody2D" parent="."]
+position = Vector2(1700, 500)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground3"]
+shape = SubResource("1_ground")
+
+[node name="Visual" type="ColorRect" parent="Ground3"]
+offset_left = -300.0
+offset_top = -15.0
+offset_right = 300.0
+offset_bottom = 15.0
+color = Color(0.298, 0.686, 0.314, 1)
+
+[node name="Grass1" type="ColorRect" parent="Ground3"]
+offset_left = -300.0
+offset_top = -15.0
+offset_right = 300.0
+offset_bottom = -10.0
+color = Color(0.2, 0.7, 0.2, 1)
+
+[node name="LeftWall" type="StaticBody2D" parent="."]
+position = Vector2(0, 250)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftWall"]
+shape = SubResource("4_wall")
+
+[node name="Visual" type="ColorRect" parent="LeftWall"]
+offset_left = -15.0
+offset_top = -300.0
+offset_right = 15.0
+offset_bottom = 300.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="RightWall" type="StaticBody2D" parent="."]
+position = Vector2(2000, 250)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RightWall"]
+shape = SubResource("4_wall")
+
+[node name="Visual" type="ColorRect" parent="RightWall"]
+offset_left = -15.0
+offset_top = -300.0
+offset_right = 15.0
+offset_bottom = 300.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform1" type="StaticBody2D" parent="."]
+position = Vector2(200, 380)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1"]
+shape = SubResource("2_platform")
+
+[node name="Visual" type="ColorRect" parent="Platform1"]
+offset_left = -75.0
+offset_top = -7.5
+offset_right = 75.0
+offset_bottom = 7.5
+color = Color(0.627, 0.322, 0.176, 1)
+
+[node name="Platform2" type="StaticBody2D" parent="."]
+position = Vector2(500, 350)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2"]
+shape = SubResource("3_small_platform")
+
+[node name="Visual" type="ColorRect" parent="Platform2"]
+offset_left = -50.0
+offset_top = -6.0
+offset_right = 50.0
+offset_bottom = 6.0
+color = Color(0.627, 0.322, 0.176, 1)
+
+[node name="Platform3" type="StaticBody2D" parent="."]
+position = Vector2(800, 380)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform3"]
+shape = SubResource("2_platform")
+
+[node name="Visual" type="ColorRect" parent="Platform3"]
+offset_left = -75.0
+offset_top = -7.5
+offset_right = 75.0
+offset_bottom = 7.5
+color = Color(0.627, 0.322, 0.176, 1)
+
+[node name="Platform4" type="StaticBody2D" parent="."]
+position = Vector2(1200, 350)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform4"]
+shape = SubResource("3_small_platform")
+
+[node name="Visual" type="ColorRect" parent="Platform4"]
+offset_left = -50.0
+offset_top = -6.0
+offset_right = 50.0
+offset_bottom = 6.0
+color = Color(0.627, 0.322, 0.176, 1)
+
+[node name="Platform5" type="StaticBody2D" parent="."]
+position = Vector2(1500, 380)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform5"]
+shape = SubResource("2_platform")
+
+[node name="Visual" type="ColorRect" parent="Platform5"]
+offset_left = -75.0
+offset_top = -7.5
+offset_right = 75.0
+offset_bottom = 7.5
+color = Color(0.627, 0.322, 0.176, 1)
+
+[node name="EdgeWall1" type="StaticBody2D" parent="."]
+position = Vector2(595, 485)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EdgeWall1"]
+shape = SubResource("5_edge_wall")
+
+[node name="EdgeWall2" type="StaticBody2D" parent="."]
+position = Vector2(705, 485)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EdgeWall2"]
+shape = SubResource("5_edge_wall")
+
+[node name="EdgeWall3" type="StaticBody2D" parent="."]
+position = Vector2(1295, 485)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EdgeWall3"]
+shape = SubResource("5_edge_wall")
+
+[node name="EdgeWall4" type="StaticBody2D" parent="."]
+position = Vector2(1405, 485)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EdgeWall4"]
+shape = SubResource("5_edge_wall")
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector2(100, 470)
+
+[node name="Enemy1" parent="." instance=ExtResource("4_enemy")]
+position = Vector2(350, 470)
+
+[node name="Enemy2" parent="." instance=ExtResource("4_enemy")]
+position = Vector2(1100, 470)
+
+[node name="Enemy3" parent="." instance=ExtResource("4_enemy")]
+position = Vector2(1800, 470)
+
+[node name="Coin1" parent="." instance=ExtResource("5_coin")]
+position = Vector2(200, 340)
+
+[node name="Coin2" parent="." instance=ExtResource("5_coin")]
+position = Vector2(500, 310)
+
+[node name="Coin3" parent="." instance=ExtResource("5_coin")]
+position = Vector2(800, 340)
+
+[node name="Coin4" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1200, 310)
+
+[node name="Coin5" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1500, 340)
+
+[node name="Coin6" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1700, 460)
+
+[node name="Coin7" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1900, 460)
+
+[node name="Coin8" parent="." instance=ExtResource("5_coin")]
+position = Vector2(150, 470)
+
+[node name="Coin9" parent="." instance=ExtResource("5_coin")]
+position = Vector2(250, 470)
+
+[node name="Coin10" parent="." instance=ExtResource("5_coin")]
+position = Vector2(350, 470)
+
+[node name="Coin11" parent="." instance=ExtResource("5_coin")]
+position = Vector2(450, 470)
+
+[node name="Coin12" parent="." instance=ExtResource("5_coin")]
+position = Vector2(850, 470)
+
+[node name="Coin13" parent="." instance=ExtResource("5_coin")]
+position = Vector2(950, 470)
+
+[node name="Coin14" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1050, 470)
+
+[node name="Coin15" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1150, 470)
+
+[node name="Coin16" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1550, 470)
+
+[node name="Coin17" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1650, 470)
+
+[node name="Coin18" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1750, 470)
+
+[node name="Coin19" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1850, 470)
+
+[node name="Coin20" parent="." instance=ExtResource("5_coin")]
+position = Vector2(1950, 470)
+
+[node name="Portal" parent="." instance=ExtResource("6_portal")]
+position = Vector2(1900, 460)
+
+[node name="DeathZone" parent="." instance=ExtResource("7_death")]
+position = Vector2(1000, 600)
+
+[node name="GameHUD" parent="." instance=ExtResource("8_hud")]
+
+[node name="DebugUI" parent="." instance=ExtResource("2_debug")]
