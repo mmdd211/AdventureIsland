@@ -5,6 +5,8 @@ extends CharacterBody2D
 @export var move_speed: float = 100.0
 @export var gravity: float = 1600.0
 @export var exp_reward: int = 20  # 击杀获得经验（比金币多）
+@export_enum("mushroom", "snail", "slime") var enemy_kind: String = "mushroom"
+@export var contact_damage: int = 10
 
 var health: int = 30
 var is_dead: bool = false
@@ -48,6 +50,20 @@ func _physics_process(delta: float) -> void:
 	# 更新朝向
 	if visual_node:
 		visual_node.scale.x = direction
+	var sprite = get_node_or_null("PixelSprite")
+	if sprite:
+		sprite.flip_h = direction < 0
+
+	_apply_contact_damage()
+
+func _apply_contact_damage() -> void:
+	var damage_area = get_node_or_null("DamageArea")
+	if not damage_area:
+		return
+
+	for body in damage_area.get_overlapping_bodies():
+		if body.is_in_group("player") and body.has_method("take_damage"):
+			body.take_damage(contact_damage, global_position)
 
 ## 受到伤害
 func take_damage(amount: int) -> void:
@@ -66,11 +82,14 @@ func take_damage(amount: int) -> void:
 		sm.play_hit()
 
 	# 受击闪烁
-	if visual_node:
-		visual_node.modulate = Color(1, 0, 0)
+	var flash_target := get_node_or_null("PixelSprite")
+	if not flash_target:
+		flash_target = visual_node
+	if flash_target:
+		flash_target.modulate = Color(1, 0, 0)
 		await get_tree().create_timer(0.1).timeout
-		if visual_node and not is_dead:
-			visual_node.modulate = Color.WHITE
+		if flash_target and not is_dead:
+			flash_target.modulate = Color.WHITE
 
 	# 死亡
 	if health <= 0:
@@ -96,8 +115,11 @@ func die() -> void:
 	_create_death_effect()
 
 	# 死亡动画
-	if visual_node:
-		visual_node.modulate = Color(0.5, 0.5, 0.5)
+	var death_target := get_node_or_null("PixelSprite")
+	if not death_target:
+		death_target = visual_node
+	if death_target:
+		death_target.modulate = Color(0.5, 0.5, 0.5)
 
 	# 延迟删除
 	await get_tree().create_timer(0.5).timeout

@@ -38,12 +38,4 @@ position = Vector2(50, 0)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
 shape = SubResource("2_attack_shape")
 
-[node name="Visual" type="ColorRect" parent="AttackArea"]
-offset_left = -40.0
-offset_top = -25.0
-offset_right = 40.0
-offset_bottom = 25.0
-color = Color(1, 0, 0, 0.3)
-visible = false
-
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]

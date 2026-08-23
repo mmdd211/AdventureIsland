@@ -26,6 +26,9 @@ extends CharacterBody2D
 @export var attack_cooldown: float = 0.4
 @export var attack_duration: float = 0.2
 
+@export_group("受击")
+@export var contact_damage_cooldown: float = 0.8
+
 @export_group("视觉")
 @export var squash_stretch: bool = true
 @export var land_squash: float = 0.7
@@ -50,8 +53,8 @@ var visual_scale: Vector2 = Vector2.ONE
 var is_attacking: bool = false
 var attack_timer: float = 0.0
 var attack_cooldown_timer: float = 0.0
-var attack_visual_node = null
 var hit_enemies: Array = []
+var contact_damage_timer: float = 0.0
 
 # 节点引用
 var visual_node = null
@@ -63,11 +66,8 @@ func _ready() -> void:
 	add_to_group("player")
 	visual_node = get_node_or_null("Visual")
 
-	# 获取攻击范围视觉
+	# 获取攻击判定区域
 	var attack_area = get_node_or_null("AttackArea")
-	if attack_area:
-		attack_visual_node = attack_area.get_node_or_null("Visual")
-
 	# 连接攻击区域信号
 	if attack_area:
 		attack_area.body_entered.connect(_on_attack_area_body_entered)
@@ -77,6 +77,8 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	var on_floor = is_on_floor()
+	if contact_damage_timer > 0:
+		contact_damage_timer -= delta
 
 	# 攻击计时器
 	_update_attack_timers(delta)
@@ -124,14 +126,14 @@ func _start_attack() -> void:
 	attack_timer = attack_duration
 	attack_cooldown_timer = attack_cooldown
 	hit_enemies.clear()
+	_play_action("attack")
 
 	# 攻击视觉反馈
-	if visual_node:
-		visual_node.modulate = Color(1, 0.5, 0.5)  # 变红
-
-	# 显示攻击范围
-	if attack_visual_node:
-		attack_visual_node.visible = true
+	var attack_flash = get_node_or_null("PixelAnimator")
+	if not attack_flash:
+		attack_flash = visual_node
+	if attack_flash:
+		attack_flash.modulate = Color(1, 0.5, 0.5)  # 变红
 
 	# 创建攻击粒子效果
 	_create_attack_effect()
@@ -177,14 +179,41 @@ func _create_attack_effect() -> void:
 
 func _end_attack() -> void:
 	is_attacking = false
+	_play_action("idle")
 
 	# 恢复颜色
-	if visual_node:
-		visual_node.modulate = Color.WHITE
+	var attack_flash = get_node_or_null("PixelAnimator")
+	if not attack_flash:
+		attack_flash = visual_node
+	if attack_flash:
+		attack_flash.modulate = Color.WHITE
 
-	# 隐藏攻击范围
-	if attack_visual_node:
-		attack_visual_node.visible = false
+func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
+	if contact_damage_timer > 0:
+		return
+
+	contact_damage_timer = contact_damage_cooldown
+	var hud = get_tree().get_first_node_in_group("game_hud")
+	if hud:
+		hud.take_damage(amount)
+
+	var sm = get_node_or_null("/root/SoundManager")
+	if sm:
+		sm.play_hurt()
+
+	var knockback_direction = signf(global_position.x - source_position.x)
+	if knockback_direction == 0:
+		knockback_direction = -facing_direction
+	velocity = Vector2(knockback_direction * 180, -260)
+
+	var animator = get_node_or_null("PixelAnimator")
+	if animator:
+		animator.modulate = Color(1, 0.45, 0.45)
+		await get_tree().create_timer(0.12).timeout
+		if is_instance_valid(animator):
+			animator.modulate = Color.WHITE
+
+	print("玩家受到接触伤害: ", amount)
 
 func _on_attack_area_body_entered(body: Node2D) -> void:
 	print("body_entered 触发: ", body.name, " 是否攻击中: ", is_attacking)
@@ -249,6 +278,7 @@ func _handle_jump(on_floor: bool) -> void:
 
 func _perform_jump(is_air_jump: bool) -> void:
 	velocity.y = jump_force
+	_play_action("jump")
 
 	if is_air_jump:
 		velocity.y *= 0.85
@@ -274,25 +304,31 @@ func _handle_movement(delta: float, _on_floor: bool) -> void:
 	# 更新朝向和攻击区域
 	if visual_node:
 		visual_node.scale.x = facing_direction * abs(visual_scale.x)
+	var animator = get_node_or_null("PixelAnimator")
+	if animator:
+		animator.flip_h = facing_direction < 0
 
 	# 翻转攻击区域位置
 	var attack_area = get_node_or_null("AttackArea")
 	if attack_area:
 		attack_area.position.x = 50 * facing_direction
 
+func _play_action(action_name: String) -> void:
+	var animator = get_node_or_null("PixelAnimator")
+	if animator and animator.sprite_frames and animator.sprite_frames.has_animation(action_name):
+		animator.play(action_name)
+
 func _update_visual(on_floor: bool) -> void:
-	if not squash_stretch or not visual_node:
+	if is_attacking:
 		return
 
 	if on_floor and not was_on_floor:
-		visual_node.scale = visual_scale * Vector2(1.3, land_squash)
-
-		# 创建落地灰尘效果
 		_create_land_dust()
 
-	var target_scale = visual_scale
-	visual_node.scale.x = lerp(visual_node.scale.x, target_scale.x * facing_direction, 0.2)
-	visual_node.scale.y = lerp(visual_node.scale.y, target_scale.y, 0.2)
+	if not on_floor:
+		_play_action("jump" if velocity.y < 0 else "fall")
+	elif attack_cooldown_timer <= 0:
+		_play_action("idle")
 
 func _create_land_dust() -> void:
 	var particles = CPUParticles2D.new()

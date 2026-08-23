@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/systems/portal.tscn" id="6_portal"]
 [ext_resource type="PackedScene" path="res://scenes/systems/death_zone.tscn" id="7_death"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_hud.tscn" id="8_hud"]
+[ext_resource type="Texture2D" path="res://assets/images/Background.jpg" id="9_bg"]
 
 [sub_resource type="RectangleShape2D" id="5_edge_wall"]
 size = Vector2(10, 30)
@@ -26,12 +27,14 @@ size = Vector2(30, 600)
 
 [node name="TestLevel" type="Node2D"]
 
-[node name="Background" type="ColorRect" parent="."]
-offset_left = -100.0
-offset_top = -100.0
-offset_right = 2200.0
-offset_bottom = 700.0
-color = Color(0.529, 0.808, 0.922, 1)
+[node name="Background" type="TextureRect" parent="."]
+offset_left = -700.0
+offset_top = -400.0
+offset_right = 2800.0
+offset_bottom = 1000.0
+texture = ExtResource("9_bg")
+stretch_mode = 6
+expand_mode = 1
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(640, 300)
@@ -245,12 +248,15 @@ position = Vector2(100, 470)
 
 [node name="Enemy1" parent="." instance=ExtResource("4_enemy")]
 position = Vector2(350, 470)
+enemy_kind = "mushroom"
 
 [node name="Enemy2" parent="." instance=ExtResource("4_enemy")]
 position = Vector2(1100, 470)
+enemy_kind = "snail"
 
 [node name="Enemy3" parent="." instance=ExtResource("4_enemy")]
 position = Vector2(1800, 470)
+enemy_kind = "slime"
 
 [node name="Coin1" parent="." instance=ExtResource("5_coin")]
 position = Vector2(200, 340)

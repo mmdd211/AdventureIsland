@@ -18,6 +18,12 @@ config/name="冒险岛风格横版动作Demo"
 run/main_scene="res://scenes/levels/test_level.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[autoload]
+
+GameManager="*res://scripts/systems/game_manager.gd"
+SoundManager="*res://scripts/systems/sound_manager.gd"
+PixelStyleManager="*res://scripts/systems/pixel_style_manager.gd"
+
 [display]
 
 window/size/viewport_width=1280
@@ -63,8 +69,3 @@ attack={
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-
-[autoload]
-
-GameManager="*res://scripts/systems/game_manager.gd"
-SoundManager="*res://scripts/systems/sound_manager.gd"
