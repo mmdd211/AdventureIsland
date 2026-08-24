@@ -15,12 +15,13 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	time += delta
-	if visual_node:
-		visual_node.modulate = Color(
-			0.5 + sin(time * 3) * 0.3,
-			0.8 + sin(time * 2) * 0.2,
-			1,
-			0.8 + sin(time * 4) * 0.2
+	var pixel_portal = get_node_or_null("PixelPortal")
+	if pixel_portal:
+		pixel_portal.modulate = Color(
+			0.94 + sin(time * 4.0) * 0.06,
+			0.96 + sin(time * 3.0) * 0.04,
+			1.0,
+			0.94 + sin(time * 5.0) * 0.06
 		)
 
 func _on_body_entered(body: Node2D) -> void:
@@ -38,11 +39,14 @@ func _on_body_entered(body: Node2D) -> void:
 			sm.play_portal()
 
 		# 闪烁效果
-		if visual_node:
+		var flash_target = get_node_or_null("PixelPortal")
+		if not flash_target:
+			flash_target = visual_node
+		if flash_target:
 			for i in range(3):
-				visual_node.modulate = Color(1, 1, 1, 1)
+				flash_target.modulate = Color(1, 1, 1, 1)
 				await get_tree().create_timer(0.1).timeout
-				visual_node.modulate = Color(0.3, 0.6, 1, 1)
+				flash_target.modulate = Color(0.55, 0.85, 1, 1)
 				await get_tree().create_timer(0.1).timeout
 
 		# 传送玩家到起始位置（模拟重新开始）

@@ -128,13 +128,6 @@ func _start_attack() -> void:
 	hit_enemies.clear()
 	_play_action("attack")
 
-	# 攻击视觉反馈
-	var attack_flash = get_node_or_null("PixelAnimator")
-	if not attack_flash:
-		attack_flash = visual_node
-	if attack_flash:
-		attack_flash.modulate = Color(1, 0.5, 0.5)  # 变红
-
 	# 创建攻击粒子效果
 	_create_attack_effect()
 
@@ -180,13 +173,6 @@ func _create_attack_effect() -> void:
 func _end_attack() -> void:
 	is_attacking = false
 	_play_action("idle")
-
-	# 恢复颜色
-	var attack_flash = get_node_or_null("PixelAnimator")
-	if not attack_flash:
-		attack_flash = visual_node
-	if attack_flash:
-		attack_flash.modulate = Color.WHITE
 
 func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
 	if contact_damage_timer > 0:
@@ -327,6 +313,8 @@ func _update_visual(on_floor: bool) -> void:
 
 	if not on_floor:
 		_play_action("jump" if velocity.y < 0 else "fall")
+	elif absf(velocity.x) > 10.0:
+		_play_action("walk")
 	elif attack_cooldown_timer <= 0:
 		_play_action("idle")
 

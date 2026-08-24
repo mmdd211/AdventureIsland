@@ -98,11 +98,122 @@ func _apply_portal_style() -> void:
 	for child in root.get_children():
 		if child.name == "Portal":
 			var visual = child.get_node_or_null("Visual")
-			if visual is ColorRect:
-				visual.color = Color(0.20, 0.50, 1.00, 0.85)
+			if visual:
+				visual.visible = false
 			var frame = child.get_node_or_null("Visual/Frame")
-			if frame is ColorRect:
-				frame.color = Color(0.10, 0.30, 0.80)
+
+			for old_child_name in ["PixelPortal", "PortalSparkles"]:
+				var old_child = child.get_node_or_null(old_child_name)
+				if old_child:
+					old_child.queue_free()
+
+			var portal := AnimatedSprite2D.new()
+			portal.name = "PixelPortal"
+			portal.sprite_frames = _create_portal_frames()
+			portal.scale = Vector2(2, 2)
+			portal.z_index = 10
+			portal.play("portal")
+			child.add_child(portal)
+
+			var sparkles := CPUParticles2D.new()
+			sparkles.name = "PortalSparkles"
+			sparkles.amount = 14
+			sparkles.lifetime = 1.2
+			sparkles.preprocess = 1.0
+			sparkles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+			sparkles.emission_rect_extents = Vector2(17, 26)
+			sparkles.direction = Vector2(0, -1)
+			sparkles.spread = 14
+			sparkles.gravity = Vector2(0, -28)
+			sparkles.initial_velocity_min = 5.0
+			sparkles.initial_velocity_max = 14.0
+			sparkles.scale_amount_min = 0.5
+			sparkles.scale_amount_max = 1.1
+			sparkles.color = Color(0.74, 0.95, 1.00, 0.85)
+			sparkles.z_index = 9
+			child.add_child(sparkles)
+
+func _create_portal_frames() -> SpriteFrames:
+	var frames := SpriteFrames.new()
+	if frames.has_animation("default"):
+		frames.remove_animation("default")
+	frames.add_animation("portal")
+	frames.set_animation_speed("portal", 8.0)
+	frames.set_animation_loop("portal", true)
+	for frame_index in range(6):
+		frames.add_frame("portal", _create_portal_frame(frame_index))
+	return frames
+
+func _create_portal_frame(frame_index: int) -> ImageTexture:
+	var img = Image.create(32, 40, false, Image.FORMAT_RGBA8)
+	var wood := Color(0.66, 0.42, 0.20)
+	var wood_light := Color(0.82, 0.58, 0.31)
+	var wood_dark := Color(0.42, 0.24, 0.11)
+	var outline := Color(0.13, 0.09, 0.08)
+	var stone := Color(0.62, 0.63, 0.68)
+	var stone_light := Color(0.79, 0.81, 0.85)
+	var stone_dark := Color(0.37, 0.39, 0.46)
+	var portal_deep := Color(0.07, 0.13, 0.36)
+	var portal_mid := Color(0.13, 0.36, 0.82)
+	var portal_cyan := Color(0.38, 0.84, 1.00)
+	var portal_white := Color(0.86, 0.98, 1.00)
+
+	for y in range(img.get_height()):
+		for x in range(img.get_width()):
+			var dx := (x - 15.5) / 12.0
+			var dy := (y - 20.0) / 17.0
+			var arch_distance := pow(pow(absf(dx), 3.5) + pow(absf(dy), 3.5), 1.0 / 3.5)
+
+			if arch_distance <= 1.0:
+				var color := wood
+				if x < 10 or y < 12:
+					color = wood_light
+				elif x > 21 or y > 29:
+					color = wood_dark
+				img.set_pixel(x, y, color)
+
+				if arch_distance >= 0.48:
+					if arch_distance >= 0.90:
+						color = outline
+					elif x < 9 or y < 10:
+						color = wood_light
+					elif x > 22 or y > 30:
+						color = wood_dark
+					else:
+						color = wood
+					img.set_pixel(x, y, color)
+				else:
+					var angle := atan2(y - 20.0, x - 15.5)
+					var phase := float(frame_index) / 6.0
+					var wave := sin(angle * 2.0 + arch_distance * 9.0 - phase * TAU)
+					color = portal_deep
+					if wave > 0.65:
+						color = portal_white
+					elif wave > 0.0:
+						color = portal_cyan
+					elif wave > -0.45:
+						color = portal_mid
+					img.set_pixel(x, y, color)
+
+	# 底座用几个硬边石块收住传送门，让它落在地形上。
+	_fill_rect(img, 3, 34, 26, 1, outline)
+	_fill_rect(img, 3, 35, 26, 4, stone)
+	_fill_rect(img, 3, 35, 26, 1, stone_light)
+	_fill_rect(img, 3, 38, 26, 1, stone_dark)
+	_fill_rect(img, 10, 36, 1, 2, stone_dark)
+	_fill_rect(img, 21, 36, 1, 2, stone_dark)
+
+	# 少量十字形亮点，保持像素颗粒感。
+	var sparkle_positions := [
+		Vector2i(10 + (frame_index * 2) % 11, 13),
+		Vector2i(20 - (frame_index * 3) % 10, 23),
+		Vector2i(14 + (frame_index % 3) * 2, 30),
+	]
+	for position in sparkle_positions:
+		_fill_rect(img, position.x, position.y, 1, 3, portal_white)
+		_fill_rect(img, position.x - 1, position.y + 1, 3, 1, portal_white)
+
+	return ImageTexture.create_from_image(img)
 
 func _create_player_frames() -> SpriteFrames:
 	var frames := SpriteFrames.new()
@@ -111,6 +222,7 @@ func _create_player_frames() -> SpriteFrames:
 
 	var definitions := {
 		"idle": {"fps": 6.0, "loop": true, "poses": ["idle"]},
+		"walk": {"fps": 10.0, "loop": true, "poses": ["walk_step_a", "walk_pass_a", "walk_step_b", "walk_pass_b"]},
 		"jump": {"fps": 8.0, "loop": false, "poses": ["jump"]},
 		"fall": {"fps": 8.0, "loop": false, "poses": ["fall"]},
 		"attack": {"fps": 15.0, "loop": false, "poses": ["attack_wind", "attack_hit", "attack_recover"]},
@@ -178,6 +290,22 @@ func _create_player_pose_texture(pose: String) -> ImageTexture:
 		_fill_rect(img, 20, 14, 2, 2, skin)
 		_fill_rect(img, 4, 7, 2, 6, blade_dark)
 		_fill_rect(img, 6, 11, 3, 2, blade)
+	elif pose.begins_with("walk_"):
+		if pose == "walk_step_a":
+			_fill_rect(img, 6, 14, 2, 4, shirt)
+			_fill_rect(img, 22, 13, 2, 4, shirt)
+			_fill_rect(img, 6, 18, 2, 2, skin)
+			_fill_rect(img, 22, 17, 2, 2, skin)
+		elif pose == "walk_step_b":
+			_fill_rect(img, 7, 13, 2, 4, shirt)
+			_fill_rect(img, 21, 14, 2, 4, shirt)
+			_fill_rect(img, 7, 17, 2, 2, skin)
+			_fill_rect(img, 21, 18, 2, 2, skin)
+		else:
+			_fill_rect(img, 9, 13, 2, 5, shirt)
+			_fill_rect(img, 21, 13, 2, 5, shirt)
+			_fill_rect(img, 9, 18, 2, 2, skin)
+			_fill_rect(img, 21, 18, 2, 2, skin)
 	elif pose == "attack_hit":
 		_fill_rect(img, 20, 12, 4, 2, skin)
 		_fill_rect(img, 23, 10, 7, 2, blade)
@@ -207,12 +335,37 @@ func _create_player_pose_texture(pose: String) -> ImageTexture:
 		_fill_rect(img, 8, 21, 5, 2, boots)
 		_fill_rect(img, 19, 21, 5, 2, boots)
 		_fill_rect(img, 8, 23, 16, 1, outline)
-	else:
+	elif pose == "idle" or pose == "attack_recover" or pose == "attack_wind":
 		_fill_rect(img, 12, 17, 3, 4, pants)
 		_fill_rect(img, 17, 17, 3, 4, pants)
 		_fill_rect(img, 10, 21, 5, 2, boots)
 		_fill_rect(img, 17, 21, 5, 2, boots)
 		_fill_rect(img, 10, 23, 12, 1, outline)
+
+	if pose == "walk_step_a":
+		_fill_rect(img, 9, 17, 3, 3, pants)
+		_fill_rect(img, 18, 17, 3, 3, pants)
+		_fill_rect(img, 7, 20, 4, 2, boots)
+		_fill_rect(img, 18, 21, 5, 2, boots)
+		_fill_rect(img, 7, 23, 16, 1, outline)
+	elif pose == "walk_pass_a":
+		_fill_rect(img, 11, 17, 3, 4, pants)
+		_fill_rect(img, 16, 17, 3, 3, pants)
+		_fill_rect(img, 10, 21, 5, 2, boots)
+		_fill_rect(img, 15, 20, 5, 2, boots)
+		_fill_rect(img, 10, 23, 10, 1, outline)
+	elif pose == "walk_step_b":
+		_fill_rect(img, 18, 17, 3, 3, pants)
+		_fill_rect(img, 11, 17, 3, 3, pants)
+		_fill_rect(img, 20, 20, 4, 2, boots)
+		_fill_rect(img, 8, 21, 5, 2, boots)
+		_fill_rect(img, 8, 23, 16, 1, outline)
+	elif pose == "walk_pass_b":
+		_fill_rect(img, 16, 17, 3, 4, pants)
+		_fill_rect(img, 11, 17, 3, 3, pants)
+		_fill_rect(img, 15, 21, 5, 2, boots)
+		_fill_rect(img, 10, 20, 5, 2, boots)
+		_fill_rect(img, 10, 23, 10, 1, outline)
 
 	return ImageTexture.create_from_image(img)
 
