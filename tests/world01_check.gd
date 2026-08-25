@@ -8,6 +8,7 @@ func _ready() -> void:
 	add_child(level)
 	await get_tree().create_timer(0.45).timeout
 	_check_structure()
+	_check_art_style()
 	await _check_checkpoints()
 	await _check_mechanics()
 	await _check_completion()
@@ -45,12 +46,32 @@ func _check_structure() -> void:
 	_assert(checkpoints == 3, "World01 has three checkpoints")
 	_assert(springs >= 1 and spikes >= 2, "World01 has spring and spike hazards")
 	_assert(moving_platforms == 3 and crumble_platforms >= 1, "World01 has moving and crumbling platforms")
-	_assert(level.get_node_or_null("WorldBackground") != null, "World01 has parallax background")
-	_assert(level.get_node("WorldBackground").get_child_count() >= 5, "Background has five parallax layers")
+	var background := level.get_node_or_null("Background") as TextureRect
+	_assert(background != null and background.texture != null, "World01 uses the imported mushroom background")
 	var spring_model := _find_by_prefix("Spring") as Node2D
 	_assert(spring_model != null and spring_model.get_node_or_null("SpringSprite") != null, "Spring has pixel model")
 	_assert(GameState.total_coin_pickups >= 20, "World01 registers collectible coins")
 	_assert(GameState.collected_coin_pickups == 0, "Coin counter starts empty")
+
+func _check_art_style() -> void:
+	_assert(ProjectSettings.get_setting("rendering/textures/canvas_textures/default_texture_filter") == 0,
+		"Project uses nearest pixel filtering")
+	_assert(PixelStyleManager.TILE_SIZE == 32, "Terrain uses a 32 pixel tile grid")
+	var ground := level.get_node_or_null("Ground1") as Node2D
+	_assert(ground != null and ground.get_node_or_null("PixelGround") != null, "Ground uses generated pixel terrain")
+	_assert(ground != null and ground.get_node_or_null("PixelDecor") != null, "Ground has flowers, stones, or signs")
+	var ground_top := ground.get_node_or_null("GroundTop") as CanvasItem
+	_assert(ground_top == null or not ground_top.visible, "Flat ground overlay does not hide pixel grass")
+	var player := get_tree().get_first_node_in_group("player") as Node2D
+	_assert(player != null and player.get_node_or_null("PixelAnimator") != null, "Player uses unified pixel sprite")
+	var enemy := get_tree().get_first_node_in_group("enemies") as Node2D
+	_assert(enemy != null and enemy.get_node_or_null("PixelSprite") != null, "Enemy uses unified pixel sprite")
+	var coin: Node2D = null
+	for child in level.get_children():
+		if child.is_in_group("pickups") and child.get("pickup_type") == "coin":
+			coin = child
+			break
+	_assert(coin != null and coin.get_node_or_null("PickupSprite") != null, "Coins use unified pixel sprite")
 
 func _check_checkpoints() -> void:
 	var player := get_tree().get_first_node_in_group("player") as CharacterBody2D
@@ -98,6 +119,21 @@ func _check_mechanics() -> void:
 	player.global_position = spikes.global_position + Vector2(0, -28)
 	await get_tree().create_timer(0.22).timeout
 	_assert(GameState.current_hp < health_before, "Spike strip damages once per interval")
+
+	var spike_strip := _find_by_prefix("Spikes") as Node2D
+	var spike_collider := spike_strip.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	var spike_width := (spike_collider.shape as RectangleShape2D).size.x
+	var spike_min := INF
+	var spike_max := -INF
+	for child in spike_strip.get_children():
+		if child is Polygon2D:
+			var polygon_child := child as Polygon2D
+			for point in polygon_child.polygon:
+				var world_x: float = polygon_child.to_global(point).x - spike_strip.global_position.x
+				spike_min = minf(spike_min, world_x)
+				spike_max = maxf(spike_max, world_x)
+	_assert(spike_min >= -spike_width * 0.5 - 0.5 and spike_max <= spike_width * 0.5 + 0.5, "Spike visuals cover full collision width")
+	_assert(spike_max - spike_min >= spike_width - 2.0, "Spike visuals are not smaller than collision")
 
 func _find_by_prefix(prefix: String) -> Node:
 	for child in level.get_children():

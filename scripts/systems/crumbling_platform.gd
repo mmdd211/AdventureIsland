@@ -1,5 +1,7 @@
 extends StaticBody2D
 
+const Palette := preload("res://scripts/systems/pixel_palette.gd")
+
 const RESPAWN_TIME := 2.6
 
 var triggered := false
@@ -13,6 +15,7 @@ func _ready() -> void:
 
 func _build_platform() -> void:
 	collider = CollisionShape2D.new()
+	collider.name = "CollisionShape2D"
 	var rectangle := RectangleShape2D.new()
 	rectangle.size = Vector2(110, 16)
 	collider.shape = rectangle
@@ -20,7 +23,7 @@ func _build_platform() -> void:
 
 	visual = ColorRect.new()
 	visual.name = "Visual"
-	visual.color = Color("c98f52")
+	visual.color = Palette.WOOD_LIGHT
 	visual.position = Vector2(-55, -8)
 	visual.size = Vector2(110, 16)
 	add_child(visual)

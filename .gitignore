@@ -1,5 +1,8 @@
 # Godot cache and generated files
 .godot/
+tests/*_screenshot.png
+tests/terrain_visual_*.png
+tests/terrain_visual_*.png
 
 # Operating system files
 Thumbs.db

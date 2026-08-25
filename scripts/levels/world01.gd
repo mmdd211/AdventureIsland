@@ -15,7 +15,8 @@ const CHECKPOINT_SCRIPT := preload("res://scripts/systems/checkpoint.gd")
 const MOVING_PLATFORM_SCRIPT := preload("res://scripts/systems/moving_platform.gd")
 const CRUMBLING_PLATFORM_SCRIPT := preload("res://scripts/systems/crumbling_platform.gd")
 const SPIKE_SCRIPT := preload("res://scripts/systems/spike_strip.gd")
-const WORLD_BACKGROUND_SCRIPT := preload("res://scripts/effects/world_background.gd")
+const BACKGROUND_TEXTURE := preload("res://assets/images/Background.jpg")
+const Palette := preload("res://scripts/systems/pixel_palette.gd")
 
 const LEVEL_WIDTH := 6000.0
 const FLOOR_TOP := 520.0
@@ -23,6 +24,7 @@ const FLOOR_TOP := 520.0
 var sequence_index := 0
 
 func _ready() -> void:
+	add_to_group("pixel_style_root")
 	AudioManager.play_music("level")
 	_build_background()
 	_build_camera()
@@ -38,8 +40,13 @@ func _ready() -> void:
 	call_deferred("_apply_pixel_style")
 
 func _build_background() -> void:
-	var background: ParallaxBackground = WORLD_BACKGROUND_SCRIPT.new()
-	background.name = "WorldBackground"
+	var background := TextureRect.new()
+	background.name = "Background"
+	background.texture = BACKGROUND_TEXTURE
+	background.stretch_mode = TextureRect.STRETCH_TILE
+	background.position = Vector2(-700, -260)
+	background.size = Vector2(LEVEL_WIDTH + 2000, 2200)
+	background.z_index = -100
 	add_child(background)
 
 func _build_camera() -> void:
@@ -56,8 +63,8 @@ func _build_camera() -> void:
 	add_child(camera)
 
 func _build_bounds() -> void:
-	_static_body("LeftWall", Vector2(-18, 100), Vector2(36, 1600), Color("596274"))
-	_static_body("RightWall", Vector2(LEVEL_WIDTH + 18, 100), Vector2(36, 1600), Color("596274"))
+	_static_body("LeftWall", Vector2(-18, 100), Vector2(36, 1600), Palette.STONE_DARK)
+	_static_body("RightWall", Vector2(LEVEL_WIDTH + 18, 100), Vector2(36, 1600), Palette.STONE_DARK)
 
 func _build_warmup() -> void:
 	_ground(1, Vector2(450, FLOOR_TOP + 15), Vector2(900, 30))
@@ -170,17 +177,17 @@ func _static_body(body_name: String, body_position: Vector2, size_value: Vector2
 
 func _ground(index: int, position_value: Vector2, size_value: Vector2) -> void:
 	var body := _static_collision_body("Ground%d" % index, position_value, size_value)
-	_attach_visual(body, size_value, Color("4c3a28"))
+	_attach_visual(body, size_value, Palette.DIRT_DARK)
 	add_child(body)
 
 func _static_platform(index: int, position_value: Vector2, size_value: Vector2, one_way := false) -> void:
 	var body := _static_collision_body("Platform%d" % index, position_value, size_value, one_way)
-	_attach_visual(body, size_value, Color("7a5230"), one_way)
+	_attach_visual(body, size_value, Palette.WOOD, one_way)
 	add_child(body)
 
 func _one_way_platform(index: int, position_value: Vector2, size_value: Vector2) -> void:
 	var body := _static_collision_body("PlatformOneWay%d" % index, position_value, size_value, true)
-	_attach_visual(body, size_value, Color("8a5a35"), true)
+	_attach_visual(body, size_value, Palette.DIRT, true)
 	add_child(body)
 
 func _static_collision_body(body_name: String, position_value: Vector2, size_value: Vector2, one_way := false) -> StaticBody2D:
@@ -190,6 +197,7 @@ func _static_collision_body(body_name: String, position_value: Vector2, size_val
 	body.collision_mask = 0
 	body.position = position_value
 	var shape := CollisionShape2D.new()
+	shape.name = "CollisionShape2D"
 	var rectangle := RectangleShape2D.new()
 	rectangle.size = size_value
 	shape.shape = rectangle
@@ -210,7 +218,7 @@ func _attach_visual(body: Node2D, size_value: Vector2, color: Color, floating :=
 		fill.name = "GroundFill"
 		fill.position = visual.position
 		fill.size = Vector2(size_value.x, 375)
-		fill.color = Color("4a3524")
+		fill.color = Color(Palette.DIRT_DARK, 0.96)
 		fill.z_index = -1
 		body.add_child(fill)
 
@@ -218,7 +226,7 @@ func _attach_visual(body: Node2D, size_value: Vector2, color: Color, floating :=
 		floor_top.name = "GroundTop"
 		floor_top.position = visual.position
 		floor_top.size = Vector2(size_value.x, 8)
-		floor_top.color = Color("59b64f")
+		floor_top.color = Palette.GRASS
 		floor_top.z_index = 1
 		body.add_child(floor_top)
 
@@ -226,7 +234,7 @@ func _attach_visual(body: Node2D, size_value: Vector2, color: Color, floating :=
 		grass.name = "Grass1"
 		grass.position = Vector2(visual.position.x, visual.position.y)
 		grass.size = Vector2(size_value.x, 6)
-		grass.color = Color("59b64f")
+		grass.color = Palette.GRASS
 		body.add_child(grass)
 
 func _place_enemy(kind_value: String, position_value: Vector2) -> void:
@@ -271,6 +279,7 @@ func _spike(position_value: Vector2, width_value: float) -> void:
 	spikes.name = "Spikes%d" % sequence_index
 	spikes.position = position_value
 	var shape := CollisionShape2D.new()
+	shape.name = "CollisionShape2D"
 	var rectangle := RectangleShape2D.new()
 	rectangle.size = Vector2(width_value, 22)
 	shape.shape = rectangle

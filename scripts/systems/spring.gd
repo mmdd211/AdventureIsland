@@ -1,6 +1,7 @@
 extends Area2D
 
 @export var launch_force := -940.0
+const Palette := preload("res://scripts/systems/pixel_palette.gd")
 
 var cooldown := 0.0
 var spring_sprite: Sprite2D
@@ -44,14 +45,14 @@ func _create_spring_texture() -> ImageTexture:
 	var image := Image.create(16, 12, false, Image.FORMAT_RGBA8)
 	for x in range(2, 14):
 		for y in range(2, 5):
-			image.set_pixel(x, y, Color("ffe066"))
+			image.set_pixel(x, y, Palette.YELLOW)
 	for x in range(3, 13):
-		image.set_pixel(x, 5, Color("fff3b0"))
+		image.set_pixel(x, 5, Palette.YELLOW_LIGHT)
 	for y in range(6, 10):
 		var coil_width := 3 if y % 2 == 0 else 5
 		for x in range(8 - coil_width, 8 + coil_width):
-			image.set_pixel(x, y, Color("ff8a5c"))
+			image.set_pixel(x, y, Color("e07a3c"))
 	for x in range(1, 15):
-		image.set_pixel(x, 10, Color("7a5230"))
-		image.set_pixel(x, 11, Color("5b4029"))
+		image.set_pixel(x, 10, Palette.WOOD)
+		image.set_pixel(x, 11, Palette.WOOD_DARK)
 	return ImageTexture.create_from_image(image)

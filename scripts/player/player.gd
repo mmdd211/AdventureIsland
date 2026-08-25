@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+const Palette := preload("res://scripts/systems/pixel_palette.gd")
+
 signal attack_hit(enemy: Node)
 
 const COMBO_DAMAGE := [10, 14]
@@ -123,7 +125,7 @@ func _perform_jump(is_air_jump: bool) -> void:
 	if is_air_jump:
 		air_jumps_left -= 1
 		AudioManager.play_sfx("double_jump")
-		_create_ring_effect(Color("a8e8ff"))
+		_create_ring_effect(Palette.CYAN)
 	else:
 		AudioManager.play_sfx("jump")
 	coyote_timer = 0.0
@@ -214,7 +216,7 @@ func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
 	invulnerable_timer = hurt_invulnerability
 	GameState.damage_player(amount)
 	_shake_camera(8.0)
-	_spawn_floating_text(str(-amount), global_position + Vector2(0, -42), Color("ff6b6b"))
+	_spawn_floating_text(str(-amount), global_position + Vector2(0, -42), Palette.RED)
 	if GameState.current_hp > 0:
 		var away := signf(global_position.x - source_position.x)
 		if away == 0.0:
@@ -233,7 +235,7 @@ func _shake_camera(strength: float) -> void:
 	get_tree().call_group("game_camera", "shake", strength)
 
 func _spawn_damage_number(value: int, target_position: Vector2) -> void:
-	_spawn_floating_text(str(value), target_position + Vector2(randf_range(-8.0, 8.0), -38.0), Color("ffe066"))
+	_spawn_floating_text(str(value), target_position + Vector2(randf_range(-8.0, 8.0), -38.0), Palette.YELLOW)
 
 func _spawn_floating_text(text_value: String, world_position: Vector2, color: Color) -> void:
 	var label := Label.new()
@@ -343,7 +345,7 @@ func _create_land_dust() -> void:
 func _create_slash_arc(stage: int) -> void:
 	var arc := Line2D.new()
 	arc.width = 12.0 if stage == 1 else 17.0
-	arc.default_color = Color(1.0, 0.965, 0.8, 0.85)
+	arc.default_color = Color(Palette.YELLOW_LIGHT, 0.85)
 	arc.z_index = 80
 	var points := PackedVector2Array()
 	var radius := 44.0 if stage == 1 else 62.0
@@ -382,7 +384,7 @@ func _create_dash_trail() -> void:
 	particles.initial_velocity_min = 80.0
 	particles.initial_velocity_max = 180.0
 	particles.gravity = Vector2.ZERO
-	particles.color = Color("bfe9ff")
+	particles.color = Palette.CYAN
 	particles.z_index = 70
 	add_child(particles)
 	particles.emitting = true

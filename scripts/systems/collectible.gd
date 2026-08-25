@@ -1,5 +1,7 @@
 extends Area2D
 
+const Palette := preload("res://scripts/systems/pixel_palette.gd")
+
 @export_enum("coin", "heart") var pickup_type := "coin"
 @export var value := 1
 @export var bob_height := 4.0
@@ -22,7 +24,8 @@ func _process(delta: float) -> void:
 	position.y = start_position.y + sin(time * bob_speed) * bob_height
 	var sprite := get_node_or_null("PickupSprite") as Sprite2D
 	if sprite:
-		sprite.scale.x = sin(time * 4.0)
+		var base_scale := 1.5 if pickup_type == "heart" else 1.25
+		sprite.scale.x = base_scale * absf(sin(time * 4.0))
 
 func _build_visual() -> void:
 	var old_visual := get_node_or_null("Visual")
@@ -31,6 +34,7 @@ func _build_visual() -> void:
 	var sprite := Sprite2D.new()
 	sprite.name = "PickupSprite"
 	sprite.texture = PixelStyleManager._create_coin_texture() if pickup_type == "coin" else _create_heart_texture()
+	sprite.scale = Vector2(1.25, 1.25) if pickup_type == "coin" else Vector2(1.5, 1.5)
 	sprite.z_index = 20
 	add_child(sprite)
 
@@ -48,7 +52,7 @@ func _create_heart_texture() -> ImageTexture:
 		".....r.....",
 	])
 	var palette := {
-		"R": Color("ff5c69"),
+		"R": Palette.RED,
 		"r": Color("ffc2c6"),
 	}
 	var image := Image.create(rows[0].length(), rows.size(), false, Image.FORMAT_RGBA8)
@@ -68,7 +72,7 @@ func _on_body_entered(body: Node2D) -> void:
 	else:
 		GameState.heal_player(value)
 		AudioManager.play_sfx("heart")
-	_create_effect(Color("ffd166") if pickup_type == "coin" else Color("ff8093"))
+	_create_effect(Palette.YELLOW if pickup_type == "coin" else Color("ff8093"))
 	queue_free()
 
 func _create_effect(color: Color) -> void:

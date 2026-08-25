@@ -1,6 +1,9 @@
 # 像素艺术风格管理器：冒险岛风格 Q 版角色
 extends Node
 
+const Palette := preload("res://scripts/systems/pixel_palette.gd")
+const TILE_SIZE := 32
+
 func _ready() -> void:
 	call_deferred("apply_pixel_style")
 
@@ -68,12 +71,14 @@ func _apply_sprite_to_enemy(enemy: Node) -> void:
 	enemy.add_child(sprite)
 
 func _apply_to_coins() -> void:
-	var root = get_tree().current_scene
+	var root = _style_root()
 	if not root:
 		return
 	for child in root.get_children():
-		var is_coin: bool = child.name.begins_with("Coin") and not child.is_in_group("pickups")
+		var is_coin: bool = child.is_in_group("pickups") and child.get("pickup_type") == "coin"
 		if is_coin:
+			if child.get_node_or_null("PickupSprite") != null:
+				continue
 			var visual = child.get_node_or_null("Visual")
 			if visual:
 				visual.visible = false
@@ -84,29 +89,35 @@ func _apply_to_coins() -> void:
 			var sprite := Sprite2D.new()
 			sprite.name = "PixelSprite"
 			sprite.texture = _create_coin_texture()
-			sprite.scale = Vector2.ONE
+			sprite.scale = Vector2(1.25, 1.25)
 			sprite.z_index = 10
 			child.add_child(sprite)
 
 func _apply_ground_style() -> void:
-	var root = get_tree().current_scene
+	var root = _style_root()
 	if not root:
 		return
 	for child in root.get_children():
 		if child.name.begins_with("Ground"):
 			_set_terrain_sprite(child, "PixelGround", false)
+			_apply_ground_fill_style(child)
 			var grass = child.get_node_or_null("Grass1")
 			if grass:
 				grass.visible = false
+			var ground_top = child.get_node_or_null("GroundTop")
+			if ground_top:
+				ground_top.visible = false
+			_apply_terrain_decorations(child, true)
 		elif child.name.begins_with("Platform"):
 			_set_terrain_sprite(child, "PixelPlatform", true)
+			_apply_terrain_decorations(child, false)
 		elif child.name.begins_with("EdgeWall") or child.name in ["LeftWall", "RightWall"]:
 			var visual = child.get_node_or_null("Visual")
 			if visual:
 				visual.visible = false
 
 func _apply_portal_style() -> void:
-	var root = get_tree().current_scene
+	var root = _style_root()
 	if not root:
 		return
 	for child in root.get_children():
@@ -148,6 +159,29 @@ func _apply_portal_style() -> void:
 			sparkles.z_index = 9
 			child.add_child(sparkles)
 
+func _apply_ground_fill_style(body: Node2D) -> void:
+	var old_fill = body.get_node_or_null("PixelGroundFill")
+	if old_fill:
+		body.remove_child(old_fill)
+		old_fill.queue_free()
+	var fill: ColorRect = body.get_node_or_null("GroundFill") as ColorRect
+	if fill == null:
+		return
+	var size_value := fill.size
+	var sprite := Sprite2D.new()
+	sprite.name = "PixelGroundFill"
+	sprite.texture = _create_ground_fill_texture(int(size_value.x), int(size_value.y))
+	sprite.position = fill.position + size_value * 0.5
+	sprite.z_index = -1
+	body.add_child(sprite)
+	fill.visible = false
+
+func _style_root() -> Node:
+	var roots := get_tree().get_nodes_in_group("pixel_style_root")
+	if roots.size() > 0:
+		return roots[0]
+	return get_tree().current_scene
+
 func _create_portal_frames() -> SpriteFrames:
 	var frames := SpriteFrames.new()
 	if frames.has_animation("default"):
@@ -161,17 +195,17 @@ func _create_portal_frames() -> SpriteFrames:
 
 func _create_portal_frame(frame_index: int) -> ImageTexture:
 	var img = Image.create(32, 40, false, Image.FORMAT_RGBA8)
-	var wood := Color(0.66, 0.42, 0.20)
-	var wood_light := Color(0.82, 0.58, 0.31)
-	var wood_dark := Color(0.42, 0.24, 0.11)
-	var outline := Color(0.13, 0.09, 0.08)
-	var stone := Color(0.62, 0.63, 0.68)
-	var stone_light := Color(0.79, 0.81, 0.85)
-	var stone_dark := Color(0.37, 0.39, 0.46)
-	var portal_deep := Color(0.07, 0.13, 0.36)
-	var portal_mid := Color(0.13, 0.36, 0.82)
-	var portal_cyan := Color(0.38, 0.84, 1.00)
-	var portal_white := Color(0.86, 0.98, 1.00)
+	var wood := Palette.WOOD_LIGHT
+	var wood_light := Color("c98f52")
+	var wood_dark := Palette.WOOD_DARK
+	var outline := Palette.OUTLINE
+	var stone := Palette.STONE
+	var stone_light := Palette.STONE_LIGHT
+	var stone_dark := Palette.STONE_DARK
+	var portal_deep := Palette.PORTAL_DEEP
+	var portal_mid := Palette.PORTAL_MID
+	var portal_cyan := Palette.PORTAL_CYAN
+	var portal_white := Palette.PORTAL_WHITE
 
 	for y in range(img.get_height()):
 		for x in range(img.get_width()):
@@ -256,25 +290,25 @@ func _create_player_texture() -> ImageTexture:
 
 func _create_player_pose_texture(pose: String) -> ImageTexture:
 	var img = Image.create(32, 24, false, Image.FORMAT_RGBA8)
-	var outline := Color(0.12, 0.09, 0.12)
+	var outline := Palette.OUTLINE
 	var hair := Color(0.34, 0.20, 0.13)
 	var skin := Color(1.00, 0.87, 0.71)
 	var skin_shadow := Color(0.90, 0.70, 0.56)
 	var blush := Color(0.98, 0.65, 0.58)
 	var eye := Color(0.13, 0.10, 0.13)
-	var shirt := Color(0.22, 0.48, 0.92)
-	var shirt_dark := Color(0.15, 0.34, 0.72)
-	var belt := Color(1.00, 0.78, 0.20)
+	var shirt := Color("3a6fd8")
+	var shirt_dark := Color("2650a8")
+	var belt := Palette.YELLOW
 	var pants := Color(0.20, 0.26, 0.48)
 	var boots := Color(0.48, 0.30, 0.17)
 	var blade := Color(0.82, 0.88, 0.95)
 	var blade_dark := Color(0.48, 0.56, 0.68)
-	var slash := Color(1.00, 0.92, 0.48)
+	var slash := Palette.YELLOW_LIGHT
 
 	# 帽子和头部
 	_fill_rect(img, 12, 2, 8, 1, outline)
-	_fill_rect(img, 11, 3, 10, 2, Color(0.88, 0.19, 0.22))
-	_fill_rect(img, 10, 5, 12, 1, Color(0.68, 0.11, 0.16))
+	_fill_rect(img, 11, 3, 10, 2, Color("e0574f"))
+	_fill_rect(img, 10, 5, 12, 1, Color("b23c40"))
 	_fill_rect(img, 11, 6, 10, 1, hair)
 	_fill_rect(img, 12, 7, 8, 5, skin)
 	_fill_rect(img, 14, 9, 2, 2, eye)
@@ -390,6 +424,13 @@ func _fill_rect(img: Image, x: int, y: int, width: int, height: int, color: Colo
 			if px >= 0 and px < img.get_width() and py >= 0 and py < img.get_height():
 				img.set_pixel(px, py, color)
 
+func _fill_ellipse(image: Image, center: Vector2, radius: Vector2, color: Color) -> void:
+	for y in range(maxi(0, int(center.y - radius.y)), mini(image.get_height(), int(center.y + radius.y) + 1)):
+		for x in range(maxi(0, int(center.x - radius.x)), mini(image.get_width(), int(center.x + radius.x) + 1)):
+			var offset := (Vector2(x, y) - center) / radius
+			if offset.length_squared() <= 1.0:
+				image.set_pixel(x, y, color)
+
 func _create_player_rows_texture() -> ImageTexture:
 	var rows := PackedStringArray([
 		"................",
@@ -418,17 +459,17 @@ func _create_player_rows_texture() -> ImageTexture:
 		"..OOOOOOOOOOOO..",
 	])
 	var palette := {
-		"O": Color(0.12, 0.09, 0.12),
-		"R": Color(0.88, 0.19, 0.22),
-		"r": Color(0.68, 0.11, 0.16),
+		"O": Palette.OUTLINE,
+		"R": Color("e0574f"),
+		"r": Color("b23c40"),
 		"H": Color(0.34, 0.20, 0.13),
 		"S": Color(1.00, 0.87, 0.71),
 		"s": Color(0.90, 0.70, 0.56),
 		"P": Color(0.98, 0.65, 0.58),
-		"K": Color(0.13, 0.10, 0.13),
-		"B": Color(0.22, 0.48, 0.92),
-		"b": Color(0.15, 0.34, 0.72),
-		"Y": Color(1.00, 0.78, 0.20),
+		"K": Palette.OUTLINE,
+		"B": Color("3a6fd8"),
+		"b": Color("2650a8"),
+		"Y": Palette.YELLOW,
 		"N": Color(0.20, 0.26, 0.48),
 		"T": Color(0.48, 0.30, 0.17),
 	}
@@ -460,12 +501,12 @@ func _create_mushroom_texture() -> ImageTexture:
 		".....OOOO.....",
 	])
 	var palette := {
-		"O": Color(0.16, 0.10, 0.08),
-		"R": Color(0.95, 0.48, 0.14),
-		"r": Color(1.00, 0.72, 0.25),
+		"O": Palette.OUTLINE,
+		"R": Color("e07a3c"),
+		"r": Palette.YELLOW,
 		"W": Color(1.00, 0.95, 0.82),
 		"s": Color(0.91, 0.81, 0.66),
-		"K": Color(0.16, 0.10, 0.08),
+		"K": Palette.OUTLINE,
 	}
 	return _texture_from_rows(rows, palette)
 
@@ -488,12 +529,12 @@ func _create_snail_texture() -> ImageTexture:
 		"..............",
 	])
 	var palette := {
-		"O": Color(0.12, 0.13, 0.22),
-		"B": Color(0.28, 0.55, 0.95),
-		"b": Color(0.18, 0.36, 0.72),
+		"O": Palette.OUTLINE,
+		"B": Color("4f83d8"),
+		"b": Color("31599f"),
 		"W": Color(0.85, 0.94, 1.00),
-		"Y": Color(1.00, 0.85, 0.48),
-		"K": Color(0.12, 0.13, 0.22),
+		"Y": Palette.YELLOW,
+		"K": Palette.OUTLINE,
 	}
 	return _texture_from_rows(rows, palette)
 
@@ -516,36 +557,233 @@ func _create_slime_texture() -> ImageTexture:
 		"..............",
 	])
 	var palette := {
-		"O": Color(0.10, 0.20, 0.12),
-		"G": Color(0.28, 0.80, 0.36),
-		"g": Color(0.55, 0.95, 0.55),
+		"O": Palette.GRASS_OUTLINE,
+		"G": Palette.GRASS,
+		"g": Palette.GRASS_LIGHT,
 		"W": Color(0.88, 1.00, 0.90),
-		"K": Color(0.10, 0.20, 0.12),
+		"K": Palette.GRASS_OUTLINE,
 	}
 	return _texture_from_rows(rows, palette)
 
 func _create_coin_texture() -> ImageTexture:
-	var img = Image.create(24, 24, false, Image.FORMAT_RGBA8)
-	for y in range(2, 22):
-		for x in range(2, 22):
-			var dist = Vector2(x - 12, y - 12).length()
-			if dist < 10:
-				img.set_pixel(x, y, Color(0.85, 0.68, 0))
-	for y in range(4, 20):
-		for x in range(4, 20):
-			var dist = Vector2(x - 12, y - 12).length()
-			if dist < 8:
-				img.set_pixel(x, y, Color(1, 0.85, 0.15))
-	for y in range(5, 10):
-		for x in range(6, 12):
-			var dist = Vector2(x - 9, y - 7).length()
-			if dist < 4:
-				img.set_pixel(x, y, Color(1, 0.95, 0.5))
+	var img = Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	for y in range(2, 14):
+		for x in range(2, 14):
+			var dist = Vector2(x - 7.5, y - 7.5).length()
+			if dist <= 6.2:
+				img.set_pixel(x, y, Palette.YELLOW)
+			if dist <= 4.8:
+				img.set_pixel(x, y, Color("f7c948"))
+			if dist <= 2.4 and x < 8 and y < 8:
+				img.set_pixel(x, y, Palette.YELLOW_LIGHT)
+	for x in range(3, 13):
+		_set_pixel_if_empty(img, x, 2, Palette.OUTLINE)
+		_set_pixel_if_empty(img, x, 13, Palette.OUTLINE)
+	for y in range(3, 13):
+		_set_pixel_if_empty(img, 2, y, Palette.OUTLINE)
+		_set_pixel_if_empty(img, 13, y, Palette.OUTLINE)
+	return ImageTexture.create_from_image(img)
+
+func _set_pixel_if_empty(img: Image, x: int, y: int, color: Color) -> void:
+	if x >= 0 and x < img.get_width() and y >= 0 and y < img.get_height() and img.get_pixel(x, y).a == 0.0:
+		img.set_pixel(x, y, color)
+
+func _apply_terrain_decorations(body: Node2D, allow_sign: bool) -> void:
+	var old_decor = body.get_node_or_null("PixelDecor")
+	if old_decor:
+		body.remove_child(old_decor)
+		old_decor.queue_free()
+	var old_underdecor = body.get_node_or_null("PixelUnderdecor")
+	if old_underdecor:
+		body.remove_child(old_underdecor)
+		old_underdecor.queue_free()
+
+	var collider = body.get_node_or_null("CollisionShape2D")
+	if collider == null:
+		for child in body.get_children():
+			if child is CollisionShape2D:
+				collider = child
+				break
+	if collider == null or not (collider.shape is RectangleShape2D):
+		return
+	var size: Vector2 = collider.shape.size
+	var decor := Node2D.new()
+	decor.name = "PixelDecor"
+	body.add_child(decor)
+
+	var random := RandomNumberGenerator.new()
+	random.seed = hash(String(body.name))
+	var count := clampi(int(size.x / 230.0), 2, 7)
+	var is_platform := String(body.name).begins_with("Platform")
+	for index in range(count):
+		var kind := "mushroom" if index % 3 == 0 else ("grass" if index % 3 == 1 else "flower")
+		if index % 4 == 3:
+			kind = "stone"
+		if not is_platform and index == count - 1:
+			kind = "stump"
+		if allow_sign and index == count / 2:
+			kind = "sign"
+		if is_platform and kind == "sign":
+			kind = "mushroom"
+		var texture := _create_terrain_decor_texture(kind)
+		var sprite := Sprite2D.new()
+		sprite.name = "%s%d" % [kind.capitalize(), index]
+		sprite.texture = texture
+		sprite.z_index = 3
+		var margin := 26.0 if not is_platform else 18.0
+		var x := clampf(size.x * (float(index) + 0.5) / count + random.randf_range(-28.0, 28.0), margin, size.x - margin)
+		var overlap := 4.0 if kind == "sign" else 2.0
+		sprite.position = Vector2(x - size.x * 0.5, -size.y * 0.5 + overlap - texture.get_height() * 0.5)
+		decor.add_child(sprite)
+
+	if String(body.name).begins_with("Platform"):
+		var underdecor := Node2D.new()
+		underdecor.name = "PixelUnderdecor"
+		body.add_child(underdecor)
+		var vine_count := clampi(int(size.x / 72.0), 2, 5)
+		for index in range(vine_count):
+			var vine := Sprite2D.new()
+			vine.name = "Vine%d" % index
+			vine.texture = _create_vine_texture()
+			vine.z_index = -1
+			vine.position = Vector2(
+				-size.x * 0.5 + size.x * (float(index) + 0.5) / vine_count + random.randf_range(-10.0, 10.0),
+				size.y * 0.5 + _create_vine_texture().get_height() * 0.5 - 4.0
+			)
+			underdecor.add_child(vine)
+
+	var spores := CPUParticles2D.new()
+	spores.name = "GlowSpores"
+	spores.amount = clampi(int(size.x / 70.0), 8, 18)
+	spores.lifetime = 2.6
+	spores.preprocess = 1.0
+	spores.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	spores.emission_rect_extents = Vector2(size.x * 0.5, 14)
+	spores.position = Vector2(0, -size.y * 0.5 + 8)
+	spores.direction = Vector2(0, -1)
+	spores.spread = 16
+	spores.gravity = Vector2(0, -12)
+	spores.initial_velocity_min = 4.0
+	spores.initial_velocity_max = 12.0
+	spores.scale_amount_min = 0.7
+	spores.scale_amount_max = 1.4
+	spores.color = Color(Palette.CYAN, 0.45)
+	spores.z_index = 4
+	decor.add_child(spores)
+
+func _create_terrain_decor_texture(kind: String) -> ImageTexture:
+	if kind == "stone":
+		return _create_stone_texture()
+	if kind == "sign":
+		return _create_sign_texture()
+	if kind == "mushroom":
+		return _create_mushroom_decor_texture()
+	if kind == "grass":
+		return _create_grass_tuft_texture()
+	if kind == "stump":
+		return _create_stump_texture()
+	return _create_flower_texture()
+
+func _create_stump_texture() -> ImageTexture:
+	var img = Image.create(24, 21, false, Image.FORMAT_RGBA8)
+	_fill_rect(img, 4, 6, 16, 14, Palette.WOOD)
+	_fill_rect(img, 4, 6, 3, 14, Palette.WOOD_LIGHT)
+	_fill_rect(img, 16, 6, 4, 14, Palette.WOOD_DARK)
+	_fill_ellipse(img, Vector2(12, 6), Vector2(9, 5), Palette.OUTLINE)
+	_fill_ellipse(img, Vector2(12, 6), Vector2(8, 4), Palette.WOOD_LIGHT)
+	_fill_ellipse(img, Vector2(12, 6), Vector2(5, 3), Palette.WOOD_DARK)
+	_fill_rect(img, 8, 11, 1, 8, Palette.OUTLINE)
+	_fill_rect(img, 14, 13, 1, 6, Palette.OUTLINE)
+	return ImageTexture.create_from_image(img)
+
+func _create_mushroom_decor_texture() -> ImageTexture:
+	var img = Image.create(16, 18, false, Image.FORMAT_RGBA8)
+	_fill_rect(img, 6, 9, 4, 8, Color("f2e3c2"))
+	_fill_rect(img, 6, 9, 1, 8, Color("d8c4a0"))
+	_fill_rect(img, 9, 9, 1, 8, Color("c9b28d"))
+	_fill_rect(img, 2, 4, 12, 5, Color("e0574f"))
+	_fill_rect(img, 4, 2, 8, 2, Color("e0574f"))
+	_fill_rect(img, 4, 4, 3, 2, Palette.WHITE)
+	_fill_rect(img, 10, 5, 3, 2, Palette.WHITE)
+	_fill_rect(img, 2, 8, 12, 1, Palette.OUTLINE)
+	_fill_rect(img, 3, 2, 10, 1, Palette.OUTLINE)
+	_fill_rect(img, 2, 3, 1, 5, Palette.OUTLINE)
+	_fill_rect(img, 13, 3, 1, 5, Palette.OUTLINE)
+	_fill_rect(img, 5, 16, 6, 1, Palette.OUTLINE)
+	return ImageTexture.create_from_image(img)
+
+func _create_grass_tuft_texture() -> ImageTexture:
+	var img = Image.create(18, 13, false, Image.FORMAT_RGBA8)
+	var blades := [Vector2i(2, 7), Vector2i(5, 3), Vector2i(8, 1), Vector2i(11, 4), Vector2i(15, 8)]
+	for index in range(blades.size()):
+		var blade: Vector2i = blades[index]
+		var color := Palette.GRASS if index % 2 == 0 else Palette.GRASS_LIGHT
+		for y in range(blade.y, 12):
+			var sway := (11 - y) / 5
+			img.set_pixel(blade.x + sway, y, color)
+			if y > blade.y + 2:
+				img.set_pixel(blade.x + sway + 1, y, Palette.GRASS_DARK)
+	return ImageTexture.create_from_image(img)
+
+func _create_vine_texture() -> ImageTexture:
+	var img = Image.create(10, 26, false, Image.FORMAT_RGBA8)
+	for y in range(1, 25):
+		var sway := int(sin(float(y) * 0.35) * 2.0)
+		img.set_pixel(5 + sway, y, Palette.GRASS_DARK)
+		if y % 5 == 0:
+			img.set_pixel(3 + sway, y, Palette.GRASS)
+			img.set_pixel(7 + sway, y + 1, Palette.GRASS)
+	return ImageTexture.create_from_image(img)
+
+func _create_flower_texture() -> ImageTexture:
+	var img = Image.create(12, 16, false, Image.FORMAT_RGBA8)
+	_fill_rect(img, 5, 8, 2, 8, Palette.GRASS_DARK)
+	_fill_rect(img, 3, 11, 2, 1, Palette.GRASS)
+	_fill_rect(img, 7, 13, 2, 1, Palette.GRASS)
+	_fill_rect(img, 4, 3, 4, 4, Palette.RED)
+	_fill_rect(img, 3, 4, 6, 2, Palette.RED)
+	_fill_rect(img, 5, 4, 2, 2, Palette.YELLOW_LIGHT)
+	_fill_rect(img, 4, 2, 4, 1, Palette.OUTLINE)
+	_fill_rect(img, 3, 3, 1, 4, Palette.OUTLINE)
+	_fill_rect(img, 8, 3, 1, 4, Palette.OUTLINE)
+	_fill_rect(img, 4, 7, 4, 1, Palette.OUTLINE)
+	return ImageTexture.create_from_image(img)
+
+func _create_stone_texture() -> ImageTexture:
+	var img = Image.create(16, 10, false, Image.FORMAT_RGBA8)
+	_fill_rect(img, 3, 2, 10, 6, Palette.STONE)
+	_fill_rect(img, 5, 1, 6, 1, Palette.STONE)
+	_fill_rect(img, 4, 2, 5, 2, Palette.STONE_LIGHT)
+	_fill_rect(img, 8, 6, 5, 2, Palette.STONE_DARK)
+	_fill_rect(img, 3, 8, 10, 1, Palette.OUTLINE)
+	_fill_rect(img, 2, 3, 1, 5, Palette.OUTLINE)
+	_fill_rect(img, 13, 3, 1, 5, Palette.OUTLINE)
+	_fill_rect(img, 5, 0, 6, 1, Palette.OUTLINE)
+	return ImageTexture.create_from_image(img)
+
+func _create_sign_texture() -> ImageTexture:
+	var img = Image.create(24, 30, false, Image.FORMAT_RGBA8)
+	_fill_rect(img, 10, 14, 4, 16, Palette.WOOD)
+	_fill_rect(img, 10, 14, 1, 16, Palette.WOOD_LIGHT)
+	_fill_rect(img, 13, 14, 1, 16, Palette.WOOD_DARK)
+	_fill_rect(img, 2, 2, 20, 13, Palette.WOOD)
+	_fill_rect(img, 3, 3, 18, 2, Palette.WOOD_LIGHT)
+	_fill_rect(img, 4, 6, 16, 1, Palette.WOOD_DARK)
+	_fill_rect(img, 4, 9, 12, 1, Palette.WOOD_DARK)
+	_fill_rect(img, 2, 2, 20, 1, Palette.OUTLINE)
+	_fill_rect(img, 2, 14, 20, 1, Palette.OUTLINE)
+	_fill_rect(img, 2, 2, 1, 13, Palette.OUTLINE)
+	_fill_rect(img, 21, 2, 1, 13, Palette.OUTLINE)
 	return ImageTexture.create_from_image(img)
 
 func _set_terrain_sprite(body: Node2D, sprite_name: String, floating: bool) -> void:
 	var size := Vector2(160, 24)
 	var collider = body.get_node_or_null("CollisionShape2D")
+	if collider == null:
+		for child in body.get_children():
+			if child is CollisionShape2D:
+				collider = child
+				break
 	if collider and collider.shape is RectangleShape2D:
 		size = collider.shape.size
 
@@ -563,66 +801,171 @@ func _set_terrain_sprite(body: Node2D, sprite_name: String, floating: bool) -> v
 	sprite.texture = _create_terrain_texture(int(size.x), int(size.y), floating)
 	sprite.z_index = 0
 	body.add_child(sprite)
-	if floating:
-		sprite.position.y = 5.0
+	sprite.position.y = _terrain_sprite_offset(int(size.y), floating)
 
 func _create_terrain_texture(width: int, height: int, floating: bool) -> ImageTexture:
-	width = maxi(24, width)
-	height = maxi(12, height)
-	var terrain_height := height if not floating else height + 10
-	var draw_height := height if not floating else height + 4
+	width = maxi(TILE_SIZE, width)
+	height = maxi(16, height)
+	var top_pad := 7 if floating else 6
+	var bottom_tail := 24 if floating else 0
+	var terrain_height := top_pad + height + bottom_tail
 	var img = Image.create(width, terrain_height, false, Image.FORMAT_RGBA8)
-	var grass_outline := Color(0.08, 0.26, 0.11)
-	var grass_light := Color(0.62, 0.85, 0.32)
-	var grass := Color(0.31, 0.68, 0.25)
-	var grass_dark := Color(0.18, 0.47, 0.19)
-	var dirt := Color(0.55, 0.34, 0.18)
-	var dirt_light := Color(0.70, 0.45, 0.24)
-	var dirt_dark := Color(0.39, 0.23, 0.12)
-	var outline := Color(0.16, 0.09, 0.05)
-	var root_color := Color(0.43, 0.27, 0.15)
+	var body_top := top_pad
+	var body_bottom := top_pad + height
+	var radius := clampi(mini(width, height) / 5, 4, 9) if floating else 6
+	var random := RandomNumberGenerator.new()
+	random.seed = hash("%d-%d-%s" % [width, height, floating])
 
-	for y in range(draw_height):
+	for y in range(top_pad, body_bottom):
 		for x in range(width):
-			var edge := x == 0 or x == width - 1 or y == 0 or y == draw_height - 1
-			var grass_depth := clampi(int(6.0 + sin(x * 0.17) * 1.7 + cos(x * 0.41) * 0.9), 3, 8)
+			if not _terrain_point_inside(x, y, body_top, height, width, floating, radius):
+				continue
+			var body_y := y - body_top
+			var edge := x < 2 or x >= width - 2 or body_y < 2 or body_y >= height - 2
+			var grass_depth := top_pad + clampi(
+				18 + int(sin(float(x) * 0.043) * 4.0 + cos(float(x) * 0.017) * 3.0),
+				12, 25
+			)
+			var color: Color
 			if y <= grass_depth:
-				var color := grass
-				if y == 0 or edge:
-					color = grass_outline
-				elif y == 1:
-					color = grass_light
-				elif y == grass_depth:
-					color = grass_dark
-				elif (x + y) % 9 == 0:
-					color = grass_light
-				img.set_pixel(x, y, color)
-				continue
-
-			if edge:
-				img.set_pixel(x, y, outline)
-				continue
-
-			var grain = fmod(abs(sin(x * 12.9898 + y * 78.233) * 43758.5453), 1.0)
-			var color := dirt
-			if grain > 0.88:
-				color = dirt_light
-			elif grain < 0.14:
-				color = dirt_dark
-			elif (x + y * 2) % 23 == 0:
-				color = dirt_dark
+				color = Palette.GRASS
+				if y == top_pad or edge:
+					color = Palette.GRASS_OUTLINE
+				elif y <= top_pad + 3:
+					color = Palette.GRASS_LIGHT
+				elif y >= grass_depth - 2:
+					color = Palette.GRASS_DARK
+				elif (x * 5 + y * 3) % 9 == 0:
+					color = Palette.GRASS_LIGHT
+			else:
+				var depth_ratio := float(body_y) / float(height)
+				color = Palette.DIRT.lerp(Palette.DIRT_DARK, clampf((depth_ratio - 0.24) / 0.76, 0.0, 1.0))
+				var clump := sin(float(x) * 0.029 + float(body_y) * 0.051) * 0.5
+				clump += sin(float(x) * 0.011 - float(body_y) * 0.023 + 1.3) * 0.5
+				var grain := fmod(abs(sin(float(x) * 12.9898 + float(body_y) * 78.233) * 43758.5453), 1.0)
+				if clump > 0.48:
+					color = color.lightened(0.07)
+				elif clump < -0.48:
+					color = color.darkened(0.10)
+				if grain > 0.94:
+					color = Palette.DIRT_LIGHT
+				elif grain < 0.06:
+					color = color.darkened(0.12)
+				if x < 6 or x >= width - 6:
+					color = color.darkened(0.10)
+				if y >= grass_depth and y < grass_depth + 6:
+					color = color.darkened(0.14)
 			img.set_pixel(x, y, color)
 
+	# 草皮从边缘垂下来，形成更厚的冒险岛式草块。
+	for side in range(2):
+		var edge_x := 0 if side == 0 else width - 1
+		var direction := 1 if side == 0 else -1
+		for offset in range(9):
+			var x := edge_x + direction * offset
+			if x < 0 or x >= width:
+				continue
+			var drape := top_pad + 16 + int(sin(float(offset) * 0.7 + float(side)) * 3.0) + (8 - offset) / 2
+			for y in range(top_pad, mini(body_bottom, drape)):
+				if not _terrain_point_inside(x, y, body_top, height, width, floating, radius):
+					continue
+				var color := Palette.GRASS_DARK
+				if offset < 2:
+					color = Palette.GRASS
+				elif offset < 4:
+					color = Palette.GRASS.lightened(0.08)
+				img.set_pixel(x, y, color)
+
+	# 草顶上方留出细碎草叶，让边缘不再像硬纸片。
+	for x in range(2, width - 2):
+		var blade_seed := fmod(abs(sin(float(x) * 43.71) * 9187.31), 1.0)
+		if blade_seed > 0.48:
+			var blade_height := 1 + int(blade_seed * 2.9)
+			for blade_y in range(top_pad - blade_height, top_pad):
+				if _terrain_point_inside(x, blade_y, body_top, height, width, floating, radius):
+					continue
+				img.set_pixel(x, blade_y, Palette.GRASS_DARK if blade_y == top_pad - blade_height else Palette.GRASS)
+
+	# 浮空岛底部改成有粗细变化的根须，而不是三根直线。
 	if floating:
-		var roots := [int(width * 0.22), int(width * 0.50), int(width * 0.76)]
-		for base_x in roots:
-			for tail_y in range(height + 4, terrain_height):
-				var sway := int(sin((tail_y - height) * 0.8 + base_x) * 1.2)
-				var root_x := clampi(base_x + sway, 1, width - 2)
-				img.set_pixel(root_x, tail_y, root_color)
-				img.set_pixel(root_x - 1, tail_y, outline)
+		for index in range(5):
+			var base_x := int(width * (0.16 + float(index) * 0.17))
+			var root_length := 9 + (index * 5) % 9
+			for tail_y in range(body_bottom, body_bottom + root_length):
+				var progress := float(tail_y - body_bottom) / float(root_length)
+				var sway := int(sin(progress * 5.0 + float(index) * 1.7) * (2.0 + progress * 2.0))
+				var root_x := clampi(base_x + sway, 2, width - 3)
+				var root_width := 3 - int(progress * 2.0)
+				for root_offset in range(root_width):
+					if _terrain_point_inside(root_x + root_offset, tail_y, body_top, height, width, floating, radius):
+						continue
+					img.set_pixel(root_x + root_offset, tail_y, Palette.WOOD_DARK if root_offset == 0 else Palette.WOOD)
 
 	return ImageTexture.create_from_image(img)
+
+func _terrain_sprite_offset(height: int, floating: bool) -> float:
+	var top_pad := 7 if floating else 6
+	var terrain_height := top_pad + height + (24 if floating else 0)
+	return -float(height) * 0.5 - float(top_pad) + float(terrain_height) * 0.5
+
+func _terrain_point_inside(x: int, y: int, top: int, height: int, width: int, floating: bool, radius: int) -> bool:
+	var body_y := y - top
+	if body_y < 0 or body_y >= height or x < 0 or x >= width:
+		return false
+	var nearest_x := clampi(x, radius, width - 1 - radius)
+	var nearest_y := clampi(y, top + radius, top + height - 1 - radius) if floating else clampi(y, top + radius, top + height - 1)
+	if floating:
+		nearest_y = clampi(y, top + radius, top + height - 1 - radius)
+	else:
+		nearest_y = clampi(y, top + radius, top + height - 1)
+	return Vector2(float(x - nearest_x), float(y - nearest_y)).length() <= float(radius)
+
+func _create_ground_fill_texture(width: int, height: int) -> ImageTexture:
+	width = maxi(TILE_SIZE, width)
+	height = maxi(TILE_SIZE, height)
+	var image := Image.create(width, height, false, Image.FORMAT_RGBA8)
+	var random := RandomNumberGenerator.new()
+	random.seed = hash("ground-fill-%d-%d" % [width, height])
+
+	for y in range(height):
+		var depth := float(y) / float(height)
+		var color := Palette.DIRT.lerp(Palette.DIRT_DARK, clampf(depth * 1.25, 0.0, 1.0))
+		if y < 12:
+			color = color.darkened(0.16)
+		elif y < 28:
+			color = color.darkened(0.06)
+		for x in range(width):
+			var band := sin(float(x) * 0.017 + float(y) * 0.031) * 0.5
+			band += sin(float(x) * 0.006 - float(y) * 0.013 + 1.1) * 0.5
+			var pixel := color
+			if band > 0.56:
+				pixel = pixel.lightened(0.035)
+			elif band < -0.56:
+				pixel = pixel.darkened(0.045)
+			var grain := fmod(abs(sin(float(x) * 12.9898 + float(y) * 78.233) * 43758.5453), 1.0)
+			if grain > 0.96:
+				pixel = Palette.DIRT_LIGHT
+			elif grain < 0.04:
+				pixel = pixel.darkened(0.10)
+			image.set_pixel(x, y, pixel)
+
+	for index in range(clampi(width / 150, 4, 18)):
+		var stone_x := random.randi_range(16, width - 20)
+		var stone_y := random.randi_range(30, height - 18)
+		var stone_size := random.randf_range(3.0, 7.0)
+		_fill_ellipse(image, Vector2(stone_x, stone_y), Vector2(stone_size, stone_size * 0.65), Palette.STONE.darkened(0.15))
+		_fill_ellipse(image, Vector2(stone_x - 1, stone_y - 1), Vector2(stone_size * 0.5, stone_size * 0.35), Palette.STONE)
+	for index in range(clampi(width / 110, 5, 22)):
+		var root_x := random.randi_range(12, width - 12)
+		var root_y := random.randi_range(24, height - 24)
+		var root_height := random.randi_range(18, 48)
+		for y in range(root_y, mini(height - 4, root_y + root_height)):
+			var sway := int(sin(float(y - root_y) * 0.18 + float(index)) * 2.0)
+			image.set_pixel(root_x + sway, y, Palette.WOOD_DARK)
+			if y % 4 == 0:
+				image.set_pixel(root_x + sway + 1, y, Palette.WOOD)
+
+	return ImageTexture.create_from_image(image)
 
 func _texture_from_rows(rows: PackedStringArray, palette: Dictionary) -> ImageTexture:
 	var width := 0

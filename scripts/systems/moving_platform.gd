@@ -1,5 +1,7 @@
 extends AnimatableBody2D
 
+const Palette := preload("res://scripts/systems/pixel_palette.gd")
+
 @export var travel := Vector2(160, 0)
 @export var period := 3.0
 @export var phase := 0.0
@@ -22,6 +24,7 @@ func _physics_process(delta: float) -> void:
 
 func setup(size_value: Vector2) -> void:
 	var shape := CollisionShape2D.new()
+	shape.name = "CollisionShape2D"
 	var rectangle := RectangleShape2D.new()
 	rectangle.size = size_value
 	shape.shape = rectangle
@@ -34,7 +37,7 @@ func _build_visual() -> void:
 		size_value = collider.shape.size
 	var visual := ColorRect.new()
 	visual.name = "Visual"
-	visual.color = Color("8a5a35")
+	visual.color = Palette.DIRT
 	visual.position = -size_value * 0.5
 	visual.size = size_value
 	add_child(visual)

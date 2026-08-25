@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+const Palette := preload("res://scripts/systems/pixel_palette.gd")
+
 const ENEMY_DATA_SCRIPT := preload("res://scripts/monsters/enemy_data.gd")
 const COIN_SCENE := preload("res://scenes/systems/coin.tscn")
 
@@ -100,7 +102,7 @@ func _setup_health_bar() -> void:
 	health_fill.name = "HealthFill"
 	health_fill.position = Vector2(-18, -37)
 	health_fill.size = Vector2(36, 3)
-	health_fill.color = Color("ff5c69")
+	health_fill.color = Palette.RED
 	health_fill.z_index = 31
 	add_child(health_fill)
 
@@ -240,10 +242,10 @@ func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
 		if attacker_side == float(direction):
 			shown_amount = maxi(1, int(round(amount * 0.2)))
 			AudioManager.play_sfx("block")
-			_spawn_text("格挡", Color("bfe9ff"))
+			_spawn_text("格挡", Palette.CYAN)
 		else:
 			shown_amount = amount * 2
-			_spawn_text("背击!", Color("ffd166"))
+			_spawn_text("背击!", Palette.YELLOW)
 
 	health -= shown_amount
 	flash_timer = 0.09
@@ -272,7 +274,7 @@ func die() -> void:
 	GameState.register_kill()
 	GameState.add_experience(data.exp_reward)
 	_spawn_coin_rewards()
-	_spawn_text("+%d EXP" % [data.exp_reward], Color("ffe066"))
+	_spawn_text("+%d EXP" % [data.exp_reward], Palette.YELLOW)
 	AudioManager.play_sfx("enemy_death")
 	_create_death_effect()
 	modulate = Color(1.0, 0.7, 0.7, 0.75)
@@ -340,7 +342,7 @@ func _create_death_effect() -> void:
 	particles.initial_velocity_min = 90.0
 	particles.initial_velocity_max = 230.0
 	particles.gravity = Vector2(0, 520)
-	particles.color = Color("ff8a5c")
+	particles.color = Color("e07a3c")
 	particles.z_index = 120
 	get_parent().call_deferred("add_child", particles)
 	particles.position = global_position
