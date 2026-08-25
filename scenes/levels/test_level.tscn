@@ -9,6 +9,8 @@
 [ext_resource type="PackedScene" path="res://scenes/systems/death_zone.tscn" id="7_death"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_hud.tscn" id="8_hud"]
 [ext_resource type="Texture2D" path="res://assets/images/Background.jpg" id="9_bg"]
+[ext_resource type="Script" path="res://scripts/levels/test_level.gd" id="10_level"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_screens.tscn" id="11_screens"]
 
 [sub_resource type="RectangleShape2D" id="5_edge_wall"]
 size = Vector2(10, 30)
@@ -26,6 +28,7 @@ size = Vector2(100, 12)
 size = Vector2(30, 600)
 
 [node name="TestLevel" type="Node2D"]
+script = ExtResource("10_level")
 
 [node name="Background" type="TextureRect" parent="."]
 offset_left = -700.0
@@ -327,3 +330,5 @@ position = Vector2(1000, 600)
 [node name="GameHUD" parent="." instance=ExtResource("8_hud")]
 
 [node name="DebugUI" parent="." instance=ExtResource("2_debug")]
+
+[node name="GameScreens" parent="." instance=ExtResource("11_screens")]

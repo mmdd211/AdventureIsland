@@ -1,39 +1,47 @@
-# 调试 UI（精简版）
 extends CanvasLayer
 
-var player = null
-var player_found: bool = false
-
-var pos_label: Label = null
-var state_label: Label = null
-var fps_label: Label = null
+var player: Node2D
+var pos_label: Label
+var state_label: Label
+var fps_label: Label
 
 func _ready() -> void:
-	call_deferred("_init_ui")
+	visible = false
+	layer = 25
+	_build_ui()
 
-func _init_ui() -> void:
-	var panel = get_node_or_null("Panel")
-	if panel:
-		var vbox = panel.get_node_or_null("VBox")
-		if vbox:
-			fps_label = vbox.get_node_or_null("FPSLabel")
-			pos_label = vbox.get_node_or_null("PosLabel")
-			state_label = vbox.get_node_or_null("StateLabel")
-	print("调试 UI 已就绪")
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("debug_toggle"):
+		visible = not visible
+
+func _build_ui() -> void:
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	panel.offset_left = 12.0
+	panel.offset_top = -104.0
+	panel.offset_right = 240.0
+	panel.offset_bottom = -12.0
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0.55)
+	style.set_corner_radius_all(6)
+	panel.add_theme_stylebox_override("panel", style)
+	add_child(panel)
+	var box := VBoxContainer.new()
+	panel.add_child(box)
+	fps_label = Label.new()
+	pos_label = Label.new()
+	state_label = Label.new()
+	for label in [fps_label, pos_label, state_label]:
+		label.add_theme_font_size_override("font_size", 12)
+		box.add_child(label)
 
 func _process(_delta: float) -> void:
-	if not player_found and is_inside_tree():
-		var players = get_tree().get_nodes_in_group("player")
-		if players.size() > 0:
-			player = players[0]
-			player_found = true
-
-	if player and is_instance_valid(player):
-		if pos_label:
-			pos_label.text = "(%.0f, %.0f)" % [player.position.x, player.position.y]
-		if state_label:
-			var state_text = "地面" if player.is_on_floor() else ("上升" if player.velocity.y < 0 else "下落")
-			state_label.text = state_text
-
-	if fps_label:
-		fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
+	if not visible:
+		return
+	if player == null or not is_instance_valid(player):
+		var players := get_tree().get_nodes_in_group("player")
+		player = players[0] if players.size() > 0 else null
+	fps_label.text = "FPS %d" % Engine.get_frames_per_second()
+	if player:
+		pos_label.text = "(%d, %d)" % [player.position.x, player.position.y]
+		state_label.text = "地面" if player.is_on_floor() else ("上升" if player.velocity.y < 0.0 else "下落")

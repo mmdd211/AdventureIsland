@@ -14,47 +14,4 @@ corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
 [node name="DebugUI" type="CanvasLayer"]
-layer = 1
 script = ExtResource("1_script")
-
-[node name="Panel" type="PanelContainer" parent="."]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = -120.0
-offset_right = 280.0
-offset_bottom = -10.0
-grow_vertical = 0
-theme_override_styles/panel = SubResource("StyleBoxFlat_Debug")
-
-[node name="VBox" type="VBoxContainer" parent="Panel"]
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="FPSLabel" type="Label" parent="Panel/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 0.8)
-theme_override_font_sizes/font_size = 12
-text = "FPS: 60"
-
-[node name="PosLabel" type="Label" parent="Panel/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 0.8)
-theme_override_font_sizes/font_size = 12
-text = "(0, 0)"
-
-[node name="StateLabel" type="Label" parent="Panel/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 0.8)
-theme_override_font_sizes/font_size = 12
-text = "地面"
-
-[node name="HSep" type="HSeparator" parent="Panel/VBox"]
-layout_mode = 2
-
-[node name="Controls" type="Label" parent="Panel/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.8, 1, 0.7)
-theme_override_font_sizes/font_size = 11
-text = "WASD 移动 | 空格跳 | J 攻击"

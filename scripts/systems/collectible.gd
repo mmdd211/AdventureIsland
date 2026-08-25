@@ -1,67 +1,89 @@
-# 收集物脚本（金币、宝石等）
 extends Area2D
 
-@export var score_value: int = 10
-@export var exp_value: int = 5
-@export var bob_height: float = 5.0
-@export var bob_speed: float = 2.0
+@export_enum("coin", "heart") var pickup_type := "coin"
+@export var value := 1
+@export var bob_height := 4.0
+@export var bob_speed := 2.4
 
 var start_position: Vector2
-var time: float = 0.0
+var time := 0.0
+var collected := false
 
 func _ready() -> void:
+	add_to_group("pickups")
+	if pickup_type == "coin":
+		GameState.register_coin_pickups(value)
 	start_position = position
 	body_entered.connect(_on_body_entered)
-	print("金币已就绪: ", name)
+	_build_visual()
 
 func _process(delta: float) -> void:
 	time += delta
 	position.y = start_position.y + sin(time * bob_speed) * bob_height
+	var sprite := get_node_or_null("PickupSprite") as Sprite2D
+	if sprite:
+		sprite.scale.x = sin(time * 4.0)
+
+func _build_visual() -> void:
+	var old_visual := get_node_or_null("Visual")
+	if old_visual:
+		old_visual.visible = false
+	var sprite := Sprite2D.new()
+	sprite.name = "PickupSprite"
+	sprite.texture = PixelStyleManager._create_coin_texture() if pickup_type == "coin" else _create_heart_texture()
+	sprite.z_index = 20
+	add_child(sprite)
+
+func _create_heart_texture() -> ImageTexture:
+	var rows := PackedStringArray([
+		"..RR...RR..",
+		".RRRR.RRRR.",
+		"RRrRRRRRrRR",
+		"RRRRRRRRRRR",
+		"rRRRRRRRRRr",
+		".rRRRRRRRr.",
+		"..rRRRRRr..",
+		"...rRRRr...",
+		"....rRr....",
+		".....r.....",
+	])
+	var palette := {
+		"R": Color("ff5c69"),
+		"r": Color("ffc2c6"),
+	}
+	var image := Image.create(rows[0].length(), rows.size(), false, Image.FORMAT_RGBA8)
+	for y in range(rows.size()):
+		for x in range(rows[y].length()):
+			if palette.has(rows[y][x]):
+				image.set_pixel(x, y, palette[rows[y][x]])
+	return ImageTexture.create_from_image(image)
 
 func _on_body_entered(body: Node2D) -> void:
-	print("金币碰撞: ", body.name, " 组: ", body.get_groups())
-	if body.is_in_group("player"):
-		# 增加分数
-		var gm = get_node_or_null("/root/GameManager")
-		if gm:
-			gm.add_score(score_value)
-			print("金币收集! 分数: ", gm.score)
+	if collected or not body.is_in_group("player"):
+		return
+	collected = true
+	if pickup_type == "coin":
+		GameState.add_coin(value)
+		AudioManager.play_sfx("coin")
+	else:
+		GameState.heal_player(value)
+		AudioManager.play_sfx("heart")
+	_create_effect(Color("ffd166") if pickup_type == "coin" else Color("ff8093"))
+	queue_free()
 
-		# 增加经验
-		var hud = get_tree().get_first_node_in_group("game_hud")
-		if hud:
-			hud.add_experience(exp_value)
-
-		# 播放收集音效
-		var sm = get_node_or_null("/root/SoundManager")
-		if sm:
-			sm.play_coin()
-
-		# 创建收集闪光效果
-		_create_collect_effect()
-
-		queue_free()
-
-func _create_collect_effect() -> void:
-	var particles = CPUParticles2D.new()
-	particles.name = "CollectEffect"
-	particles.amount = 15
-	particles.lifetime = 0.7
-	particles.speed_scale = 2.5
-	particles.direction = Vector2(0, -1)
-	particles.spread = 80.0
-	particles.gravity = Vector2(0, 80)
-	particles.initial_size_min = 0.6
-	particles.initial_size_max = 1.2
-	particles.color = Color(1, 0.84, 0, 1)  # 金色
-	particles.scale_amount_min = 0.8
-	particles.scale_amount_max = 1.5
-	particles.z_index = 100  # 显示在最上层
-
-	# 添加到父节点，这样效果会留在原位
+func _create_effect(color: Color) -> void:
+	var particles := CPUParticles2D.new()
+	particles.amount = 14
+	particles.lifetime = 0.42
+	particles.one_shot = true
+	particles.explosiveness = 1.0
+	particles.spread = 180.0
+	particles.initial_velocity_min = 60.0
+	particles.initial_velocity_max = 150.0
+	particles.gravity = Vector2(0, 240)
+	particles.color = color
+	particles.z_index = 120
 	get_parent().add_child(particles)
 	particles.global_position = global_position
 	particles.emitting = true
-
-	await particles.finished
-	particles.queue_free()
+	get_tree().create_timer(0.8).timeout.connect(particles.queue_free)

@@ -5,7 +5,6 @@ func _ready() -> void:
 	call_deferred("apply_pixel_style")
 
 func apply_pixel_style() -> void:
-	print("应用冒险岛风格像素角色...")
 	await get_tree().create_timer(0.2).timeout
 
 	_apply_to_player()
@@ -14,7 +13,13 @@ func apply_pixel_style() -> void:
 	_apply_ground_style()
 	_apply_portal_style()
 
-	print("冒险岛风格已应用!")
+func refresh_enemy_styles() -> void:
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		var existing := enemy.get_node_or_null("PixelSprite")
+		if existing:
+			enemy.remove_child(existing)
+			existing.queue_free()
+		_apply_sprite_to_enemy(enemy)
 
 func _apply_to_player() -> void:
 	for player in get_tree().get_nodes_in_group("player"):
@@ -23,9 +28,11 @@ func _apply_to_player() -> void:
 			visual.visible = false
 		var old_sprite = player.get_node_or_null("PixelSprite")
 		if old_sprite:
+			player.remove_child(old_sprite)
 			old_sprite.queue_free()
 		var old_animator = player.get_node_or_null("PixelAnimator")
 		if old_animator:
+			player.remove_child(old_animator)
 			old_animator.queue_free()
 
 		var animator := AnimatedSprite2D.new()
@@ -35,37 +42,44 @@ func _apply_to_player() -> void:
 		animator.z_index = 10
 		animator.play("idle")
 		player.add_child(animator)
+		player.set("base_animator_scale", animator.scale)
 
 func _apply_to_enemies() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):
-		var visual = enemy.get_node_or_null("Visual")
-		if visual:
-			visual.visible = false
-		var old_sprite = enemy.get_node_or_null("PixelSprite")
-		if old_sprite:
-			old_sprite.queue_free()
+		_apply_sprite_to_enemy(enemy)
 
-		var kind = enemy.get("enemy_kind")
-		if kind == null:
-			kind = "mushroom"
-		var sprite := Sprite2D.new()
-		sprite.name = "PixelSprite"
-		sprite.texture = _create_enemy_texture(str(kind))
-		sprite.scale = Vector2(2, 2)
-		sprite.z_index = 10
-		enemy.add_child(sprite)
+func _apply_sprite_to_enemy(enemy: Node) -> void:
+	var existing_sprite = enemy.get_node_or_null("PixelSprite")
+	if existing_sprite:
+		enemy.remove_child(existing_sprite)
+		existing_sprite.queue_free()
+	var visual = enemy.get_node_or_null("Visual")
+	if visual:
+		visual.visible = false
+	var kind = enemy.get("enemy_kind")
+	if kind == null:
+		kind = "mushroom"
+	var sprite := Sprite2D.new()
+	sprite.name = "PixelSprite"
+	sprite.texture = _create_enemy_texture(str(kind))
+	var mini = enemy.get("is_mini") if enemy.get("is_mini") != null else false
+	sprite.scale = Vector2(1.55, 1.55) if mini else Vector2(2, 2)
+	sprite.z_index = 10
+	enemy.add_child(sprite)
 
 func _apply_to_coins() -> void:
 	var root = get_tree().current_scene
 	if not root:
 		return
 	for child in root.get_children():
-		if child.name.begins_with("Coin"):
+		var is_coin: bool = child.name.begins_with("Coin") and not child.is_in_group("pickups")
+		if is_coin:
 			var visual = child.get_node_or_null("Visual")
 			if visual:
 				visual.visible = false
 			var old_sprite = child.get_node_or_null("PixelSprite")
 			if old_sprite:
+				child.remove_child(old_sprite)
 				old_sprite.queue_free()
 			var sprite := Sprite2D.new()
 			sprite.name = "PixelSprite"
@@ -105,6 +119,7 @@ func _apply_portal_style() -> void:
 			for old_child_name in ["PixelPortal", "PortalSparkles"]:
 				var old_child = child.get_node_or_null(old_child_name)
 				if old_child:
+					child.remove_child(old_child)
 					old_child.queue_free()
 
 			var portal := AnimatedSprite2D.new()
@@ -540,6 +555,7 @@ func _set_terrain_sprite(body: Node2D, sprite_name: String, floating: bool) -> v
 
 	var old_sprite = body.get_node_or_null(sprite_name)
 	if old_sprite:
+		body.remove_child(old_sprite)
 		old_sprite.queue_free()
 
 	var sprite := Sprite2D.new()
