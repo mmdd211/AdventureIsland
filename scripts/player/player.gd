@@ -57,8 +57,10 @@ var invulnerable_timer := 0.0
 
 var step_timer := 0.0
 var is_dead := false
+var control_enabled := true
 var base_animator_scale := Vector2.ONE
 var visual_base_scale := Vector2.ONE
+var death_tween: Tween
 
 func _ready() -> void:
 	add_to_group("player")
@@ -76,6 +78,9 @@ func _capture_animator() -> void:
 
 func _physics_process(delta: float) -> void:
 	if is_dead:
+		return
+	if not control_enabled:
+		velocity = Vector2.ZERO
 		return
 
 	_update_timers(delta)
@@ -304,17 +309,21 @@ func _attack_area() -> Area2D:
 
 func _on_player_died() -> void:
 	is_dead = true
+	if death_tween:
+		death_tween.kill()
 	velocity = Vector2.ZERO
 	set_deferred("collision_layer", 0)
 	set_deferred("collision_mask", 0)
 	modulate = Color(1.0, 0.55, 0.55, 0.75)
 	_play_action("fall")
-	var tween := create_tween()
-	tween.tween_property(self, "position:y", position.y - 35.0, 0.22)
-	tween.tween_property(self, "position:y", position.y + 120.0, 0.45)
+	death_tween = create_tween()
+	death_tween.tween_property(self, "position:y", position.y - 35.0, 0.22)
+	death_tween.tween_property(self, "position:y", position.y + 120.0, 0.45)
 
-func _on_respawn_requested(spawn_position: Vector2) -> void:
+func _on_respawn_requested(_zone_id: String, spawn_position: Vector2) -> void:
 	is_dead = false
+	if death_tween:
+		death_tween.kill()
 	global_position = spawn_position
 	velocity = Vector2.ZERO
 	collision_layer = 1

@@ -12,6 +12,8 @@ const COIN_SCENE := preload("res://scenes/systems/coin.tscn")
 const MINI_SLIME_SPEED := 110.0
 const MINI_CHASE_SPEED := Vector2(250.0, 320.0)
 const MINI_HOP_COOLDOWN := Vector2(0.42, 0.62)
+const MINI_SPAWN_SPREAD := 84.0
+const MINI_SPAWN_VERTICAL := 6.0
 
 enum State { PATROL, WINDUP, CHARGE, RECOVER }
 
@@ -28,6 +30,8 @@ var is_dead := false
 var gravity := 1750.0
 var edge_ray: RayCast2D
 var health_fill: ColorRect
+var spawn_facing := 0
+var spawn_hop_delay := 0.0
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -43,7 +47,11 @@ func _ready() -> void:
 		data.coin_reward = 1
 		data.can_split = false
 	health = data.max_health
-	direction = -1 if randf() < 0.5 else 1
+	if spawn_facing != 0:
+		direction = spawn_facing
+	else:
+		direction = -1 if randf() < 0.5 else 1
+	hop_timer = spawn_hop_delay
 	_setup_edge_ray()
 	_setup_health_bar()
 	_refresh_visual_scale()
@@ -289,14 +297,18 @@ func die() -> void:
 
 func _split_slime() -> void:
 	var scene := load("res://scenes/monsters/basic_enemy.tscn") as PackedScene
-	for offset in [-16.0, 16.0]:
+	var parent := get_parent()
+	for side in [-1.0, 1.0]:
 		var child := scene.instantiate()
 		child.set("enemy_kind", "slime")
 		child.set("is_mini", true)
+		child.set("spawn_facing", int(side))
+		child.set("spawn_hop_delay", 0.18 if side < 0.0 else 0.0)
 		child.set("spawn_grace_timer", 0.42)
 		child.set("inherited_contact_damage", data.contact_damage)
-		child.set("position", global_position + Vector2(offset, -6.0))
-		get_parent().call_deferred("add_child", child)
+		var spawn_global := global_position + Vector2(side * MINI_SPAWN_SPREAD, -MINI_SPAWN_VERTICAL)
+		child.set("position", parent.to_local(spawn_global))
+		parent.call_deferred("add_child", child)
 	call_deferred("_refresh_split_styles")
 
 func _refresh_split_styles() -> void:
@@ -304,13 +316,15 @@ func _refresh_split_styles() -> void:
 		PixelStyleManager.call("refresh_enemy_styles")
 
 func _spawn_coin_rewards() -> void:
+	var parent := get_parent()
 	for index in range(data.coin_reward):
 		var coin := COIN_SCENE.instantiate() as Node2D
 		coin.set("pickup_type", "coin")
 		coin.set("value", 1)
 		var angle := TAU * float(index) / maxf(1.0, float(data.coin_reward))
-		coin.set("position", global_position + Vector2(cos(angle) * 14.0, -8.0))
-		get_parent().call_deferred("add_child", coin)
+		var spawn_global := global_position + Vector2(cos(angle) * 14.0, -8.0)
+		coin.set("position", parent.to_local(spawn_global))
+		parent.call_deferred("add_child", coin)
 
 func _update_health_bar() -> void:
 	if health_fill:
@@ -344,8 +358,9 @@ func _create_death_effect() -> void:
 	particles.gravity = Vector2(0, 520)
 	particles.color = Color("e07a3c")
 	particles.z_index = 120
-	get_parent().call_deferred("add_child", particles)
-	particles.position = global_position
+	var parent := get_parent()
+	particles.position = parent.to_local(global_position)
+	parent.call_deferred("add_child", particles)
 	particles.emitting = true
 	get_tree().create_timer(0.9).timeout.connect(particles.queue_free)
 

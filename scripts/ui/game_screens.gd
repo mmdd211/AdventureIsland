@@ -1,9 +1,12 @@
 extends CanvasLayer
 
+const WORLD_MAP_OVERLAY := preload("res://scripts/ui/world_map_overlay.gd")
+
 var pause_panel: PanelContainer
 var death_panel: PanelContainer
 var complete_panel: PanelContainer
 var complete_stats: Label
+var world_map_overlay: CanvasLayer
 
 func _ready() -> void:
 	layer = 30
@@ -13,6 +16,10 @@ func _ready() -> void:
 	GameState.level_completed.connect(_on_level_completed)
 
 func _build_ui() -> void:
+	world_map_overlay = WORLD_MAP_OVERLAY.new()
+	world_map_overlay.name = "WorldMapOverlay"
+	add_child(world_map_overlay)
+
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -30,7 +37,7 @@ func _build_ui() -> void:
 	_add_button(death_box, "重新开始关卡", _restart_level)
 	_add_button(death_box, "返回标题", _go_title)
 
-	complete_panel = _make_panel(root, "关卡完成！", Color("12281d"))
+	complete_panel = _make_panel(root, "世界通关！", Color("12281d"))
 	var complete_box := complete_panel.get_meta("box") as VBoxContainer
 	complete_stats = Label.new()
 	complete_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -102,9 +109,28 @@ func _show_only_panel(panel: PanelContainer) -> void:
 	_set_panel_visible(complete_panel, panel == complete_panel)
 
 func _input(event: InputEvent) -> void:
+	# 加载界面显示期间不响应地图/暂停输入，避免加载未完成就打开覆盖层。
+	if get_tree().get_first_node_in_group("loading_screen") != null:
+		return
+	if event.is_action_pressed("toggle_map"):
+		if world_map_overlay.visible:
+			_close_world_map()
+		elif not death_panel.visible and not complete_panel.visible and not pause_panel.visible:
+			_open_world_map()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("pause") and world_map_overlay.visible:
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("pause") and not death_panel.visible and not complete_panel.visible:
 		_toggle_pause()
 		get_viewport().set_input_as_handled()
+
+func _open_world_map() -> void:
+	world_map_overlay.open_map()
+
+func _close_world_map() -> void:
+	world_map_overlay.close_map()
 
 func _toggle_pause() -> void:
 	var paused := not get_tree().paused
@@ -139,9 +165,13 @@ func _on_level_completed() -> void:
 
 func _restart_level() -> void:
 	get_tree().paused = false
+	world_map_overlay.visible = false
 	GameState.reset_run()
+	# 重开也走加载界面：重新搭建世界 + 重画像素美术需要数秒。
+	GameState.pending_loading_screen = true
 	get_tree().reload_current_scene()
 
 func _go_title() -> void:
 	get_tree().paused = false
+	world_map_overlay.visible = false
 	get_tree().change_scene_to_file("res://scenes/ui/title_screen.tscn")

@@ -6,10 +6,13 @@ signal coins_changed(coins: int)
 signal checkpoint_reached(position: Vector2)
 signal player_died
 signal level_completed
-signal respawn_requested(position: Vector2)
+signal zone_changed(zone_id: String)
+signal map_state_changed
+signal respawn_requested(zone_id: String, position: Vector2)
 
 const BASE_MAX_HP := 100
 const BASE_REQUIRED_EXP := 100
+const INITIAL_ZONE_ID := "meadow"
 
 var max_hp := BASE_MAX_HP
 var current_hp := BASE_MAX_HP
@@ -22,10 +25,16 @@ var kills := 0
 var deaths := 0
 var total_coin_pickups := 0
 var collected_coin_pickups := 0
+var current_zone_id := INITIAL_ZONE_ID
+var discovered_zones: Array[String] = [INITIAL_ZONE_ID]
+var zone_checkpoints := {}
+var checkpoint_zone_id := INITIAL_ZONE_ID
 var checkpoint_position := Vector2(120, 460)
 var elapsed_time := 0.0
 var final_time := 0.0
 var level_finished := false
+# 点击开始/重开后是否先走加载界面：由 title_screen、game_screens 置位，world_map 消费。
+var pending_loading_screen := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -47,6 +56,10 @@ func reset_run() -> void:
 	deaths = 0
 	total_coin_pickups = 0
 	collected_coin_pickups = 0
+	current_zone_id = INITIAL_ZONE_ID
+	discovered_zones = [INITIAL_ZONE_ID]
+	zone_checkpoints = {}
+	checkpoint_zone_id = INITIAL_ZONE_ID
 	checkpoint_position = Vector2(120, 460)
 	elapsed_time = 0.0
 	final_time = 0.0
@@ -87,6 +100,19 @@ func add_experience(amount: int) -> void:
 func register_coin_pickups(count: int) -> void:
 	total_coin_pickups += count
 
+func activate_zone(zone_id: String, spawn_position: Vector2) -> void:
+	if zone_id.is_empty():
+		return
+	if not discovered_zones.has(zone_id):
+		discovered_zones.append(zone_id)
+	current_zone_id = zone_id
+	checkpoint_zone_id = zone_id
+	if not zone_checkpoints.has(zone_id):
+		zone_checkpoints[zone_id] = spawn_position
+	checkpoint_position = zone_checkpoints[zone_id]
+	zone_changed.emit(zone_id)
+	map_state_changed.emit()
+
 func add_coin(value: int = 1) -> void:
 	if level_finished:
 		return
@@ -107,8 +133,13 @@ func register_kill() -> void:
 	score += 50
 
 func set_checkpoint(position: Vector2) -> void:
-	if position.distance_squared_to(checkpoint_position) < 4.0:
+	return set_zone_checkpoint(current_zone_id, position)
+
+func set_zone_checkpoint(zone_id: String, position: Vector2) -> void:
+	if zone_checkpoints.get(zone_id, Vector2.INF).distance_squared_to(position) < 4.0:
 		return
+	zone_checkpoints[zone_id] = position
+	checkpoint_zone_id = zone_id
 	checkpoint_position = position
 	checkpoint_reached.emit(position)
 
@@ -117,7 +148,7 @@ func respawn_from_checkpoint() -> void:
 		return
 	current_hp = max_hp
 	hp_changed.emit(current_hp, max_hp)
-	respawn_requested.emit(checkpoint_position)
+	respawn_requested.emit(checkpoint_zone_id, checkpoint_position)
 
 func complete_level() -> void:
 	if level_finished:

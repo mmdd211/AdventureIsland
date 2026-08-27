@@ -14,7 +14,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if activated or not body.is_in_group("player"):
 		return
 	activated = true
-	GameState.set_checkpoint(global_position + Vector2(0, 16))
+	GameState.set_zone_checkpoint(GameState.current_zone_id, global_position + Vector2(0, 16))
 	AudioManager.play_sfx("checkpoint")
 	var flag := get_node_or_null("Flag") as Polygon2D
 	if flag:

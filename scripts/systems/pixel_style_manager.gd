@@ -4,17 +4,105 @@ extends Node
 const Palette := preload("res://scripts/systems/pixel_palette.gd")
 const TILE_SIZE := 32
 
+# 加载界面进度回调：done/total 工作项数量。
+signal style_progress(done: int, total: int)
+var _style_work_done := 0
+var _style_work_total := 0
+
+# 已经做过像素美术的 zone（按 node path 记录），避免重复计算。
+var _styled_zone_paths := {}
+
 func _ready() -> void:
-	call_deferred("apply_pixel_style")
+	# 启动时不主动跑；由 world_map 在合适时机调用，避免点开始游戏瞬间主线程卡顿。
+	pass
+
+func make_enemy_texture(kind: String) -> ImageTexture:
+	# 暴露给加载界面：用于展示弹跳的史莱姆。
+	return _create_enemy_texture(kind)
+
+func make_coin_texture() -> ImageTexture:
+	# 暴露给标题屏：装饰用的旋转金币。
+	return _create_coin_texture()
+
+func _tick_style_work() -> void:
+	# 仅在异步路径设置了 _style_work_total 时才 emit 进度；旧式调用不 emit。
+	if _style_work_total <= 0:
+		return
+	_style_work_done += 1
+	style_progress.emit(_style_work_done, _style_work_total)
 
 func apply_pixel_style() -> void:
+	# 兼容旧用法：处理所有 zone，但跨帧让步，每个 zone 之间 await 一帧。
 	await get_tree().create_timer(0.2).timeout
 
-	_apply_to_player()
-	_apply_to_enemies()
-	_apply_to_coins()
-	_apply_ground_style()
-	_apply_portal_style()
+	await _apply_to_player()
+	await _apply_to_enemies()
+	# 单层关卡（如 world01.tscn）的 ground/platform/portal/pickup 直接挂在 root 下。
+	await _style_one_zone(null)
+	for zone in _collect_zones(false):
+		await _style_one_zone(zone)
+		await get_tree().process_frame
+
+func apply_pixel_style_for_active() -> void:
+	# 首次进入世界：只处理当前 process_mode != DISABLED 的 zone（通常只有 meadow），
+	# 避免一次性画完全部 6 个区近 200 个 body 的像素位图导致长时间黑屏。
+	# 每次重新加载世界都清空缓存：节点路径在重载后会复用，
+	# 旧缓存会让已访问过的 zone 被误判为"已处理"而跳过美术生成。
+	_styled_zone_paths.clear()
+	_style_work_done = 0
+	_style_work_total = _count_work_items(true)
+	style_progress.emit(0, _style_work_total)
+	await _apply_to_player()
+	await _apply_to_enemies()
+	# 单层关卡（无 world_zone）也走这条路径：只画 root 直挂的非 zone 节点，
+	# 非活跃 zone 留给玩家进区时懒加载。
+	await _style_nodes(_root_level_nodes(_style_root()))
+	for zone in _collect_zones(true):
+		await _style_one_zone(zone)
+		# 记录已处理的 zone，玩家之后回到该 zone 时不必重新生成位图。
+		_styled_zone_paths[str(zone.get_path())] = true
+		await get_tree().process_frame
+	_style_work_total = 0
+
+func apply_pixel_style_for_zone(target_zone: Node) -> void:
+	# 单 zone 应用，已处理过的跳过。玩家跨区时由 world_map 调度。
+	if target_zone == null:
+		return
+	var key := str(target_zone.get_path())
+	if _styled_zone_paths.has(key):
+		return
+	_styled_zone_paths[key] = true
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if _find_owning_zone(enemy) == target_zone:
+			_apply_sprite_to_enemy(enemy)
+	await _style_one_zone(target_zone)
+
+func _collect_zones(only_active: bool) -> Array:
+	var result: Array = []
+	var root := _style_root()
+	if root == null:
+		return result
+	for zone in _world_zones(root):
+		if only_active and zone.process_mode == Node.PROCESS_MODE_DISABLED:
+			continue
+		result.append(zone)
+	return result
+
+func _style_one_zone(zone: Node) -> void:
+	var root := _style_root()
+	if root == null:
+		return
+	# zone == null 表示处理 root 下所有非 zone 子节点（单层关卡如 world01，
+	# 以及兼容旧用法）；否则只处理指定 zone 的子节点。
+	await _style_nodes(_styleable_nodes(root, zone))
+
+func _find_owning_zone(node: Node) -> Node:
+	var current := node.get_parent()
+	while current != null:
+		if current.is_in_group("world_zone"):
+			return current
+		current = current.get_parent()
+	return null
 
 func refresh_enemy_styles() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -46,10 +134,15 @@ func _apply_to_player() -> void:
 		animator.play("idle")
 		player.add_child(animator)
 		player.set("base_animator_scale", animator.scale)
+		_tick_style_work()
 
 func _apply_to_enemies() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):
+		var owning_zone := _find_owning_zone(enemy)
+		if owning_zone != null and owning_zone.process_mode == Node.PROCESS_MODE_DISABLED:
+			continue
 		_apply_sprite_to_enemy(enemy)
+		_tick_style_work()
 
 func _apply_sprite_to_enemy(enemy: Node) -> void:
 	var existing_sprite = enemy.get_node_or_null("PixelSprite")
@@ -70,34 +163,19 @@ func _apply_sprite_to_enemy(enemy: Node) -> void:
 	sprite.z_index = 10
 	enemy.add_child(sprite)
 
-func _apply_to_coins() -> void:
-	var root = _style_root()
-	if not root:
+func _style_nodes(nodes: Array) -> void:
+	# 对给定节点批次按 地面 → 传送门 → 金币 三段处理，段间让出一帧。
+	if nodes.is_empty():
 		return
-	for child in root.get_children():
-		var is_coin: bool = child.is_in_group("pickups") and child.get("pickup_type") == "coin"
-		if is_coin:
-			if child.get_node_or_null("PickupSprite") != null:
-				continue
-			var visual = child.get_node_or_null("Visual")
-			if visual:
-				visual.visible = false
-			var old_sprite = child.get_node_or_null("PixelSprite")
-			if old_sprite:
-				child.remove_child(old_sprite)
-				old_sprite.queue_free()
-			var sprite := Sprite2D.new()
-			sprite.name = "PixelSprite"
-			sprite.texture = _create_coin_texture()
-			sprite.scale = Vector2(1.25, 1.25)
-			sprite.z_index = 10
-			child.add_child(sprite)
+	await _apply_ground_style_for_nodes(nodes)
+	await get_tree().process_frame
+	await _apply_portal_style_for_nodes(nodes)
+	await get_tree().process_frame
+	await _apply_coin_style_for_nodes(nodes)
 
-func _apply_ground_style() -> void:
-	var root = _style_root()
-	if not root:
-		return
-	for child in root.get_children():
+func _apply_ground_style_for_nodes(nodes: Array) -> void:
+	var processed := 0
+	for child in nodes:
 		if child.name.begins_with("Ground"):
 			_set_terrain_sprite(child, "PixelGround", false)
 			_apply_ground_fill_style(child)
@@ -115,49 +193,119 @@ func _apply_ground_style() -> void:
 			var visual = child.get_node_or_null("Visual")
 			if visual:
 				visual.visible = false
+		else:
+			continue
+		processed += 1
+		_tick_style_work()
+		# 位图生成较重，每 2 个 body 让出一帧，避免主线程长时间卡顿。
+		if processed % 2 == 0:
+			await get_tree().process_frame
 
-func _apply_portal_style() -> void:
-	var root = _style_root()
-	if not root:
-		return
+func _apply_portal_style_for_nodes(nodes: Array) -> void:
+	for child in nodes:
+		if not String(child.name).begins_with("Portal"):
+			continue
+		var visual = child.get_node_or_null("Visual")
+		if visual:
+			visual.visible = false
+
+		for old_child_name in ["PixelPortal", "PortalSparkles"]:
+			var old_child = child.get_node_or_null(old_child_name)
+			if old_child:
+				child.remove_child(old_child)
+				old_child.queue_free()
+
+		var portal := AnimatedSprite2D.new()
+		portal.name = "PixelPortal"
+		portal.sprite_frames = _create_portal_frames(_body_theme(child))
+		portal.scale = Vector2(2, 2)
+		portal.z_index = 10
+		portal.play("portal")
+		child.add_child(portal)
+
+		var sparkles := CPUParticles2D.new()
+		sparkles.name = "PortalSparkles"
+		sparkles.amount = 14
+		sparkles.lifetime = 1.2
+		sparkles.preprocess = 1.0
+		sparkles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		sparkles.emission_rect_extents = Vector2(17, 26)
+		sparkles.direction = Vector2(0, -1)
+		sparkles.spread = 14
+		sparkles.gravity = Vector2(0, -28)
+		sparkles.initial_velocity_min = 5.0
+		sparkles.initial_velocity_max = 14.0
+		sparkles.scale_amount_min = 0.5
+		sparkles.scale_amount_max = 1.1
+		sparkles.color = Color(0.74, 0.95, 1.00, 0.85)
+		sparkles.z_index = 9
+		child.add_child(sparkles)
+		_tick_style_work()
+
+func _apply_coin_style_for_nodes(nodes: Array) -> void:
+	for child in nodes:
+		if not child.is_in_group("pickups"):
+			continue
+		if child.get("pickup_type") != "coin":
+			continue
+		var visual = child.get_node_or_null("Visual")
+		if visual:
+			visual.visible = false
+		var old_sprite = child.get_node_or_null("PixelSprite")
+		if old_sprite:
+			child.remove_child(old_sprite)
+			old_sprite.queue_free()
+		var sprite := Sprite2D.new()
+		sprite.name = "PixelSprite"
+		sprite.texture = _create_coin_texture()
+		sprite.scale = Vector2(1.25, 1.25)
+		sprite.z_index = 10
+		child.add_child(sprite)
+		_tick_style_work()
+
+func _root_level_nodes(root: Node) -> Array:
+	# root 直挂的非 zone 子节点（单层关卡的 ground/portal 等）。
+	var result: Array = []
+	if root == null:
+		return result
 	for child in root.get_children():
-		if child.name == "Portal":
-			var visual = child.get_node_or_null("Visual")
-			if visual:
-				visual.visible = false
-			var frame = child.get_node_or_null("Visual/Frame")
+		if not child.is_in_group("world_zone"):
+			result.append(child)
+	return result
 
-			for old_child_name in ["PixelPortal", "PortalSparkles"]:
-				var old_child = child.get_node_or_null(old_child_name)
-				if old_child:
-					child.remove_child(old_child)
-					old_child.queue_free()
+func _is_styleable_child(child: Node) -> bool:
+	# 真正需要像素美术处理的节点，用于统计工作量（进度条分母）。
+	var n := String(child.name)
+	if n.begins_with("Ground") or n.begins_with("Platform") or n.begins_with("EdgeWall"):
+		return true
+	if n in ["LeftWall", "RightWall"]:
+		return true
+	if n.begins_with("Portal"):
+		return true
+	if child.is_in_group("pickups") and child.get("pickup_type") == "coin":
+		return true
+	return false
 
-			var portal := AnimatedSprite2D.new()
-			portal.name = "PixelPortal"
-			portal.sprite_frames = _create_portal_frames()
-			portal.scale = Vector2(2, 2)
-			portal.z_index = 10
-			portal.play("portal")
-			child.add_child(portal)
-
-			var sparkles := CPUParticles2D.new()
-			sparkles.name = "PortalSparkles"
-			sparkles.amount = 14
-			sparkles.lifetime = 1.2
-			sparkles.preprocess = 1.0
-			sparkles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-			sparkles.emission_rect_extents = Vector2(17, 26)
-			sparkles.direction = Vector2(0, -1)
-			sparkles.spread = 14
-			sparkles.gravity = Vector2(0, -28)
-			sparkles.initial_velocity_min = 5.0
-			sparkles.initial_velocity_max = 14.0
-			sparkles.scale_amount_min = 0.5
-			sparkles.scale_amount_max = 1.1
-			sparkles.color = Color(0.74, 0.95, 1.00, 0.85)
-			sparkles.z_index = 9
-			child.add_child(sparkles)
+func _count_work_items(only_active: bool) -> int:
+	# 估算本次运行的总工作量：玩家 + 敌人 + 可样式化节点。
+	var count := 0
+	count += get_tree().get_nodes_in_group("player").size()
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if only_active:
+			var owning_zone := _find_owning_zone(enemy)
+			if owning_zone != null and owning_zone.process_mode == Node.PROCESS_MODE_DISABLED:
+				continue
+		count += 1
+	var root := _style_root()
+	if root != null:
+		for child in _root_level_nodes(root):
+			if _is_styleable_child(child):
+				count += 1
+		for zone in _collect_zones(only_active):
+			for child in zone.get_children():
+				if _is_styleable_child(child):
+					count += 1
+	return count
 
 func _apply_ground_fill_style(body: Node2D) -> void:
 	var old_fill = body.get_node_or_null("PixelGroundFill")
@@ -170,7 +318,7 @@ func _apply_ground_fill_style(body: Node2D) -> void:
 	var size_value := fill.size
 	var sprite := Sprite2D.new()
 	sprite.name = "PixelGroundFill"
-	sprite.texture = _create_ground_fill_texture(int(size_value.x), int(size_value.y))
+	sprite.texture = _create_ground_fill_texture(int(size_value.x), int(size_value.y), _body_theme(body))
 	sprite.position = fill.position + size_value * 0.5
 	sprite.z_index = -1
 	body.add_child(sprite)
@@ -182,7 +330,39 @@ func _style_root() -> Node:
 		return roots[0]
 	return get_tree().current_scene
 
-func _create_portal_frames() -> SpriteFrames:
+func _styleable_nodes(root: Node, zone_filter: Node = null) -> Array:
+	var result: Array = []
+	# 单层关卡（如 world01.tscn）的 ground/platform 直接挂在 root 下。
+	if zone_filter == null:
+		for child in root.get_children():
+			if not child.is_in_group("world_zone"):
+				result.append(child)
+	# 多区域世界地图的 world_zone 可能挂在 ZoneRoot 之类的容器下，递归收集。
+	for zone in _world_zones(root):
+		if zone_filter == null or zone == zone_filter:
+			result.append_array(zone.get_children())
+	return result
+
+func _world_zones(root: Node) -> Array:
+	var result: Array = []
+	var stack: Array = [root]
+	while stack.size() > 0:
+		var current = stack.pop_back()
+		for child in current.get_children():
+			if child.is_in_group("world_zone"):
+				result.append(child)
+			stack.push_back(child)
+	return result
+
+func _body_theme(body: Node) -> Dictionary:
+	return body.get_meta("zone_theme", {})
+
+func _theme_color(theme: Dictionary, key: String, fallback: Color) -> Color:
+	if theme.has(key):
+		return Color(str(theme[key]))
+	return fallback
+
+func _create_portal_frames(theme := {}) -> SpriteFrames:
 	var frames := SpriteFrames.new()
 	if frames.has_animation("default"):
 		frames.remove_animation("default")
@@ -190,10 +370,10 @@ func _create_portal_frames() -> SpriteFrames:
 	frames.set_animation_speed("portal", 8.0)
 	frames.set_animation_loop("portal", true)
 	for frame_index in range(6):
-		frames.add_frame("portal", _create_portal_frame(frame_index))
+		frames.add_frame("portal", _create_portal_frame(frame_index, theme))
 	return frames
 
-func _create_portal_frame(frame_index: int) -> ImageTexture:
+func _create_portal_frame(frame_index: int, theme := {}) -> ImageTexture:
 	var img = Image.create(32, 40, false, Image.FORMAT_RGBA8)
 	var wood := Palette.WOOD_LIGHT
 	var wood_light := Color("c98f52")
@@ -202,9 +382,9 @@ func _create_portal_frame(frame_index: int) -> ImageTexture:
 	var stone := Palette.STONE
 	var stone_light := Palette.STONE_LIGHT
 	var stone_dark := Palette.STONE_DARK
-	var portal_deep := Palette.PORTAL_DEEP
-	var portal_mid := Palette.PORTAL_MID
-	var portal_cyan := Palette.PORTAL_CYAN
+	var portal_deep := _theme_color(theme, "near", Palette.PORTAL_DEEP)
+	var portal_mid := _theme_color(theme, "far", Palette.PORTAL_MID)
+	var portal_cyan := _theme_color(theme, "accent", Palette.PORTAL_CYAN)
 	var portal_white := Palette.PORTAL_WHITE
 
 	for y in range(img.get_height()):
@@ -589,6 +769,8 @@ func _set_pixel_if_empty(img: Image, x: int, y: int, color: Color) -> void:
 		img.set_pixel(x, y, color)
 
 func _apply_terrain_decorations(body: Node2D, allow_sign: bool) -> void:
+	var theme := _body_theme(body)
+	var zone_id := str(body.get_meta("zone_id", ""))
 	var old_decor = body.get_node_or_null("PixelDecor")
 	if old_decor:
 		body.remove_child(old_decor)
@@ -616,16 +798,8 @@ func _apply_terrain_decorations(body: Node2D, allow_sign: bool) -> void:
 	var count := clampi(int(size.x / 230.0), 2, 7)
 	var is_platform := String(body.name).begins_with("Platform")
 	for index in range(count):
-		var kind := "mushroom" if index % 3 == 0 else ("grass" if index % 3 == 1 else "flower")
-		if index % 4 == 3:
-			kind = "stone"
-		if not is_platform and index == count - 1:
-			kind = "stump"
-		if allow_sign and index == count / 2:
-			kind = "sign"
-		if is_platform and kind == "sign":
-			kind = "mushroom"
-		var texture := _create_terrain_decor_texture(kind)
+		var kind := _theme_decor_kind(zone_id, index, is_platform, allow_sign)
+		var texture := _create_terrain_decor_texture(kind, theme)
 		var sprite := Sprite2D.new()
 		sprite.name = "%s%d" % [kind.capitalize(), index]
 		sprite.texture = texture
@@ -652,37 +826,59 @@ func _apply_terrain_decorations(body: Node2D, allow_sign: bool) -> void:
 			)
 			underdecor.add_child(vine)
 
-	var spores := CPUParticles2D.new()
-	spores.name = "GlowSpores"
-	spores.amount = clampi(int(size.x / 70.0), 8, 18)
-	spores.lifetime = 2.6
-	spores.preprocess = 1.0
-	spores.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	spores.emission_rect_extents = Vector2(size.x * 0.5, 14)
-	spores.position = Vector2(0, -size.y * 0.5 + 8)
-	spores.direction = Vector2(0, -1)
-	spores.spread = 16
-	spores.gravity = Vector2(0, -12)
-	spores.initial_velocity_min = 4.0
-	spores.initial_velocity_max = 12.0
-	spores.scale_amount_min = 0.7
-	spores.scale_amount_max = 1.4
-	spores.color = Color(Palette.CYAN, 0.45)
-	spores.z_index = 4
-	decor.add_child(spores)
+func _theme_decor_kind(zone_id: String, index: int, is_platform: bool, allow_sign: bool) -> String:
+	match zone_id:
+		"meadow":
+			var kinds := ["flower", "grass", "flower", "stone"]
+			return "sign" if allow_sign and index == 2 and not is_platform else kinds[index % kinds.size()]
+		"forest":
+			return "mushroom" if index % 3 != 1 else "grass"
+		"grove":
+			return "crystal" if index % 3 == 0 else ("mushroom" if index % 3 == 1 else "grass")
+		"canyon":
+			return "stone" if index % 3 == 0 else "grass"
+		"ruins":
+			return "stone" if index % 3 != 1 else "stump"
+		"gate":
+			return "crystal" if index % 2 == 0 else "flower"
+		_:
+			var kind := "mushroom" if index % 3 == 0 else ("grass" if index % 3 == 1 else "flower")
+			if index % 4 == 3:
+				kind = "stone"
+			if not is_platform and index == 1:
+				kind = "stump"
+			if allow_sign and index == 2:
+				kind = "sign"
+			if is_platform and kind == "sign":
+				kind = "mushroom"
+			return kind
 
-func _create_terrain_decor_texture(kind: String) -> ImageTexture:
+func _create_terrain_decor_texture(kind: String, theme := {}) -> ImageTexture:
+	if kind == "crystal":
+		return _create_crystal_texture(theme)
 	if kind == "stone":
-		return _create_stone_texture()
+		return _create_stone_texture(theme)
 	if kind == "sign":
 		return _create_sign_texture()
 	if kind == "mushroom":
 		return _create_mushroom_decor_texture()
 	if kind == "grass":
-		return _create_grass_tuft_texture()
+		return _create_grass_tuft_texture(theme)
 	if kind == "stump":
 		return _create_stump_texture()
-	return _create_flower_texture()
+	return _create_flower_texture(theme)
+
+func _create_crystal_texture(theme: Dictionary) -> ImageTexture:
+	var img = Image.create(18, 26, false, Image.FORMAT_RGBA8)
+	var crystal := _theme_color(theme, "accent", Palette.CYAN)
+	_fill_rect(img, 7, 2, 4, 20, crystal)
+	_fill_rect(img, 5, 6, 3, 14, crystal.darkened(0.12))
+	_fill_rect(img, 10, 5, 3, 15, crystal.lightened(0.22))
+	_fill_rect(img, 6, 21, 7, 3, crystal.darkened(0.28))
+	_fill_rect(img, 8, 1, 2, 1, Palette.WHITE)
+	_fill_rect(img, 6, 2, 1, 19, crystal.darkened(0.3))
+	_fill_rect(img, 11, 3, 1, 18, crystal.darkened(0.3))
+	return ImageTexture.create_from_image(img)
 
 func _create_stump_texture() -> ImageTexture:
 	var img = Image.create(24, 21, false, Image.FORMAT_RGBA8)
@@ -712,17 +908,18 @@ func _create_mushroom_decor_texture() -> ImageTexture:
 	_fill_rect(img, 5, 16, 6, 1, Palette.OUTLINE)
 	return ImageTexture.create_from_image(img)
 
-func _create_grass_tuft_texture() -> ImageTexture:
+func _create_grass_tuft_texture(theme := {}) -> ImageTexture:
 	var img = Image.create(18, 13, false, Image.FORMAT_RGBA8)
+	var grass := _theme_color(theme, "ground_grass", Palette.GRASS)
 	var blades := [Vector2i(2, 7), Vector2i(5, 3), Vector2i(8, 1), Vector2i(11, 4), Vector2i(15, 8)]
 	for index in range(blades.size()):
 		var blade: Vector2i = blades[index]
-		var color := Palette.GRASS if index % 2 == 0 else Palette.GRASS_LIGHT
+		var color := grass if index % 2 == 0 else grass.lightened(0.18)
 		for y in range(blade.y, 12):
 			var sway := (11 - y) / 5
 			img.set_pixel(blade.x + sway, y, color)
 			if y > blade.y + 2:
-				img.set_pixel(blade.x + sway + 1, y, Palette.GRASS_DARK)
+				img.set_pixel(blade.x + sway + 1, y, grass.darkened(0.22))
 	return ImageTexture.create_from_image(img)
 
 func _create_vine_texture() -> ImageTexture:
@@ -735,13 +932,15 @@ func _create_vine_texture() -> ImageTexture:
 			img.set_pixel(7 + sway, y + 1, Palette.GRASS)
 	return ImageTexture.create_from_image(img)
 
-func _create_flower_texture() -> ImageTexture:
+func _create_flower_texture(theme := {}) -> ImageTexture:
 	var img = Image.create(12, 16, false, Image.FORMAT_RGBA8)
-	_fill_rect(img, 5, 8, 2, 8, Palette.GRASS_DARK)
-	_fill_rect(img, 3, 11, 2, 1, Palette.GRASS)
-	_fill_rect(img, 7, 13, 2, 1, Palette.GRASS)
-	_fill_rect(img, 4, 3, 4, 4, Palette.RED)
-	_fill_rect(img, 3, 4, 6, 2, Palette.RED)
+	var grass := _theme_color(theme, "ground_grass", Palette.GRASS)
+	var blossom := _theme_color(theme, "landmark_a", Palette.RED)
+	_fill_rect(img, 5, 8, 2, 8, grass.darkened(0.22))
+	_fill_rect(img, 3, 11, 2, 1, grass)
+	_fill_rect(img, 7, 13, 2, 1, grass)
+	_fill_rect(img, 4, 3, 4, 4, blossom)
+	_fill_rect(img, 3, 4, 6, 2, blossom)
 	_fill_rect(img, 5, 4, 2, 2, Palette.YELLOW_LIGHT)
 	_fill_rect(img, 4, 2, 4, 1, Palette.OUTLINE)
 	_fill_rect(img, 3, 3, 1, 4, Palette.OUTLINE)
@@ -749,12 +948,13 @@ func _create_flower_texture() -> ImageTexture:
 	_fill_rect(img, 4, 7, 4, 1, Palette.OUTLINE)
 	return ImageTexture.create_from_image(img)
 
-func _create_stone_texture() -> ImageTexture:
+func _create_stone_texture(theme := {}) -> ImageTexture:
 	var img = Image.create(16, 10, false, Image.FORMAT_RGBA8)
-	_fill_rect(img, 3, 2, 10, 6, Palette.STONE)
-	_fill_rect(img, 5, 1, 6, 1, Palette.STONE)
-	_fill_rect(img, 4, 2, 5, 2, Palette.STONE_LIGHT)
-	_fill_rect(img, 8, 6, 5, 2, Palette.STONE_DARK)
+	var stone := _theme_color(theme, "landmark_a", Palette.STONE)
+	_fill_rect(img, 3, 2, 10, 6, stone)
+	_fill_rect(img, 5, 1, 6, 1, stone)
+	_fill_rect(img, 4, 2, 5, 2, stone.lightened(0.18))
+	_fill_rect(img, 8, 6, 5, 2, stone.darkened(0.18))
 	_fill_rect(img, 3, 8, 10, 1, Palette.OUTLINE)
 	_fill_rect(img, 2, 3, 1, 5, Palette.OUTLINE)
 	_fill_rect(img, 13, 3, 1, 5, Palette.OUTLINE)
@@ -798,12 +998,12 @@ func _set_terrain_sprite(body: Node2D, sprite_name: String, floating: bool) -> v
 
 	var sprite := Sprite2D.new()
 	sprite.name = sprite_name
-	sprite.texture = _create_terrain_texture(int(size.x), int(size.y), floating)
+	sprite.texture = _create_terrain_texture(int(size.x), int(size.y), floating, _body_theme(body))
 	sprite.z_index = 0
 	body.add_child(sprite)
 	sprite.position.y = _terrain_sprite_offset(int(size.y), floating)
 
-func _create_terrain_texture(width: int, height: int, floating: bool) -> ImageTexture:
+func _create_terrain_texture(width: int, height: int, floating: bool, theme := {}) -> ImageTexture:
 	width = maxi(TILE_SIZE, width)
 	height = maxi(16, height)
 	var top_pad := 7 if floating else 6
@@ -815,6 +1015,15 @@ func _create_terrain_texture(width: int, height: int, floating: bool) -> ImageTe
 	var radius := clampi(mini(width, height) / 5, 4, 9) if floating else 6
 	var random := RandomNumberGenerator.new()
 	random.seed = hash("%d-%d-%s" % [width, height, floating])
+	var grass := _theme_color(theme, "ground_grass", Palette.GRASS)
+	var grass_light := grass.lightened(0.22)
+	var grass_dark := grass.darkened(0.24)
+	var grass_outline := grass.darkened(0.48)
+	var dirt := _theme_color(theme, "ground_body", Palette.DIRT)
+	var dirt_light := dirt.lightened(0.16)
+	var dirt_dark := _theme_color(theme, "ground_dark", Palette.DIRT_DARK)
+	var root := _theme_color(theme, "landmark_b", Palette.WOOD)
+	var root_dark := root.darkened(0.28)
 
 	for y in range(top_pad, body_bottom):
 		for x in range(width):
@@ -828,18 +1037,18 @@ func _create_terrain_texture(width: int, height: int, floating: bool) -> ImageTe
 			)
 			var color: Color
 			if y <= grass_depth:
-				color = Palette.GRASS
+				color = grass
 				if y == top_pad or edge:
-					color = Palette.GRASS_OUTLINE
+					color = grass_outline
 				elif y <= top_pad + 3:
-					color = Palette.GRASS_LIGHT
+					color = grass_light
 				elif y >= grass_depth - 2:
-					color = Palette.GRASS_DARK
+					color = grass_dark
 				elif (x * 5 + y * 3) % 9 == 0:
-					color = Palette.GRASS_LIGHT
+					color = grass_light
 			else:
 				var depth_ratio := float(body_y) / float(height)
-				color = Palette.DIRT.lerp(Palette.DIRT_DARK, clampf((depth_ratio - 0.24) / 0.76, 0.0, 1.0))
+				color = dirt.lerp(dirt_dark, clampf((depth_ratio - 0.24) / 0.76, 0.0, 1.0))
 				var clump := sin(float(x) * 0.029 + float(body_y) * 0.051) * 0.5
 				clump += sin(float(x) * 0.011 - float(body_y) * 0.023 + 1.3) * 0.5
 				var grain := fmod(abs(sin(float(x) * 12.9898 + float(body_y) * 78.233) * 43758.5453), 1.0)
@@ -848,7 +1057,7 @@ func _create_terrain_texture(width: int, height: int, floating: bool) -> ImageTe
 				elif clump < -0.48:
 					color = color.darkened(0.10)
 				if grain > 0.94:
-					color = Palette.DIRT_LIGHT
+					color = dirt_light
 				elif grain < 0.06:
 					color = color.darkened(0.12)
 				if x < 6 or x >= width - 6:
@@ -869,11 +1078,11 @@ func _create_terrain_texture(width: int, height: int, floating: bool) -> ImageTe
 			for y in range(top_pad, mini(body_bottom, drape)):
 				if not _terrain_point_inside(x, y, body_top, height, width, floating, radius):
 					continue
-				var color := Palette.GRASS_DARK
+				var color := grass_dark
 				if offset < 2:
-					color = Palette.GRASS
+					color = grass
 				elif offset < 4:
-					color = Palette.GRASS.lightened(0.08)
+					color = grass.lightened(0.08)
 				img.set_pixel(x, y, color)
 
 	# 草顶上方留出细碎草叶，让边缘不再像硬纸片。
@@ -884,7 +1093,7 @@ func _create_terrain_texture(width: int, height: int, floating: bool) -> ImageTe
 			for blade_y in range(top_pad - blade_height, top_pad):
 				if _terrain_point_inside(x, blade_y, body_top, height, width, floating, radius):
 					continue
-				img.set_pixel(x, blade_y, Palette.GRASS_DARK if blade_y == top_pad - blade_height else Palette.GRASS)
+				img.set_pixel(x, blade_y, grass_dark if blade_y == top_pad - blade_height else grass)
 
 	# 浮空岛底部改成有粗细变化的根须，而不是三根直线。
 	if floating:
@@ -899,7 +1108,7 @@ func _create_terrain_texture(width: int, height: int, floating: bool) -> ImageTe
 				for root_offset in range(root_width):
 					if _terrain_point_inside(root_x + root_offset, tail_y, body_top, height, width, floating, radius):
 						continue
-					img.set_pixel(root_x + root_offset, tail_y, Palette.WOOD_DARK if root_offset == 0 else Palette.WOOD)
+					img.set_pixel(root_x + root_offset, tail_y, root_dark if root_offset == 0 else root)
 
 	return ImageTexture.create_from_image(img)
 
@@ -920,16 +1129,21 @@ func _terrain_point_inside(x: int, y: int, top: int, height: int, width: int, fl
 		nearest_y = clampi(y, top + radius, top + height - 1)
 	return Vector2(float(x - nearest_x), float(y - nearest_y)).length() <= float(radius)
 
-func _create_ground_fill_texture(width: int, height: int) -> ImageTexture:
+func _create_ground_fill_texture(width: int, height: int, theme := {}) -> ImageTexture:
 	width = maxi(TILE_SIZE, width)
 	height = maxi(TILE_SIZE, height)
 	var image := Image.create(width, height, false, Image.FORMAT_RGBA8)
 	var random := RandomNumberGenerator.new()
 	random.seed = hash("ground-fill-%d-%d" % [width, height])
+	var dirt := _theme_color(theme, "ground_body", Palette.DIRT)
+	var dirt_dark := _theme_color(theme, "ground_dark", Palette.DIRT_DARK)
+	var dirt_light := dirt.lightened(0.16)
+	var stone := _theme_color(theme, "landmark_a", Palette.STONE)
+	var root := _theme_color(theme, "landmark_b", Palette.WOOD)
 
 	for y in range(height):
 		var depth := float(y) / float(height)
-		var color := Palette.DIRT.lerp(Palette.DIRT_DARK, clampf(depth * 1.25, 0.0, 1.0))
+		var color := dirt.lerp(dirt_dark, clampf(depth * 1.25, 0.0, 1.0))
 		if y < 12:
 			color = color.darkened(0.16)
 		elif y < 28:
@@ -944,7 +1158,7 @@ func _create_ground_fill_texture(width: int, height: int) -> ImageTexture:
 				pixel = pixel.darkened(0.045)
 			var grain := fmod(abs(sin(float(x) * 12.9898 + float(y) * 78.233) * 43758.5453), 1.0)
 			if grain > 0.96:
-				pixel = Palette.DIRT_LIGHT
+				pixel = dirt_light
 			elif grain < 0.04:
 				pixel = pixel.darkened(0.10)
 			image.set_pixel(x, y, pixel)
@@ -953,17 +1167,17 @@ func _create_ground_fill_texture(width: int, height: int) -> ImageTexture:
 		var stone_x := random.randi_range(16, width - 20)
 		var stone_y := random.randi_range(30, height - 18)
 		var stone_size := random.randf_range(3.0, 7.0)
-		_fill_ellipse(image, Vector2(stone_x, stone_y), Vector2(stone_size, stone_size * 0.65), Palette.STONE.darkened(0.15))
-		_fill_ellipse(image, Vector2(stone_x - 1, stone_y - 1), Vector2(stone_size * 0.5, stone_size * 0.35), Palette.STONE)
+		_fill_ellipse(image, Vector2(stone_x, stone_y), Vector2(stone_size, stone_size * 0.65), stone.darkened(0.15))
+		_fill_ellipse(image, Vector2(stone_x - 1, stone_y - 1), Vector2(stone_size * 0.5, stone_size * 0.35), stone)
 	for index in range(clampi(width / 110, 5, 22)):
 		var root_x := random.randi_range(12, width - 12)
 		var root_y := random.randi_range(24, height - 24)
 		var root_height := random.randi_range(18, 48)
 		for y in range(root_y, mini(height - 4, root_y + root_height)):
 			var sway := int(sin(float(y - root_y) * 0.18 + float(index)) * 2.0)
-			image.set_pixel(root_x + sway, y, Palette.WOOD_DARK)
+			image.set_pixel(root_x + sway, y, root.darkened(0.28))
 			if y % 4 == 0:
-				image.set_pixel(root_x + sway + 1, y, Palette.WOOD)
+				image.set_pixel(root_x + sway + 1, y, root)
 
 	return ImageTexture.create_from_image(image)
 
