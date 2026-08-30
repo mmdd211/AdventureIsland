@@ -1,9 +1,12 @@
 extends RefCounted
 
+const AMBIENT_SCRIPT := preload("res://scripts/effects/zone_ambient.gd")
+
 static func build(zone: Node2D) -> void:
 	var theme: Dictionary = zone.zone_theme
 	_add_backdrop(zone, theme)
 	_add_landmarks(zone, theme)
+	_add_ambient(zone, theme)
 
 static func _add_backdrop(zone: Node2D, theme: Dictionary) -> void:
 	var backdrop := TextureRect.new()
@@ -28,9 +31,54 @@ static func _add_landmarks(zone: Node2D, theme: Dictionary) -> void:
 		var sprite := Sprite2D.new()
 		sprite.name = "ThemeLandmark%d" % index
 		sprite.texture = texture
-		sprite.scale = Vector2(1.45, 1.45)
+		var scale_factor := 1.16 + float(index % 3) * 0.20
+		sprite.scale = Vector2(scale_factor * (1.0 if index % 2 == 0 else -1.0), scale_factor)
+		sprite.modulate = Color(1.0, 1.0, 1.0, 0.70 + float(index % 3) * 0.13)
 		sprite.position = Vector2(spacing * float(index) + spacing * 0.32, 445.0 - float(index % 2) * 18.0)
 		root.add_child(sprite)
+
+
+static func _add_ambient(zone: Node2D, theme: Dictionary) -> void:
+	var ambient := Node2D.new()
+	ambient.name = "ThemeAmbient"
+	ambient.set_script(AMBIENT_SCRIPT)
+	ambient.z_index = -2
+	zone.add_child(ambient)
+	var texture := _create_ambient_texture(theme)
+	var random := RandomNumberGenerator.new()
+	random.seed = hash(str(zone.zone_id))
+	for index in range(12):
+		var mote := Sprite2D.new()
+		mote.name = "Mote%d" % index
+		mote.texture = texture
+		mote.position = Vector2(
+			random.randf_range(100.0, zone.zone_width - 100.0),
+			random.randf_range(190.0, 410.0)
+		)
+		mote.scale = Vector2.ONE * random.randf_range(0.70, 1.25)
+		mote.set_meta("base_position", mote.position)
+		mote.set_meta("phase", random.randf_range(0.0, TAU))
+		mote.set_meta("drift", random.randf_range(5.0, 16.0))
+		ambient.add_child(mote)
+
+
+static func _create_ambient_texture(theme: Dictionary) -> ImageTexture:
+	var motif := _motif(theme)
+	var color := Color(str(theme.accent))
+	if motif == "bright_pastoral":
+		color = Color(str(theme.landmark_b))
+	elif motif == "mushroom_canopy":
+		color = Color(str(theme.accent)).lightened(0.16)
+	var image := Image.create(7, 7, false, Image.FORMAT_RGBA8)
+	if motif == "sky_stars":
+		_fill_rect(image, 3, 0, 1, 7, Color(color, 0.85))
+		_fill_rect(image, 0, 3, 7, 1, Color(color, 0.85))
+		_fill_rect(image, 2, 2, 3, 3, Color(color, 0.55))
+	else:
+		_fill_rect(image, 2, 2, 3, 3, Color(color, 0.80))
+		_fill_rect(image, 3, 1, 1, 5, Color(color, 0.45))
+		_fill_rect(image, 1, 3, 5, 1, Color(color, 0.45))
+	return ImageTexture.create_from_image(image)
 
 
 static func _create_background_texture(theme: Dictionary) -> ImageTexture:
@@ -41,13 +89,15 @@ static func _create_background_texture(theme: Dictionary) -> ImageTexture:
 	var sky_bottom := Color(str(theme.sky_bottom))
 
 	for y in range(height):
-		var color := sky_top.lerp(sky_bottom, float(y) / float(height - 1))
+		var horizon_ratio := pow(float(y) / float(height - 1), 1.45)
+		var color := sky_top.lerp(sky_bottom, horizon_ratio)
 		for x in range(width):
 			if (x * 7 + y * 3) % 31 == 0:
 				color = color.lightened(0.025)
 			image.set_pixel(x, y, color)
 
 	_draw_sun_or_moon(image, theme)
+	_draw_sky_life(image, theme)
 	_draw_far_silhouette(image, theme)
 	_draw_near_silhouette(image, theme)
 	return ImageTexture.create_from_image(image)
@@ -75,6 +125,51 @@ static func _draw_sun_or_moon(image: Image, theme: Dictionary) -> void:
 	_centered_ellipse(image, center, radius, color)
 	_centered_ellipse(image, center + Vector2(-4, -4), radius * 0.42, color.lightened(0.3))
 
+
+static func _draw_sky_life(image: Image, theme: Dictionary) -> void:
+	var motif := _motif(theme)
+	var cloud := Color(1.0, 1.0, 1.0, 0.88)
+	var clouds := [
+		[26.0, 106.0, 22.0, 6.0, 30.0, 5.0],
+		[118.0, 130.0, 18.0, 5.0, 121.0, 4.0],
+		[218.0, 112.0, 21.0, 6.0, 223.0, 5.0],
+		[332.0, 126.0, 17.0, 5.0, 335.0, 4.0],
+		[424.0, 114.0, 20.0, 5.0, 428.0, 4.0],
+	]
+	for cloud_box in clouds:
+		_fill_rect(image, int(cloud_box[0]), int(cloud_box[1]), int(cloud_box[2]), int(cloud_box[3]), cloud)
+		_fill_rect(image, int(cloud_box[4]), int(cloud_box[1] - cloud_box[5]), int(cloud_box[2] - 8.0), int(cloud_box[5]), cloud)
+		_fill_rect(image, int(cloud_box[0]) + 1, int(cloud_box[1] + cloud_box[3]), int(cloud_box[2]) - 2, 1, cloud.darkened(0.08))
+
+	if motif == "bright_pastoral":
+		for index in range(5):
+			var x := 64 + index * 87
+			var y := 58 + (index % 2) * 23
+			_fill_rect(image, x, y, 3, 1, Color(str(theme.far), 0.72))
+			_fill_rect(image, x + 4, y + 1, 3, 1, Color(str(theme.far), 0.72))
+			_fill_rect(image, x + 1, y - 1, 2, 1, Color(str(theme.far), 0.72))
+	elif motif == "mushroom_canopy":
+		for index in range(18):
+			var x := (index * 43 + 11) % image.get_width()
+			var y := 14 + ((index * 29 + 8) % 128)
+			_fill_rect(image, x, y, 2, 2, Color(str(theme.landmark_b), 0.42))
+	elif motif == "glowing_roots":
+		for index in range(16):
+			var x := 12 + (index * 51) % 480
+			var y := 20 + ((index * 37) % 105)
+			_fill_rect(image, x, y, 2, 2, Color(str(theme.accent), 0.36))
+	elif motif == "wind_mesas":
+		for index in range(12):
+			var x := 18 + (index * 67) % 470
+			var y := 42 + ((index * 23) % 74)
+			_fill_rect(image, x, y, 5, 1, Color(str(theme.sky_bottom), 0.30))
+	elif motif == "sky_stars":
+		for index in range(3):
+			var x := 80 + index * 144
+			var y := 40 + index * 17
+			for tail in range(16):
+				_fill_rect(image, x + tail, y + tail / 2, 2, 1, Color(str(theme.accent), 0.28 - float(tail) * 0.014))
+
 static func _draw_far_silhouette(image: Image, theme: Dictionary) -> void:
 	var width := image.get_width()
 	var height := image.get_height()
@@ -85,7 +180,8 @@ static func _draw_far_silhouette(image: Image, theme: Dictionary) -> void:
 		var horizon := 190.0
 		match motif:
 			"bright_pastoral":
-				horizon = 171.0 + sin(float(x) * 0.018) * 14.0 + sin(float(x) * 0.043) * 7.0
+				var cycle := fmod(float(x), 128.0)
+				horizon = 198.0 - absf(cycle - 64.0) * 0.52
 			"mushroom_canopy":
 				horizon = 154.0 + sin(float(x) * 0.021) * 18.0 + cos(float(x) * 0.064) * 8.0
 			"glowing_roots":
@@ -99,8 +195,12 @@ static func _draw_far_silhouette(image: Image, theme: Dictionary) -> void:
 		for y in range(maxi(0, int(horizon)), height):
 			if motif == "wind_mesas" and y < 204 and (x + y * 2) % 43 < 2:
 				image.set_pixel(x, y, accent)
+			elif (y - int(horizon)) > 14 and (y - int(horizon)) % 16 == 0 and (x + y * 3) % 37 < 10:
+				image.set_pixel(x, y, far.darkened(0.10))
 			else:
 				image.set_pixel(x, y, far)
+		if x % 17 < 2:
+			image.set_pixel(x, clampi(int(horizon), 0, height - 1), Color(str(theme.accent), 0.34))
 
 	if motif == "mossy_arches":
 		for index in range(5):
@@ -129,6 +229,15 @@ static func _draw_near_silhouette(image: Image, theme: Dictionary) -> void:
 			horizon = 215.0 + (14.0 if x % 74 < 12 else 0.0)
 		for y in range(maxi(0, int(horizon)), height):
 			image.set_pixel(x, y, near)
+		image.set_pixel(x, clampi(int(horizon), 0, height - 1), near.lightened(0.08))
+		if x % 11 == 0:
+			image.set_pixel(x, clampi(int(horizon) + 1, 0, height - 1), near.lightened(0.05))
+
+	var air := Color(str(theme.sky_bottom))
+	for y in range(244, height):
+		var depth := float(y - 244) / float(height - 245)
+		for x in range(width):
+			image.set_pixel(x, y, image.get_pixel(x, y).lerp(air, depth * 0.11))
 
 static func _create_landmark_texture(zone_id: String, theme: Dictionary) -> ImageTexture:
 	match zone_id:

@@ -1,7 +1,7 @@
 extends Node2D
 
 const ZONE_BUILDER := preload("res://scripts/world/zone_builder.gd")
-const WORLD_ZONES := preload("res://scripts/world/world_zones.gd")
+const WORLD_MAPS := preload("res://scripts/world/world_maps.gd")
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
 const HUD_SCENE := preload("res://scenes/ui/game_hud.tscn")
 const SCREENS_SCENE := preload("res://scenes/ui/game_screens.tscn")
@@ -35,30 +35,33 @@ func _ready() -> void:
 	_build_ui()
 	_build_transition_layer()
 	_connect_portals()
+	GameState.boss_defeated.connect(_unlock_region_portals)
 	# 初始 zone 不触发单 zone 像素化：紧随其后的 _apply_pixel_style 会统一处理活跃 zone，
 	# 两条路径同时跑会把 meadow 的地形位图连续生成两遍，抵消懒加载带来的启动优化。
-	_activate_zone(GameState.INITIAL_ZONE_ID, false)
-	GameState.activate_zone(GameState.INITIAL_ZONE_ID, player.position)
+	_activate_zone(GameState.INITIAL_MAP_ID, false)
+	GameState.activate_map(GameState.INITIAL_MAP_ID, player.position)
 	camera.global_position = player.global_position
 	call_deferred("_apply_pixel_style")
 
 func _build_zones() -> void:
+	WORLD_MAPS.initialize_offsets()
 	zone_root = Node2D.new()
 	zone_root.name = "ZoneRoot"
 	add_child(zone_root)
-	for zone_id in WORLD_ZONES.ORDER:
-		_build_one_zone(zone_id)
+	for zone_id in WORLD_MAPS.ORDER:
+		_build_one_zone(str(zone_id))
 
 func _build_one_zone(zone_id: String) -> void:
-	var metadata: Dictionary = WORLD_ZONES.METADATA[zone_id]
+	var metadata: Dictionary = WORLD_MAPS.map_metadata(zone_id)
 	var zone: Node2D = ZONE_BUILDER.new()
 	zone.setup(metadata)
 	zone_root.add_child(zone)
 	zone.build_common()
-	WORLD_ZONES.build(zone)
+	WORLD_MAPS.build(zone)
 	zones[zone_id] = zone
 
 func _start_loading_flow() -> void:
+	WORLD_MAPS.initialize_offsets()
 	# 先搭好摄像机/玩家/UI/过渡层，再暂停游戏并显示加载界面，
 	# 随后在 _run_loading_steps 里分阶段完成音乐、地形、唤醒、美术。
 	zone_root = Node2D.new()
@@ -86,10 +89,10 @@ func _run_loading_steps() -> void:
 	AudioManager.music_preload_progress.disconnect(music_progress)
 
 	# ② 逐个搭建六大区域，每完成一个汇报一次进度。
-	var total_zones := WORLD_ZONES.ORDER.size()
+	var total_zones := WORLD_MAPS.ORDER.size()
 	for i in total_zones:
-		var zone_id: String = WORLD_ZONES.ORDER[i]
-		var metadata: Dictionary = WORLD_ZONES.METADATA[zone_id]
+		var zone_id: String = WORLD_MAPS.ORDER[i]
+		var metadata: Dictionary = WORLD_MAPS.map_metadata(str(zone_id))
 		loading_overlay.set_stage("正在搭建「%s」…" % str(metadata["display_name"]))
 		_build_one_zone(zone_id)
 		zones[zone_id].process_mode = Node.PROCESS_MODE_DISABLED
@@ -99,10 +102,11 @@ func _run_loading_steps() -> void:
 	# ③ 唤醒世界：连接传送门、激活初始区域、放置玩家。
 	loading_overlay.set_stage("正在唤醒世界…")
 	_connect_portals()
-	_activate_zone(GameState.INITIAL_ZONE_ID, false)
+	GameState.boss_defeated.connect(_unlock_region_portals)
+	_activate_zone(GameState.INITIAL_MAP_ID, false)
 	player.position = Vector2(110, 492)
 	player.velocity = Vector2.ZERO
-	GameState.activate_zone(GameState.INITIAL_ZONE_ID, player.position)
+	GameState.activate_map(GameState.INITIAL_MAP_ID, player.position)
 	camera.global_position = player.global_position
 	camera.reset_smoothing()
 	loading_overlay.set_progress(0.68)
@@ -171,6 +175,7 @@ func _connect_portals() -> void:
 	for zone in zones.values():
 		for node in zone.find_children("*", "Area2D", true, false):
 			if node.has_signal("travel_requested"):
+				node.add_to_group("portals")
 				node.travel_requested.connect(_on_portal_travel_requested)
 
 func _on_portal_travel_requested(source: Area2D) -> void:
@@ -202,10 +207,11 @@ func _on_portal_travel_requested(source: Area2D) -> void:
 	destination_portal.set("triggered", false)
 	player.global_position = destination_portal.global_position + _arrival_offset(str(destination_portal.get("portal_id")))
 	player.velocity = Vector2.ZERO
-	GameState.activate_zone(target_zone_id, player.global_position)
+	GameState.activate_map(target_zone_id, player.global_position)
 	_apply_camera_bounds(zones[target_zone_id])
 	camera.global_position = player.global_position
 	camera.reset_smoothing()
+	_cleanup_boss_minions()
 	await _fade(0.0, 0.22)
 
 	player.control_enabled = true
@@ -225,6 +231,15 @@ func _activate_zone(zone_id: String, trigger_style := true) -> void:
 		if trigger_style and target_zone.process_mode == Node.PROCESS_MODE_INHERIT:
 			PixelStyleManager.call_deferred("apply_pixel_style_for_zone", target_zone)
 		_apply_camera_bounds(zones[zone_id])
+
+func _unlock_region_portals(region_id: String) -> void:
+	for portal in get_tree().get_nodes_in_group("portals"):
+		if str(portal.get("lock_region_id")) == region_id:
+			portal.set("locked", false)
+
+func _cleanup_boss_minions() -> void:
+	for minion in get_tree().get_nodes_in_group("boss_minions"):
+		minion.queue_free()
 
 func _apply_camera_bounds(zone: Node2D) -> void:
 	camera.limit_left = int(zone.zone_offset_x)

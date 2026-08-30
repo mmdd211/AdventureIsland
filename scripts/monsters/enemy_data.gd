@@ -2,6 +2,7 @@ class_name EnemyData
 extends Resource
 
 @export var kind := "mushroom"
+@export var behavior := "patrol"
 @export var display_name := "蘑菇"
 @export var max_health := 30
 @export var move_speed := 70.0

@@ -13,20 +13,28 @@ const ZONE_THEME_SCRIPT := preload("res://scripts/world/zone_theme.gd")
 const Palette := preload("res://scripts/systems/pixel_palette.gd")
 
 var zone_id := ""
+var region_id := ""
 var display_name := ""
 var zone_width := 3200.0
 var zone_offset_x := 0.0
 var floor_top := 520.0
 var zone_theme: Dictionary = {}
+var map_index := 0
+var difficulty := 1
+var is_boss_map := false
 var sequence_index := 0
 
 func setup(metadata: Dictionary) -> void:
 	zone_id = metadata.get("id", "")
+	region_id = metadata.get("region_id", "")
 	display_name = metadata.get("display_name", "")
 	zone_width = float(metadata.get("width", 3200.0))
 	zone_offset_x = float(metadata.get("offset_x", 0.0))
 	floor_top = float(metadata.get("floor_top", 520.0))
 	zone_theme = metadata.get("theme", {})
+	map_index = int(metadata.get("map_index", 0))
+	difficulty = int(metadata.get("difficulty", 1))
+	is_boss_map = bool(metadata.get("is_boss", false))
 	name = "Zone_%s" % zone_id.capitalize()
 	position = Vector2(zone_offset_x, 0.0)
 
@@ -93,6 +101,8 @@ func _enemy(kind_value: String, position_value: Vector2) -> void:
 	enemy.name = "%s%d" % [kind_value.capitalize(), sequence_index]
 	enemy.enemy_kind = kind_value
 	enemy.position = position_value
+	enemy.set_meta("region_id", region_id)
+	enemy.set_meta("difficulty", difficulty)
 	add_child(enemy)
 
 func _pickup(position_value: Vector2, pickup_type := "coin", amount := 1) -> void:
@@ -135,17 +145,43 @@ func _spike(position_value: Vector2, width_value: float) -> void:
 	spikes.add_child(shape)
 	add_child(spikes)
 
-func _portal(id: String, position_value: Vector2, destination_zone := "", destination_portal := "", goal := false) -> void:
+func _portal(id: String, position_value: Vector2, destination_zone := "", destination_portal := "", goal := false, lock_region := "") -> void:
 	var portal := PORTAL_SCENE.instantiate()
 	portal.name = "PortalGoal" if goal else "Portal%s" % id.capitalize()
 	portal.portal_id = id
 	portal.target_zone_id = destination_zone
 	portal.target_portal_id = destination_portal
 	portal.is_goal = goal
+	portal.lock_region_id = lock_region
+	portal.locked = not lock_region.is_empty() and not GameState.is_boss_defeated(lock_region)
 	portal.set_meta("zone_theme", zone_theme)
 	portal.set_meta("zone_id", zone_id)
+	portal.set_meta("region_id", region_id)
 	portal.position = position_value
 	add_child(portal)
+
+func _darkness(target_zone: Node2D, amount: float) -> void:
+	var overlay := ColorRect.new()
+	overlay.name = "RegionDarkness"
+	overlay.color = Color(0.02, 0.05, 0.09, amount)
+	overlay.size = Vector2(target_zone.zone_width + 520.0, 1280.0)
+	overlay.position = Vector2(-260.0, -420.0)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.z_index = 80
+	target_zone.add_child(overlay)
+
+func _boss() -> void:
+	if GameState.is_boss_defeated(region_id):
+		return
+	var boss := CharacterBody2D.new()
+	boss.name = "EliteBoss"
+	boss.collision_layer = 4
+	boss.collision_mask = 18
+	boss.position = Vector2(zone_width - 420.0, 470.0)
+	boss.set_script(load("res://scripts/monsters/elite_boss.gd"))
+	boss.set("region_id", region_id)
+	boss.set_meta("region_id", region_id)
+	add_child(boss)
 
 func _static_body(body_name: String, body_position: Vector2, size_value: Vector2, color: Color) -> void:
 	var body := _static_collision_body(body_name, body_position, size_value)

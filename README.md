@@ -27,15 +27,3 @@
 1. 安装 [Godot 4.7](https://godotengine.org/download) 或更高版本。
 2. 使用 Godot 打开本项目根目录的 `project.godot`。
 3. 点击运行（F5）即可从标题屏开始游戏。
-
-## 测试
-
-项目内置一组 headless 自动化检查，覆盖加载流程、传送门边界、敌人行为与 UI 状态等场景：
-
-```powershell
-godot --headless --path . res://tests/loading_check.tscn
-godot --headless --path . res://tests/portal_boundary_check.tscn
-godot --headless --path . res://tests/gameplay_loop_check.tscn
-```
-
-其余检查场景位于 `tests/` 目录，可按同样方式运行。

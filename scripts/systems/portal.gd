@@ -6,18 +6,22 @@ const ENEMY_BOUNDARY_OFFSET_X := 36.0
 
 var time := 0.0
 var triggered := false
+var locked := false
 var portal_sprite: AnimatedSprite2D
 
 @export var target_zone_id := ""
 @export var target_portal_id := ""
 @export var portal_id := ""
 @export var is_goal := true
+@export var lock_region_id := ""
 signal travel_requested(portal: Area2D)
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+	add_to_group("portals")
 	_build_enemy_boundaries()
 	call_deferred("_capture_portal")
+	_refresh_locked()
 
 func _build_enemy_boundaries() -> void:
 	# 传送门两侧的隐形挡墙只存在于敌人碰撞层：
@@ -41,10 +45,17 @@ func _capture_portal() -> void:
 func _process(delta: float) -> void:
 	time += delta
 	if portal_sprite:
-		portal_sprite.modulate.a = 0.86 + sin(time * 5.0) * 0.12
+		if locked:
+			portal_sprite.modulate = Color(0.55, 0.55, 0.58, 0.72)
+		else:
+			portal_sprite.modulate = Color(1, 1, 1, 0.86 + sin(time * 5.0) * 0.12)
 
 func _on_body_entered(body: Node2D) -> void:
 	if triggered or not body.is_in_group("player"):
+		return
+	if locked:
+		AudioManager.play_sfx("block")
+		_show_locked_text()
 		return
 	triggered = true
 	body.velocity = Vector2.ZERO
@@ -56,3 +67,21 @@ func _on_body_entered(body: Node2D) -> void:
 
 func reset_portal() -> void:
 	triggered = false
+
+func _refresh_locked() -> void:
+	locked = not lock_region_id.is_empty() and not GameState.is_boss_defeated(lock_region_id)
+
+func _show_locked_text() -> void:
+	var label := Label.new()
+	label.text = "先击败本区域精英守卫"
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 5)
+	label.z_index = 200
+	add_child(label)
+	label.position = Vector2(-90, -92)
+	var tween := create_tween()
+	tween.tween_interval(0.8)
+	tween.tween_property(label, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(label.queue_free)

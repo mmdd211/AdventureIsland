@@ -2,6 +2,7 @@
 extends Node
 
 const Palette := preload("res://scripts/systems/pixel_palette.gd")
+const ArtLibrary := preload("res://scripts/systems/pixel_art_library.gd")
 const TILE_SIZE := 32
 
 # 加载界面进度回调：done/total 工作项数量。
@@ -19,6 +20,15 @@ func _ready() -> void:
 func make_enemy_texture(kind: String) -> ImageTexture:
 	# 暴露给加载界面：用于展示弹跳的史莱姆。
 	return _create_enemy_texture(kind)
+
+func make_boss_texture(region_id: String) -> ImageTexture:
+	return ArtLibrary.boss_texture(region_id)
+
+func make_boss_frames(region_id: String) -> SpriteFrames:
+	return load("res://scripts/monsters/boss_visual_painter.gd").build_frames(region_id)
+
+func make_equipment_texture(item_id: String) -> ImageTexture:
+	return ArtLibrary.equipment_texture(item_id)
 
 func make_coin_texture() -> ImageTexture:
 	# 暴露给标题屏：装饰用的旋转金币。
@@ -134,6 +144,8 @@ func _apply_to_player() -> void:
 		animator.play("idle")
 		player.add_child(animator)
 		player.set("base_animator_scale", animator.scale)
+		if player.has_method("_refresh_equipment"):
+			player.call_deferred("_refresh_equipment")
 		_tick_style_work()
 
 func _apply_to_enemies() -> void:
@@ -145,6 +157,8 @@ func _apply_to_enemies() -> void:
 		_tick_style_work()
 
 func _apply_sprite_to_enemy(enemy: Node) -> void:
+	if enemy.is_in_group("elite_boss"):
+		return
 	var existing_sprite = enemy.get_node_or_null("PixelSprite")
 	if existing_sprite:
 		enemy.remove_child(existing_sprite)
@@ -656,11 +670,42 @@ func _create_player_rows_texture() -> ImageTexture:
 	return _texture_from_rows(rows, palette)
 
 func _create_enemy_texture(kind: String) -> ImageTexture:
+	if kind in ["pollen_bee", "thorn_roller", "spore_lobber", "spore_puppet", "root_ambusher", "glow_bat", "wind_falcon", "rock_thrower", "moss_guard", "rune_weaver", "star_wisp", "sky_knight"]:
+		return ArtLibrary.enemy_texture(kind)
 	if kind == "snail":
 		return _create_snail_texture()
 	if kind == "slime":
 		return _create_slime_texture()
 	return _create_mushroom_texture()
+
+func _create_creature_texture(color: Color, flying := false, armored := false, pod := false, root := false, robed := false) -> ImageTexture:
+	var image := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	var outline := Palette.OUTLINE
+	var center := Vector2(7.5, 8.5 if not flying else 7.5)
+	var radius := Vector2(5.5, 5.5)
+	_fill_ellipse(image, center, radius, outline)
+	_fill_ellipse(image, center, radius - Vector2(1, 1), color)
+	if flying:
+		_fill_rect(image, 0, 4, 3, 2, Color.WHITE)
+		_fill_rect(image, 13, 4, 3, 2, Color.WHITE)
+		_fill_rect(image, 2, 3, 2, 1, color.lightened(0.3))
+		_fill_rect(image, 12, 3, 2, 1, color.lightened(0.3))
+	if armored:
+		_fill_rect(image, 3, 5, 10, 2, outline)
+		_fill_rect(image, 4, 6, 8, 1, color.lightened(0.25))
+	if pod:
+		_fill_rect(image, 6, 3, 4, 2, color.lightened(0.4))
+	if root:
+		_fill_rect(image, 6, 11, 1, 4, color.darkened(0.15))
+		_fill_rect(image, 9, 11, 1, 4, color.darkened(0.15))
+	if robed:
+		_fill_rect(image, 4, 10, 8, 5, color.darkened(0.2))
+		_fill_rect(image, 6, 11, 4, 1, Palette.YELLOW)
+	_fill_rect(image, 5, 6, 2, 2, Color.WHITE)
+	_fill_rect(image, 9, 6, 2, 2, Color.WHITE)
+	_fill_rect(image, 6, 7, 1, 1, outline)
+	_fill_rect(image, 10, 7, 1, 1, outline)
+	return ImageTexture.create_from_image(image)
 
 func _create_mushroom_texture() -> ImageTexture:
 	var rows := PackedStringArray([
@@ -1157,9 +1202,9 @@ func _create_ground_fill_texture(width: int, height: int, theme := {}) -> ImageT
 			elif band < -0.56:
 				pixel = pixel.darkened(0.045)
 			var grain := fmod(abs(sin(float(x) * 12.9898 + float(y) * 78.233) * 43758.5453), 1.0)
-			if grain > 0.96:
+			if grain > 0.997:
 				pixel = dirt_light
-			elif grain < 0.04:
+			elif grain < 0.003:
 				pixel = pixel.darkened(0.10)
 			image.set_pixel(x, y, pixel)
 

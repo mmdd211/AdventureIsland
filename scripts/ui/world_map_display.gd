@@ -1,18 +1,10 @@
 extends Control
 
-const WorldZones := preload("res://scripts/world/world_zones.gd")
+const WorldMaps := preload("res://scripts/world/world_maps.gd")
 
 @export var compact := true
 
-const TILE_SIZE := Vector2(138, 86)
-const TILE_POSITIONS := {
-	"meadow": Vector2(24, 250),
-	"forest": Vector2(224, 250),
-	"grove": Vector2(446, 42),
-	"canyon": Vector2(446, 250),
-	"ruins": Vector2(698, 42),
-	"gate": Vector2(736, 250),
-}
+const TILE_SIZE := Vector2(110, 68)
 
 var pulse_time := 0.0
 var last_shown_zones: Array = []
@@ -34,33 +26,35 @@ func _draw() -> void:
 	last_terrain_rect_count = 0
 	if compact:
 		last_shown_zones = [GameState.current_zone_id]
-		_draw_zone_tile(Rect2(Vector2(4, 4), size - Vector2(8, 8)), GameState.current_zone_id, true)
+		var map_rect := Rect2(Vector2(4, 4), Vector2(size.x - 8.0, size.y - 26.0))
+		_draw_zone_tile(map_rect, GameState.current_zone_id, true)
+		_draw_compact_zone_name(map_rect, GameState.current_zone_id)
 		return
-	last_shown_zones = WorldZones.ORDER.duplicate()
+	last_shown_zones = WorldMaps.ORDER.duplicate()
 
 	var points := {}
-	for zone_id in WorldZones.ORDER:
-		points[zone_id] = TILE_POSITIONS[zone_id] + TILE_SIZE * 0.5
-	for connection in WorldZones.CONNECTIONS:
-		var from_id: String = connection.from_zone
-		var to_id: String = connection.to_zone
+	for zone_id in WorldMaps.ORDER:
+		points[zone_id] = WorldMaps.ui_position(str(zone_id)) + TILE_SIZE * 0.5
+	for connection in WorldMaps.CONNECTIONS:
+		var from_id: String = connection.from
+		var to_id: String = connection.to
 		var known := _is_known(from_id) or _is_known(to_id)
 		var color := Color(0.18, 0.28, 0.36, 0.75) if not known else Color(Color("61d6ff"), 0.55)
 		if GameState.current_zone_id == from_id or GameState.current_zone_id == to_id:
 			color = Color(Color("ffd700"), 0.9)
 		_draw_pixel_path(points[from_id], points[to_id], color)
-	for zone_id in WorldZones.ORDER:
-		_draw_zone_tile(Rect2(TILE_POSITIONS[zone_id], TILE_SIZE), zone_id, false)
+	for zone_id in WorldMaps.ORDER:
+		_draw_zone_tile(Rect2(WorldMaps.ui_position(str(zone_id)), TILE_SIZE), str(zone_id), false)
 
 func _draw_zone_tile(rect: Rect2, zone_id: String, show_player: bool) -> void:
-	var metadata: Dictionary = WorldZones.METADATA[zone_id]
+	var metadata: Dictionary = WorldMaps.map_metadata(zone_id)
 	var theme: Dictionary = metadata.theme
 	var known := _is_known(zone_id)
 	var current := zone_id == GameState.current_zone_id
-	var sky := Color(str(theme.sky_top)) if known else Color(0.12, 0.17, 0.22)
-	var ground := Color(str(theme.ground_grass)) if known else Color(0.23, 0.29, 0.32)
-	var body := Color(str(theme.ground_body)) if known else Color(0.14, 0.17, 0.20)
-	var accent := Color(str(theme.accent)) if known else Color(0.27, 0.32, 0.36)
+	var sky := Color(str(theme.sky_top)) if known else Color("536c77")
+	var ground := Color(str(theme.ground_grass)) if known else Color("65767a")
+	var body := Color(str(theme.ground_body)) if known else Color("35464d")
+	var accent := Color(str(theme.accent)) if known else Color("aab8b6")
 
 	draw_rect(rect, Color(0, 0, 0, 0.55 if known else 0.72))
 	var inset := Rect2(rect.position + Vector2(2, 2), rect.size - Vector2(4, 4))
@@ -79,14 +73,24 @@ func _draw_zone_tile(rect: Rect2, zone_id: String, show_player: bool) -> void:
 		last_player_marker_visible = true
 		_draw_player_marker(_player_marker_position(rect, metadata), current, show_player)
 	else:
-		_draw_centered_text("?", rect.get_center() + Vector2(0, 2), 21, Color(1, 1, 1, 0.72))
+		_draw_centered_text("?", rect.get_center() + Vector2(0, 2), 21, Color("f4f1dd"))
 
-	var border := accent if current else Color(1, 1, 1, 0.28 if known else 0.10)
+	var border := accent if current else Color("d4d8c8", 0.48 if known else 0.32)
 	if current:
 		border.a = 0.64 + sin(pulse_time * 5.0) * 0.24
 	_draw_pixel_border(rect, border, 3)
-	if not compact or known:
-		_draw_centered_text(metadata.display_name, rect.position + Vector2(rect.size.x * 0.5, rect.size.y + 9), 12, Color.WHITE if known else Color(1, 1, 1, 0.38))
+	if not compact:
+		var name_color := Color("403029") if known else Color("65767a")
+		_draw_centered_text(metadata.display_name, rect.position + Vector2(rect.size.x * 0.5, rect.size.y + 9), 12, name_color)
+		if bool(metadata.is_boss):
+			var seal_color := Color("ffd700") if GameState.is_boss_defeated(str(metadata.region_id)) else Color("8a5a35")
+			_draw_pixel_diamond(rect.position + Vector2(rect.size.x - 12.0, 12.0), 4, seal_color)
+
+func _draw_compact_zone_name(rect: Rect2, zone_id: String) -> void:
+	var metadata: Dictionary = WorldMaps.map_metadata(zone_id)
+	var label_rect := Rect2(rect.position.x + 3.0, rect.end.y + 2.0, rect.size.x - 6.0, 16.0)
+	draw_rect(label_rect, Color(0.14, 0.09, 0.07, 0.86))
+	_draw_centered_text(metadata.display_name, label_rect.get_center() + Vector2(0, -1), 12, Color("fffbe8"))
 
 func _draw_pixel_band(rect: Rect2, color_a: Color, color_b: Color, split_ratio: float) -> void:
 	var split_y := floorf(rect.position.y + rect.size.y * split_ratio)

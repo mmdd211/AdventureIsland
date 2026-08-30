@@ -1,5 +1,5 @@
 const THEME_MEADOW := {
-	"sky_top": "8fd7ff", "sky_bottom": "f7f0b8", "far": "78c990", "near": "3d8f4e",
+	"sky_top": "8fd7ff", "sky_bottom": "f7f0b8", "far": "7f9d8a", "near": "3d8f4e",
 	"accent": "ffcf4d", "ground_grass": "67c95a", "ground_body": "93613a",
 	"ground_dark": "4f2f1d", "landmark_a": "ff7ca8", "landmark_b": "fff3a6",
 	"metadata": {"motif": "bright_pastoral", "music_hint": "bright_pastoral"}

@@ -6,7 +6,7 @@ const ENEMY_DATA_SCRIPT := preload("res://scripts/monsters/enemy_data.gd")
 const COIN_SCENE := preload("res://scenes/systems/coin.tscn")
 
 @export var data: Resource
-@export_enum("mushroom", "snail", "slime") var enemy_kind := "mushroom"
+@export var enemy_kind := "mushroom"
 @export var is_mini := false
 
 const MINI_SLIME_SPEED := 110.0
@@ -32,6 +32,10 @@ var edge_ray: RayCast2D
 var health_fill: ColorRect
 var spawn_facing := 0
 var spawn_hop_delay := 0.0
+var attack_cooldown := 1.5
+var base_y := 0.0
+var phase := 0.0
+var is_hidden := false
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -52,13 +56,17 @@ func _ready() -> void:
 	else:
 		direction = -1 if randf() < 0.5 else 1
 	hop_timer = spawn_hop_delay
+	base_y = position.y
+	phase = randf_range(0.0, TAU)
 	_setup_edge_ray()
 	_setup_health_bar()
+	_apply_region_scaling()
 	_refresh_visual_scale()
 
 func _create_default_data(kind_value: String) -> Resource:
 	var result: Resource = ENEMY_DATA_SCRIPT.new()
 	result.kind = kind_value
+	result.behavior = _behavior_for_kind(kind_value)
 	match kind_value:
 		"snail":
 			result.display_name = "蜗牛"
@@ -88,7 +96,108 @@ func _create_default_data(kind_value: String) -> Resource:
 			result.contact_damage = 15
 			result.exp_reward = 26
 			result.coin_reward = 3
+		"pollen_bee":
+			result.display_name = "花粉蜂"
+			result.max_health = 34
+			result.move_speed = 110.0
+			result.contact_damage = 10
+			result.detection_range = 260.0
+			result.charge_speed = 300.0
+		"thorn_roller":
+			result.display_name = "荆棘滚虫"
+			result.max_health = 62
+			result.move_speed = 48.0
+			result.contact_damage = 16
+			result.detection_range = 240.0
+			result.charge_speed = 330.0
+		"spore_lobber":
+			result.display_name = "孢子投手"
+			result.max_health = 44
+			result.move_speed = 18.0
+			result.contact_damage = 10
+			result.detection_range = 360.0
+		"spore_puppet":
+			result.display_name = "孢荚傀儡"
+			result.max_health = 72
+			result.move_speed = 55.0
+			result.contact_damage = 14
+			result.detection_range = 310.0
+		"root_ambusher":
+			result.display_name = "悬根伏击者"
+			result.max_health = 58
+			result.move_speed = 90.0
+			result.contact_damage = 18
+			result.detection_range = 180.0
+		"glow_bat":
+			result.display_name = "荧光蝠"
+			result.max_health = 38
+			result.move_speed = 130.0
+			result.contact_damage = 12
+			result.detection_range = 320.0
+		"wind_falcon":
+			result.display_name = "风隼"
+			result.max_health = 46
+			result.move_speed = 170.0
+			result.contact_damage = 14
+			result.detection_range = 380.0
+			result.charge_speed = 420.0
+		"rock_thrower":
+			result.display_name = "沙岩投石兵"
+			result.max_health = 86
+			result.move_speed = 24.0
+			result.contact_damage = 18
+			result.detection_range = 420.0
+		"moss_guard":
+			result.display_name = "苔石守卫"
+			result.max_health = 110
+			result.move_speed = 34.0
+			result.contact_damage = 22
+			result.detection_range = 280.0
+			result.front_guard = true
+			result.charge_speed = 330.0
+		"rune_weaver":
+			result.display_name = "符文织师"
+			result.max_health = 66
+			result.move_speed = 40.0
+			result.contact_damage = 14
+			result.detection_range = 430.0
+		"star_wisp":
+			result.display_name = "星浮灵"
+			result.max_health = 54
+			result.move_speed = 100.0
+			result.contact_damage = 16
+			result.detection_range = 440.0
+		"sky_knight":
+			result.display_name = "天穹骑士"
+			result.max_health = 128
+			result.move_speed = 82.0
+			result.contact_damage = 24
+			result.detection_range = 340.0
+			result.charge_speed = 470.0
 	return result
+
+func _behavior_for_kind(kind_value: String) -> String:
+	match kind_value:
+		"pollen_bee", "glow_bat", "wind_falcon", "star_wisp": return "flyer"
+		"thorn_roller", "sky_knight", "wind_falcon": return "charger"
+		"spore_lobber", "rock_thrower", "rune_weaver": return "caster"
+		"root_ambusher": return "ambusher"
+		"moss_guard": return "guard"
+		_: return "patrol"
+
+func _apply_region_scaling() -> void:
+	var difficulty := int(get_meta("difficulty", 1))
+	var health_scale: float = [1.0, 1.22, 1.48, 1.80, 2.20, 2.70][mini(6, maxi(1, difficulty)) - 1]
+	var speed_scale: float = [1.0, 1.06, 1.12, 1.18, 1.25, 1.32][mini(6, maxi(1, difficulty)) - 1]
+	var damage_bonus: int = [0, 2, 4, 6, 9, 12][mini(6, maxi(1, difficulty)) - 1]
+	if not is_mini:
+		data.max_health = int(round(float(data.max_health) * health_scale))
+		data.move_speed *= speed_scale
+		data.charge_speed *= speed_scale
+	data.contact_damage += damage_bonus
+	data.detection_range += 20.0 * float(difficulty - 1)
+	data.exp_reward += 5 * (difficulty - 1)
+	data.coin_reward += difficulty - 1
 
 func _setup_edge_ray() -> void:
 	edge_ray = RayCast2D.new()
@@ -135,10 +244,16 @@ func _physics_process(delta: float) -> void:
 			modulate = Color.WHITE
 	turn_cooldown = maxf(0.0, turn_cooldown - delta)
 
-	if not is_on_floor():
-		velocity.y = minf(velocity.y + gravity * delta, 900.0)
-	else:
+	if _is_flying():
+		phase += delta * 3.2
+		velocity.y = sin(phase) * 55.0
+	elif enemy_kind == "root_ambusher":
 		velocity.y = 0.0
+	else:
+		if not is_on_floor():
+			velocity.y = minf(velocity.y + gravity * delta, 900.0)
+		else:
+			velocity.y = 0.0
 
 	match state:
 		State.PATROL:
@@ -171,13 +286,130 @@ func _physics_process(delta: float) -> void:
 
 func _process_patrol(delta: float) -> void:
 	var player := _find_player()
-	if data.front_guard:
+	if enemy_kind == "root_ambusher":
+		_process_ambusher(player)
+	elif _is_flying():
+		_process_flyer(player, delta)
+	elif data.front_guard:
 		_process_snail(player, delta)
 	elif enemy_kind == "slime":
 		_process_slime(player, delta)
+	elif enemy_kind == "thorn_roller" or enemy_kind == "sky_knight" or enemy_kind == "wind_falcon":
+		_process_charger(player, delta)
+	elif enemy_kind == "spore_lobber" or enemy_kind == "rock_thrower" or enemy_kind == "rune_weaver":
+		_process_caster(player, delta)
 	else:
 		velocity.x = direction * data.move_speed
 		_turn_at_terrain()
+
+func _is_flying() -> bool:
+	return enemy_kind in ["pollen_bee", "glow_bat", "wind_falcon", "star_wisp"]
+
+func _process_flyer(player: Node2D, delta: float) -> void:
+	var patrol_bounds := _patrol_bounds()
+	var local_x: float = global_position.x - patrol_bounds.x
+	if is_on_wall() and turn_cooldown <= 0.0:
+		direction = -1 if velocity.x > 0.0 else 1
+		turn_cooldown = 0.22
+	if local_x <= 120.0:
+		direction = 1
+	elif local_x >= patrol_bounds.y - 120.0:
+		direction = -1
+	if player == null:
+		velocity.x = direction * data.move_speed
+		return
+	var offset := player.global_position - global_position
+	if offset.length() < data.detection_range:
+		var desired_direction := 1 if offset.x > 0.0 else -1
+		direction = desired_direction
+		velocity.x = move_toward(velocity.x, signf(offset.x) * data.move_speed, 850.0 * delta)
+		velocity.y = sin(phase) * 70.0 + clampf(offset.y, -80.0, 80.0) * 0.8
+		if enemy_kind == "wind_falcon" and absf(offset.x) < 260.0:
+			velocity.x = signf(offset.x) * data.charge_speed
+	else:
+		velocity.x = direction * data.move_speed
+		velocity.y = sin(phase) * 55.0
+		move_and_slide()
+
+func _patrol_bounds() -> Vector2:
+	var current := get_parent()
+	while current != null:
+		if current.is_in_group("world_zone"):
+			var origin := 0.0
+			var width := 2400.0
+			var origin_value = current.get("zone_offset_x")
+			var width_value = current.get("zone_width")
+			if origin_value != null:
+				origin = float(origin_value)
+			if width_value != null:
+				width = float(width_value)
+			return Vector2(origin, origin + width)
+		current = current.get_parent()
+	return Vector2(global_position.x - 1200.0, global_position.x + 1200.0)
+
+func _process_ambusher(player: Node2D) -> void:
+	if player == null:
+		velocity.x = 0.0
+		return
+	var distance := global_position.distance_to(player.global_position)
+	if is_hidden:
+		if distance < data.detection_range:
+			is_hidden = false
+			velocity.y = -360.0
+			_spawn_text("!", Palette.YELLOW_LIGHT)
+		else:
+			velocity.x = 0.0
+		return
+	if distance < 170.0:
+		velocity.x = direction * data.charge_speed
+		direction = 1 if player.global_position.x > global_position.x else -1
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, 900.0)
+
+func _process_charger(player: Node2D, _delta: float) -> void:
+	if state != State.PATROL:
+		return
+	_turn_at_terrain(true)
+	velocity.x = direction * data.move_speed
+	if player != null and global_position.distance_to(player.global_position) < data.detection_range:
+		direction = 1 if player.global_position.x > global_position.x else -1
+		state = State.WINDUP
+		state_timer = 0.38
+
+func _process_caster(player: Node2D, _delta: float) -> void:
+	attack_cooldown = maxf(0.0, attack_cooldown - _delta)
+	velocity.x = move_toward(velocity.x, 0.0, 800.0)
+	if player != null and attack_cooldown <= 0.0 and global_position.distance_to(player.global_position) < data.detection_range:
+		direction = 1 if player.global_position.x > global_position.x else -1
+		_fire_enemy_projectile(player)
+		attack_cooldown = 1.8
+		if enemy_kind == "rune_weaver":
+			var teleport_offset := Vector2(direction * -180.0, 0.0)
+			if not test_move(global_transform, teleport_offset):
+				global_position += teleport_offset
+
+func _fire_enemy_projectile(player: Node2D) -> void:
+	var angle := global_position.angle_to_point(player.global_position)
+	var projectile := Area2D.new()
+	projectile.collision_layer = 0
+	projectile.collision_mask = 1
+	projectile.set_script(load("res://scripts/monsters/enemy_projectile.gd"))
+	projectile.set("direction", Vector2.from_angle(angle))
+	projectile.set("speed", 300.0 + float(data.contact_damage) * 2.0)
+	projectile.set("damage", maxi(5, data.contact_damage - 3))
+	projectile.set("lifetime", 2.0)
+	var shape := CollisionShape2D.new()
+	var rectangle := RectangleShape2D.new()
+	rectangle.size = Vector2(16, 16)
+	shape.shape = rectangle
+	projectile.add_child(shape)
+	var visual := ColorRect.new()
+	visual.position = Vector2(-7, -7)
+	visual.size = Vector2(14, 14)
+	visual.color = Color("ffd166")
+	projectile.add_child(visual)
+	projectile.global_position = global_position + Vector2(direction * 24.0, -12.0)
+	get_parent().add_child(projectile)
 
 func _process_snail(player: Node2D, _delta: float) -> void:
 	if state != State.PATROL:

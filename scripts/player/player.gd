@@ -4,8 +4,6 @@ const Palette := preload("res://scripts/systems/pixel_palette.gd")
 
 signal attack_hit(enemy: Node)
 
-const COMBO_DAMAGE := [10, 14]
-
 @export_group("移动")
 @export var move_speed := 350.0
 @export var acceleration := 2600.0
@@ -70,6 +68,8 @@ func _ready() -> void:
 	if visual:
 		visual_base_scale = visual.scale
 	call_deferred("_capture_animator")
+	GameState.equipment_changed.connect(_refresh_equipment)
+	call_deferred("_refresh_equipment")
 
 func _capture_animator() -> void:
 	var animator := get_node_or_null("PixelAnimator")
@@ -173,26 +173,40 @@ func _handle_attack() -> void:
 	var pressed := Input.is_action_just_pressed("attack") or (Input.is_action_pressed("attack") and not attack_input_held)
 	attack_input_held = Input.is_action_pressed("attack")
 	if pressed and attack_timer <= 0.0:
-		_start_attack(1 if attack_stage != 1 else 2)
+		_start_attack(_next_attack_stage())
 	elif pressed and attack_timer > 0.0:
 		queued_attack = true
 
 	if attack_timer <= 0.0 and queued_attack:
 		queued_attack = false
-		_start_attack(1 if attack_stage != 1 else 2)
+		_start_attack(_next_attack_stage())
+
+func _weapon() -> EquipmentData:
+	return GameState.get_current_weapon()
+
+func _next_attack_stage() -> int:
+	var weapon := _weapon()
+	var combo_count := maxi(1, weapon.combo_damage.size())
+	return attack_stage % combo_count + 1
 
 func _start_attack(stage: int) -> void:
 	attack_stage = stage
-	attack_timer = attack_duration
+	var weapon := _weapon()
+	attack_timer = attack_duration / maxf(0.4, weapon.attack_speed)
 	attack_hit_nodes.clear()
 	AudioManager.play_sfx("attack")
 	_play_action("attack")
 	var area := _attack_area()
 	var shape_node := area.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	var rectangle := RectangleShape2D.new()
 	if shape_node and shape_node.shape is RectangleShape2D:
-		var rectangle := shape_node.shape as RectangleShape2D
-		rectangle.size = Vector2(82, 52) if stage == 1 else Vector2(116, 66)
-	area.position.x = (56.0 if stage == 1 else 68.0) * facing_direction
+		rectangle = shape_node.shape as RectangleShape2D
+	var reach := weapon.reach_bonus
+	rectangle.size = Vector2(
+		(82.0 if stage == 1 else 116.0) + reach,
+		(52.0 if stage == 1 else 66.0) + reach * 0.25
+	)
+	area.position.x = ((56.0 if stage == 1 else 68.0) + reach * 0.5) * facing_direction
 	_create_slash_arc(stage)
 	_apply_squash(Vector2(1.14, 0.90))
 
@@ -202,16 +216,19 @@ func _process_attack_hits() -> void:
 	var elapsed := attack_duration - attack_timer
 	if elapsed < attack_active_from or elapsed > attack_active_until:
 		return
+	var weapon := _weapon()
 	for body in _attack_area().get_overlapping_bodies():
 		if body.is_in_group("enemies") and not attack_hit_nodes.has(body):
 			attack_hit_nodes.append(body)
-			var damage: int = COMBO_DAMAGE[attack_stage - 1]
+			var damage: int = int(weapon.combo_damage[mini(attack_stage, weapon.combo_damage.size()) - 1])
 			if body.has_method("take_damage"):
 				body.call("take_damage", damage, global_position)
 			if body.has_method("apply_knockback"):
 				body.call("apply_knockback", global_position)
 			attack_hit.emit(body)
 			_spawn_damage_number(damage, body.global_position)
+			if weapon.special == "star_impact" and attack_stage == 2:
+				_create_star_impact(body.global_position)
 			_hitstop()
 			_shake_camera(4.5 if attack_stage == 1 else 7.0)
 
@@ -353,11 +370,12 @@ func _create_land_dust() -> void:
 
 func _create_slash_arc(stage: int) -> void:
 	var arc := Line2D.new()
-	arc.width = 12.0 if stage == 1 else 17.0
-	arc.default_color = Color(Palette.YELLOW_LIGHT, 0.85)
+	var weapon := _weapon()
+	arc.width = (12.0 if stage == 1 else 17.0) + weapon.reach_bonus * 0.08
+	arc.default_color = Color(weapon.icon_color.lightened(0.2), 0.88)
 	arc.z_index = 80
 	var points := PackedVector2Array()
-	var radius := 44.0 if stage == 1 else 62.0
+	var radius := (44.0 if stage == 1 else 62.0) + weapon.reach_bonus
 	for index in range(9):
 		var angle := lerpf(-1.15, 1.15, float(index) / 8.0)
 		points.append(Vector2(cos(angle), sin(angle)) * radius * facing_direction)
@@ -366,6 +384,62 @@ func _create_slash_arc(stage: int) -> void:
 	var tween := create_tween()
 	tween.tween_property(arc, "modulate:a", 0.0, 0.16)
 	tween.tween_callback(arc.queue_free)
+
+func _create_star_impact(target_position: Vector2) -> void:
+	var ring := Line2D.new()
+	ring.closed = true
+	ring.width = 5.0
+	ring.default_color = Color("68d8ff")
+	ring.z_index = 90
+	var points := PackedVector2Array()
+	for index in range(12):
+		points.append(Vector2.from_angle(TAU * float(index) / 12.0) * 36.0)
+	ring.points = points
+	get_tree().current_scene.add_child(ring)
+	ring.global_position = target_position
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(ring, "scale", Vector2(2.4, 1.8), 0.25)
+	tween.tween_property(ring, "modulate:a", 0.0, 0.25)
+	tween.chain().tween_callback(ring.queue_free)
+
+func _refresh_equipment() -> void:
+	var weapon := _weapon()
+	if weapon == null:
+		return
+	var animator := get_node_or_null("PixelAnimator") as AnimatedSprite2D
+	if animator:
+		animator.self_modulate = Color.WHITE.lerp(weapon.icon_color, 0.12)
+		if has_node("ArmorOutline"):
+			get_node("ArmorOutline").queue_free()
+		if has_node("WeaponSprite"):
+			get_node("WeaponSprite").queue_free()
+		if has_node("ArmorSprite"):
+			get_node("ArmorSprite").queue_free()
+		var weapon_sprite := Sprite2D.new()
+		weapon_sprite.name = "WeaponSprite"
+		weapon_sprite.texture = PixelStyleManager.make_equipment_texture(weapon.id)
+		weapon_sprite.position = Vector2(14, 2)
+		weapon_sprite.scale = Vector2(1.4, 1.4)
+		weapon_sprite.z_index = 12
+		add_child(weapon_sprite)
+		var armor := GameState.get_current_armor()
+		if armor != null and armor.id != "none_armor":
+			var outline := ColorRect.new()
+			outline.name = "ArmorOutline"
+			outline.color = Color(armor.icon_color, 0.20)
+			outline.position = Vector2(-17, -26)
+			outline.size = Vector2(34, 52)
+			outline.z_index = -1
+			add_child(outline)
+			var armor_sprite := Sprite2D.new()
+			armor_sprite.name = "ArmorSprite"
+			armor_sprite.texture = PixelStyleManager.make_equipment_texture(armor.id)
+			armor_sprite.position = Vector2(0, 4)
+			armor_sprite.scale = Vector2(1.4, 1.4)
+			armor_sprite.modulate = Color(1, 1, 1, 0.82)
+			armor_sprite.z_index = 11
+			add_child(armor_sprite)
 
 func _create_ring_effect(color: Color) -> void:
 	var ring := Line2D.new()
