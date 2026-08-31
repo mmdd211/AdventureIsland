@@ -180,7 +180,9 @@ func _boss() -> void:
 	boss.position = Vector2(zone_width - 420.0, 470.0)
 	boss.set_script(load("res://scripts/monsters/elite_boss.gd"))
 	boss.set("region_id", region_id)
+	boss.set("map_id", zone_id)
 	boss.set_meta("region_id", region_id)
+	boss.set_meta("map_id", zone_id)
 	add_child(boss)
 
 func _static_body(body_name: String, body_position: Vector2, size_value: Vector2, color: Color) -> void:

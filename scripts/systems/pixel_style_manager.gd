@@ -24,8 +24,44 @@ func make_enemy_texture(kind: String) -> ImageTexture:
 func make_boss_texture(region_id: String) -> ImageTexture:
 	return ArtLibrary.boss_texture(region_id)
 
-func make_boss_frames(region_id: String) -> SpriteFrames:
-	return load("res://scripts/monsters/boss_visual_painter.gd").build_frames(region_id)
+func make_boss_frames(region_id: String, form_id: String = "bee") -> SpriteFrames:
+	if region_id == "meadow":
+		var resource_frames := _load_pollen_queen_frames(form_id)
+		if resource_frames != null:
+			return resource_frames
+	return load("res://scripts/monsters/boss_form_painter.gd").build_frames(region_id, form_id)
+
+func _load_pollen_queen_frames(form_id: String) -> SpriteFrames:
+	var base_path := "res://assets/sprites/monsters/pollen_queen/pollen_queen_%s" % form_id
+	var state_map := {
+		"idle": [6, 8.0, true],
+		"move": [6, 10.0, true],
+		"attack": [7, 14.0, false],
+		"skill": [8, 12.0, false],
+		"hurt": [3, 14.0, false],
+		"evolve": [8, 8.0, false],
+		"death": [6, 8.0, false],
+	}
+	var frames := SpriteFrames.new()
+	if frames.has_animation("default"):
+		frames.remove_animation("default")
+	for state in state_map.keys():
+		var settings: Array = state_map[state]
+		var count: int = settings[0]
+		var fps: float = settings[1]
+		var looping: bool = settings[2]
+		frames.add_animation(state)
+		frames.set_animation_speed(state, fps)
+		frames.set_animation_loop(state, looping)
+		for index in range(count):
+			var texture_path := "%s_%s_%02d.png" % [base_path, state, index]
+			if not FileAccess.file_exists(ProjectSettings.globalize_path(texture_path)):
+				return null
+			var image := Image.new()
+			if image.load(ProjectSettings.globalize_path(texture_path)) != OK:
+				return null
+			frames.add_frame(state, ImageTexture.create_from_image(image))
+	return frames
 
 func make_equipment_texture(item_id: String) -> ImageTexture:
 	return ArtLibrary.equipment_texture(item_id)
@@ -121,6 +157,9 @@ func refresh_enemy_styles() -> void:
 			enemy.remove_child(existing)
 			existing.queue_free()
 		_apply_sprite_to_enemy(enemy)
+
+func apply_enemy_style(enemy: Node) -> void:
+	_apply_sprite_to_enemy(enemy)
 
 func _apply_to_player() -> void:
 	for player in get_tree().get_nodes_in_group("player"):

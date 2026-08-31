@@ -46,37 +46,73 @@ const REGIONS := {
 		"id": "meadow", "display_name": "初始草原", "difficulty": 1,
 		"map_count": 3, "theme": THEME_MEADOW,
 		"weapon": "petal_blade", "armor": "moss_light",
-		"boss": {"id": "pollen_queen", "display_name": "花粉女王", "max_health": 380, "contact_damage": 14, "stage_count": 2, "body_color": "ffcf4d", "basic_attack": "charge", "skills": ["pollen_swarm", "royal_charge"]}
+		"boss": {
+			"id": "pollen_queen", "display_name": "花粉女爵", "body_color": "ffcf4d",
+			"forms": [
+				{"id": "bee", "display_name": "巨花蜂后", "max_health": 235, "contact_damage": 14, "collision": Vector2(96, 92), "move_speed": 88.0, "gravity_enabled": false, "basic_attack": "bee_sting", "skills": ["pollen_cloud", "bee_tide"]},
+				{"id": "dancer", "display_name": "花冠舞姬", "max_health": 225, "contact_damage": 16, "collision": Vector2(70, 110), "move_speed": 122.0, "basic_attack": "fan_strike", "skills": ["petal_paths", "royal_bees"]}
+			]
+		}
 	},
 	"forest": {
 		"id": "forest", "display_name": "蘑菇森林", "difficulty": 2,
 		"map_count": 4, "theme": THEME_FOREST,
 		"weapon": "spore_edge", "armor": "mushroom_shell",
-		"boss": {"id": "mushroom_guardian", "display_name": "巨菇守卫", "max_health": 520, "contact_damage": 18, "stage_count": 2, "body_color": "e26a5a", "basic_attack": "projectile", "skills": ["spore_burst", "guard_charge"]}
+		"boss": {
+			"id": "mushroom_guardian", "display_name": "菌王班布", "body_color": "e26a5a",
+			"forms": [
+				{"id": "turtle", "display_name": "巨孢菌龟", "max_health": 290, "contact_damage": 18, "collision": Vector2(106, 88), "move_speed": 66.0, "basic_attack": "spore_spit", "skills": ["spore_pool", "shell_roll"]},
+				{"id": "gatekeeper", "display_name": "酒馆守门人", "max_health": 270, "contact_damage": 20, "collision": Vector2(82, 102), "move_speed": 94.0, "basic_attack": "hammer_slam", "skills": ["barrel_spill", "cap_bulwark"]}
+			]
+		}
 	},
 	"grove": {
 		"id": "grove", "display_name": "低语树洞", "difficulty": 3,
 		"map_count": 3, "theme": THEME_GROVE,
 		"weapon": "glow_hook", "armor": "root_weave",
-		"boss": {"id": "whisper_root", "display_name": "低语根王", "max_health": 720, "contact_damage": 22, "stage_count": 3, "body_color": "7ff4c9", "basic_attack": "ambush", "skills": ["root_prison", "spore_wave"]}
+		"boss": {
+			"id": "whisper_root", "display_name": "低语主教", "body_color": "7ff4c9",
+			"forms": [
+				{"id": "nest", "display_name": "根须巢母", "max_health": 375, "contact_damage": 22, "collision": Vector2(102, 98), "move_speed": 58.0, "basic_attack": "tendril_slam", "skills": ["root_veins", "dark_mist"]},
+				{"id": "bishop", "display_name": "低语主教", "max_health": 355, "contact_damage": 24, "collision": Vector2(72, 116), "move_speed": 106.0, "basic_attack": "dark_wave", "skills": ["whisper_judgment", "root_prison"]}
+			]
+		}
 	},
 	"canyon": {
 		"id": "canyon", "display_name": "风哨峡谷", "difficulty": 4,
 		"map_count": 4, "theme": THEME_CANYON,
 		"weapon": "gale_rock", "armor": "gale_plate",
-		"boss": {"id": "canyon_rock_eagle", "display_name": "峡谷岩鹰", "max_health": 980, "contact_damage": 26, "stage_count": 3, "body_color": "d7a64b", "basic_attack": "charge", "skills": ["rock_rain", "gale_dive"]}
+		"boss": {
+			"id": "canyon_rock_eagle", "display_name": "鹰哨统领", "body_color": "d7a64b",
+			"forms": [
+				{"id": "eagle", "display_name": "岩翼石鹰", "max_health": 495, "contact_damage": 26, "collision": Vector2(112, 92), "move_speed": 118.0, "gravity_enabled": false, "basic_attack": "talon_gust", "skills": ["stone_feathers", "hawk_roar"]},
+				{"id": "hunter", "display_name": "风哨猎手", "max_health": 465, "contact_damage": 28, "collision": Vector2(70, 112), "move_speed": 142.0, "basic_attack": "blade_gale", "skills": ["arrow_rain", "dive_line"]}
+			]
+		}
 	},
 	"ruins": {
 		"id": "ruins", "display_name": "苔石遗迹", "difficulty": 5,
 		"map_count": 4, "theme": THEME_RUINS,
 		"weapon": "rune_blade", "armor": "rune_armor",
-		"boss": {"id": "rune_colossus", "display_name": "符文石像", "max_health": 1300, "contact_damage": 30, "stage_count": 3, "body_color": "7673b6", "basic_attack": "projectile", "skills": ["rune_ring", "blink_volley"]}
+		"boss": {
+			"id": "rune_colossus", "display_name": "符文贤者", "body_color": "7673b6",
+			"forms": [
+				{"id": "statue", "display_name": "苔石守卫像", "max_health": 635, "contact_damage": 30, "collision": Vector2(104, 104), "move_speed": 52.0, "basic_attack": "stone_smash", "skills": ["chain_burst", "tomb_drop"]},
+				{"id": "sage", "display_name": "符文贤者", "max_health": 605, "contact_damage": 32, "collision": Vector2(78, 118), "move_speed": 96.0, "basic_attack": "rune_slash", "skills": ["board_pulse", "rune_chain"]}
+			]
+		}
 	},
 	"gate": {
 		"id": "gate", "display_name": "天穹之门", "difficulty": 6,
 		"map_count": 3, "theme": THEME_GATE,
 		"weapon": "star_edge", "armor": "sky_armor",
-		"boss": {"id": "sky_gatekeeper", "display_name": "天穹守门人", "max_health": 1800, "contact_damage": 34, "stage_count": 3, "body_color": "68d8ff", "basic_attack": "charge", "skills": ["star_gate", "void_rain"]}
+		"boss": {
+			"id": "sky_gatekeeper", "display_name": "星门审判者", "body_color": "68d8ff",
+			"forms": [
+				{"id": "whale", "display_name": "虚空星鲸", "max_health": 885, "contact_damage": 34, "collision": Vector2(126, 98), "move_speed": 96.0, "gravity_enabled": false, "basic_attack": "tail_wave", "skills": ["void_whirl", "star_tide"]},
+				{"id": "judge", "display_name": "星门审判者", "max_health": 835, "contact_damage": 36, "collision": Vector2(76, 122), "move_speed": 108.0, "basic_attack": "great_slash", "skills": ["rift_blade", "judgment_pillars"]}
+			]
+		}
 	}
 }
 

@@ -1,6 +1,7 @@
 # Godot cache and generated files
 .godot/
 tests/
+tools/__pycache__/
 
 # Operating system files
 Thumbs.db

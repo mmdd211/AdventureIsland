@@ -1,6 +1,7 @@
 extends AnimatedSprite2D
 
 var region_id := "meadow"
+var form_id := "bee"
 var stage := 1
 var direction := -1
 var visual_state := "idle"
@@ -8,9 +9,10 @@ var aura: Sprite2D
 
 func _ready() -> void:
 	name = "BossAnimator"
-	sprite_frames = PixelStyleManager.make_boss_frames(region_id)
+	sprite_frames = PixelStyleManager.make_boss_frames(region_id, form_id)
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	scale = Vector2(2.1, 2.1)
+	var visual_scale := _visual_scale()
+	scale = Vector2(visual_scale, visual_scale)
 	z_index = 10
 	_build_aura()
 	animation_finished.connect(_on_animation_finished)
@@ -40,6 +42,21 @@ func play_action(state: String, next_state := "idle") -> void:
 func play_death() -> void:
 	visual_state = "death"
 	play("death")
+
+func set_form(new_form_id: String) -> void:
+	if form_id == new_form_id:
+		return
+	form_id = new_form_id
+	sprite_frames = PixelStyleManager.make_boss_frames(region_id, form_id)
+	var visual_scale := _visual_scale()
+	scale = Vector2(visual_scale, visual_scale)
+	offset.y = -30.0 if region_id == "meadow" and form_id == "dancer" else -6.0
+	play("idle")
+
+func _visual_scale() -> float:
+	if region_id != "meadow":
+		return 2.1
+	return 0.88 if form_id == "dancer" else 0.82
 
 func _process(_delta: float) -> void:
 	flip_h = direction > 0

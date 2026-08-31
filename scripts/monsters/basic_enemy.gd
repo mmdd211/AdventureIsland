@@ -8,12 +8,14 @@ const COIN_SCENE := preload("res://scenes/systems/coin.tscn")
 @export var data: Resource
 @export var enemy_kind := "mushroom"
 @export var is_mini := false
+@export var is_boss_minion := false
 
 const MINI_SLIME_SPEED := 110.0
 const MINI_CHASE_SPEED := Vector2(250.0, 320.0)
 const MINI_HOP_COOLDOWN := Vector2(0.42, 0.62)
 const MINI_SPAWN_SPREAD := 84.0
 const MINI_SPAWN_VERTICAL := 6.0
+const EXTRA_DETECTION_RANGE := 70.0
 
 enum State { PATROL, WINDUP, CHARGE, RECOVER }
 
@@ -61,6 +63,8 @@ func _ready() -> void:
 	_setup_edge_ray()
 	_setup_health_bar()
 	_apply_region_scaling()
+	_apply_minion_profile()
+	_apply_enemy_range_profile()
 	_refresh_visual_scale()
 
 func _create_default_data(kind_value: String) -> Resource:
@@ -199,6 +203,36 @@ func _apply_region_scaling() -> void:
 	data.exp_reward += 5 * (difficulty - 1)
 	data.coin_reward += difficulty - 1
 
+func _apply_minion_profile() -> void:
+	if not is_boss_minion:
+		return
+	var minion_scale := 0.62
+	_scale_collision_shape(get_node_or_null("CollisionShape2D") as CollisionShape2D, minion_scale)
+	_scale_collision_shape(get_node_or_null("DamageArea/CollisionShape2D") as CollisionShape2D, minion_scale)
+	data.max_health = maxi(8, int(round(float(data.max_health) * 0.62)))
+	data.contact_damage = maxi(6, int(round(float(data.contact_damage) * 0.60)))
+	data.move_speed *= 0.88
+	data.charge_speed *= 0.88
+	data.detection_range = maxf(250.0, data.detection_range * 0.85)
+	health = data.max_health
+
+func _scale_collision_shape(shape_node: CollisionShape2D, scale_value: float) -> void:
+	if shape_node == null or shape_node.shape == null:
+		return
+	var shape := shape_node.shape.duplicate()
+	if shape is RectangleShape2D:
+		shape.size *= Vector2(scale_value, scale_value)
+		shape_node.shape = shape
+	elif shape is CircleShape2D:
+		shape.radius *= scale_value
+		shape_node.shape = shape
+
+func _apply_enemy_range_profile() -> void:
+	if is_mini:
+		data.detection_range *= 0.82
+	else:
+		data.detection_range += EXTRA_DETECTION_RANGE
+
 func _setup_edge_ray() -> void:
 	edge_ray = RayCast2D.new()
 	edge_ray.position = Vector2.ZERO
@@ -225,6 +259,8 @@ func _setup_health_bar() -> void:
 
 func _refresh_visual_scale() -> void:
 	var target_scale := Vector2(1.55, 1.55) if is_mini else Vector2(2.0, 2.0)
+	if is_boss_minion:
+		target_scale = Vector2(1.12, 1.12)
 	for node_name in ["PixelSprite", "Visual"]:
 		var node := get_node_or_null(node_name)
 		if node:

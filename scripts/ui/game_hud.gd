@@ -81,32 +81,26 @@ func _build_ui() -> void:
 	var top := PanelContainer.new()
 	top.name = "StatusPanel"
 	top.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	top.offset_left = 14.0
-	top.offset_top = 14.0
-	top.offset_right = 388.0
-	top.offset_bottom = 98.0
-	top.custom_minimum_size = Vector2(374, 84)
+	top.offset_left = 0.0
+	top.offset_top = 0.0
 	var style := PixelUI.panel_style(Color(Palette.WHITE, 0.90), Palette.OUTLINE)
-	style.content_margin_left = 12.0
-	style.content_margin_right = 12.0
-	style.content_margin_top = 10.0
-	style.content_margin_bottom = 10.0
+	style.content_margin_left = 9.0
+	style.content_margin_right = 9.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
 	top.add_theme_stylebox_override("panel", style)
 	root.add_child(top)
 
-	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 12)
-	top.add_child(columns)
-
-	var left := VBoxContainer.new()
-	left.custom_minimum_size = Vector2(236, 60)
-	left.add_theme_constant_override("separation", 7)
-	columns.add_child(left)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 7)
+	top.add_child(stack)
 
 	var hp_row := HBoxContainer.new()
 	hp_row.add_theme_constant_override("separation", 8)
-	left.add_child(hp_row)
+	stack.add_child(hp_row)
 	var hp_icon := _make_label("♥", 15, Color("d8404d"))
+	hp_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hp_icon.custom_minimum_size = Vector2(18, 17)
 	hp_row.add_child(hp_icon)
 
 	hp_bar = PixelUI.make_bar(Vector2(148, 16), Color("b52f3b"), Color("ff7b84"))
@@ -121,60 +115,57 @@ func _build_ui() -> void:
 
 	var exp_row := HBoxContainer.new()
 	exp_row.add_theme_constant_override("separation", 8)
-	left.add_child(exp_row)
-	exp_bar = PixelUI.make_bar(Vector2(196, 12), Color("2c8fb8"), Color("a5ecff"))
+	stack.add_child(exp_row)
+	var exp_icon := _make_label("★", 14, Color("2c8fb8"))
+	exp_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	exp_icon.custom_minimum_size = Vector2(18, 17)
+	exp_row.add_child(exp_icon)
+	exp_bar = PixelUI.make_bar(Vector2(148, 16), Color("2c8fb8"), Color("a5ecff"))
 	exp_bar.max_value = 100
 	exp_row.add_child(exp_bar)
-	exp_value = _make_label("Lv.1 0/100", 10, Palette.OUTLINE_SOFT)
+	exp_value = _make_label("Lv.1 0/100", 11, Palette.OUTLINE_SOFT)
 	exp_row.add_child(exp_value)
 
-	var right := VBoxContainer.new()
-	right.alignment = BoxContainer.ALIGNMENT_END
-	right.add_theme_constant_override("separation", 2)
-	right.custom_minimum_size = Vector2(100, 60)
-	columns.add_child(right)
+	var data_row := HBoxContainer.new()
+	data_row.add_theme_constant_override("separation", 8)
+	stack.add_child(data_row)
 
-	var coin_row := HBoxContainer.new()
-	coin_row.alignment = BoxContainer.ALIGNMENT_END
-	coin_row.add_theme_constant_override("separation", 5)
-	right.add_child(coin_row)
+	level_label = _make_label("Lv.1", 12, Palette.GRASS_DARK)
+	data_row.add_child(level_label)
 
 	coin_icon = TextureRect.new()
 	coin_icon.texture = PixelStyleManager.make_coin_texture()
 	coin_icon.stretch_mode = TextureRect.STRETCH_SCALE
 	coin_icon.custom_minimum_size = Vector2(17, 17)
-	coin_row.add_child(coin_icon)
+	data_row.add_child(coin_icon)
 
-	coin_label = _make_label("0", 14, Palette.DIRT_OUTLINE)
-	coin_row.add_child(coin_label)
+	coin_label = _make_label("0", 13, Palette.DIRT_OUTLINE)
+	data_row.add_child(coin_label)
 
-	level_label = _make_label("Lv.1", 15, Palette.GRASS_DARK)
-	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	right.add_child(level_label)
 	score_label = _make_label("SCORE 0", 10, Palette.OUTLINE_SOFT)
-	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	right.add_child(score_label)
-	time_label = _make_label("00:00", 10, Palette.OUTLINE_SOFT)
-	time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	right.add_child(time_label)
+	data_row.add_child(score_label)
+
+	time_label = _make_label("00:00", 11, Palette.OUTLINE_SOFT)
+	data_row.add_child(time_label)
 
 	var equipment_row := HBoxContainer.new()
 	equipment_row.alignment = BoxContainer.ALIGNMENT_END
-	equipment_row.add_theme_constant_override("separation", 5)
-	right.add_child(equipment_row)
+	equipment_row.add_theme_constant_override("separation", 6)
+	stack.add_child(equipment_row)
+
 	weapon_icon = TextureRect.new()
 	weapon_icon.texture = PixelStyleManager.make_equipment_texture(GameState.equipped_weapon_id)
 	weapon_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	weapon_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	weapon_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	weapon_icon.custom_minimum_size = Vector2(14, 14)
+	weapon_icon.custom_minimum_size = Vector2(16, 16)
+	equipment_row.add_child(weapon_icon)
 	armor_icon = TextureRect.new()
 	armor_icon.texture = PixelStyleManager.make_equipment_texture(GameState.equipped_armor_id)
 	armor_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	armor_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	armor_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	armor_icon.custom_minimum_size = Vector2(14, 14)
-	equipment_row.add_child(weapon_icon)
+	armor_icon.custom_minimum_size = Vector2(16, 16)
 	equipment_row.add_child(armor_icon)
 	_refresh_equipment_icons()
 
