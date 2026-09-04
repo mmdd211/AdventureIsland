@@ -1,0 +1,119 @@
+[gd_resource type="Resource" script_class="ZoneLayout" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/zone_object_data.gd" id="1_dhw6a"]
+[ext_resource type="Script" path="res://scripts/world/zone_layout.gd" id="2_jk4vi"]
+
+[sub_resource type="Resource" id="Resource_fic2f"]
+script = ExtResource("1_dhw6a")
+kind = "checkpoint"
+position = Vector2(160, 470)
+
+[sub_resource type="Resource" id="Resource_p2gkp"]
+script = ExtResource("1_dhw6a")
+position = Vector2(620, 535)
+size = Vector2(1240, 30)
+
+[sub_resource type="Resource" id="Resource_nx55g"]
+script = ExtResource("1_dhw6a")
+position = Vector2(1750, 535)
+size = Vector2(1300, 30)
+
+[sub_resource type="Resource" id="Resource_w0ado"]
+script = ExtResource("1_dhw6a")
+kind = "platform"
+position = Vector2(480, 420)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_yjm5w"]
+script = ExtResource("1_dhw6a")
+kind = "platform"
+position = Vector2(780, 330)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_6lrvk"]
+script = ExtResource("1_dhw6a")
+kind = "platform"
+position = Vector2(1160, 380)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_ajcqu"]
+script = ExtResource("1_dhw6a")
+kind = "platform"
+position = Vector2(1580, 400)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_b3d78"]
+script = ExtResource("1_dhw6a")
+kind = "pickup"
+position = Vector2(480, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_q3vq4"]
+script = ExtResource("1_dhw6a")
+kind = "pickup"
+position = Vector2(780, 280)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_nfwhp"]
+script = ExtResource("1_dhw6a")
+kind = "pickup"
+position = Vector2(1160, 330)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_1yfdb"]
+script = ExtResource("1_dhw6a")
+kind = "pickup"
+position = Vector2(1580, 350)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_lc25u"]
+script = ExtResource("1_dhw6a")
+kind = "enemy"
+position = Vector2(780, 320)
+label = "wind_falcon"
+
+[sub_resource type="Resource" id="Resource_5025n"]
+script = ExtResource("1_dhw6a")
+kind = "enemy"
+position = Vector2(1160, 480)
+label = "mushroom"
+
+[sub_resource type="Resource" id="Resource_jlrg0"]
+script = ExtResource("1_dhw6a")
+kind = "enemy"
+position = Vector2(1580, 470)
+label = "rock_thrower"
+
+[sub_resource type="Resource" id="Resource_lx787"]
+script = ExtResource("1_dhw6a")
+kind = "spike"
+position = Vector2(1920, 515)
+size = Vector2(180, 22)
+
+[sub_resource type="Resource" id="Resource_o57gc"]
+script = ExtResource("1_dhw6a")
+kind = "portal"
+position = Vector2(95, 468)
+label = "left"
+target_zone_id = "grove_3"
+target_portal_id = "right"
+
+[sub_resource type="Resource" id="Resource_e2d0q"]
+script = ExtResource("1_dhw6a")
+kind = "portal"
+position = Vector2(2390, 468)
+label = "right"
+target_zone_id = "canyon_2"
+target_portal_id = "left"
+
+[resource]
+script = ExtResource("2_jk4vi")
+objects = Array[ExtResource("1_dhw6a")]([SubResource("Resource_fic2f"), SubResource("Resource_p2gkp"), SubResource("Resource_nx55g"), SubResource("Resource_w0ado"), SubResource("Resource_yjm5w"), SubResource("Resource_6lrvk"), SubResource("Resource_ajcqu"), SubResource("Resource_b3d78"), SubResource("Resource_q3vq4"), SubResource("Resource_nfwhp"), SubResource("Resource_1yfdb"), SubResource("Resource_lc25u"), SubResource("Resource_5025n"), SubResource("Resource_jlrg0"), SubResource("Resource_lx787"), SubResource("Resource_o57gc"), SubResource("Resource_e2d0q")])

@@ -1,0 +1,87 @@
+[gd_resource type="Resource" script_class="RegionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/boss_form_data.gd" id="1_60b62"]
+[ext_resource type="Script" path="res://scripts/items/boss_data.gd" id="2_5l7y7"]
+[ext_resource type="Script" path="res://scripts/world/map_data.gd" id="3_2jaxe"]
+[ext_resource type="Script" path="res://scripts/world/region_data.gd" id="4_2sgce"]
+
+[sub_resource type="Resource" id="Resource_788v2"]
+script = ExtResource("1_60b62")
+id = "bee"
+display_name = "巨花蜂后"
+max_health = 235
+collision = Vector2(96, 92)
+move_speed = 88.0
+gravity_enabled = false
+basic_attack = "bee_sting"
+skills = PackedStringArray("pollen_cloud", "bee_tide")
+
+[sub_resource type="Resource" id="Resource_qb8j1"]
+script = ExtResource("1_60b62")
+id = "dancer"
+display_name = "花冠舞姬"
+max_health = 225
+contact_damage = 16
+collision = Vector2(70, 110)
+move_speed = 122.0
+basic_attack = "fan_strike"
+skills = PackedStringArray("petal_paths", "royal_bees")
+
+[sub_resource type="Resource" id="Resource_ai7vt"]
+script = ExtResource("2_5l7y7")
+id = "pollen_queen"
+region_id = "meadow"
+display_name = "花粉女爵"
+body_color = Color(1, 0.8117647, 0.3019608, 1)
+resource_prefix = "pollen_queen"
+forms = Array[ExtResource("1_60b62")]([SubResource("Resource_788v2"), SubResource("Resource_qb8j1")])
+
+[sub_resource type="Resource" id="Resource_vof3i"]
+script = ExtResource("3_2jaxe")
+id = "meadow_1"
+display_name = "迎风草原"
+region_id = "meadow"
+scene_path = "res://scenes/levels/zone_meadow_1.tscn"
+
+[sub_resource type="Resource" id="Resource_6ccs0"]
+script = ExtResource("3_2jaxe")
+id = "meadow_2"
+display_name = "花海沟壑"
+region_id = "meadow"
+width = 2600.0
+offset_x = 2400.0
+scene_path = "res://scenes/levels/zone_meadow_2.tscn"
+
+[sub_resource type="Resource" id="Resource_f63oc"]
+script = ExtResource("3_2jaxe")
+id = "meadow_3"
+display_name = "草原之心"
+region_id = "meadow"
+width = 2100.0
+offset_x = 5000.0
+scene_path = "res://scenes/levels/zone_meadow_3.tscn"
+
+[resource]
+script = ExtResource("4_2sgce")
+id = "meadow"
+display_name = "初始草原"
+theme = {
+"accent": "ffcf4d",
+"far": "7f9d8a",
+"ground_body": "93613a",
+"ground_dark": "4f2f1d",
+"ground_grass": "67c95a",
+"landmark_a": "ff7ca8",
+"landmark_b": "fff3a6",
+"metadata": {
+"motif": "bright_pastoral"
+},
+"near": "3d8f4e",
+"sky_bottom": "f7f0b8",
+"sky_top": "8fd7ff"
+}
+weapon_id = "petal_blade"
+armor_id = "moss_light"
+map_ids = PackedStringArray("meadow_1", "meadow_2", "meadow_3")
+maps = Array[ExtResource("3_2jaxe")]([SubResource("Resource_vof3i"), SubResource("Resource_6ccs0"), SubResource("Resource_f63oc")])
+boss = SubResource("Resource_ai7vt")

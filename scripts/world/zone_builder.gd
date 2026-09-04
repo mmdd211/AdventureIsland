@@ -12,6 +12,8 @@ const SPIKE_SCRIPT := preload("res://scripts/systems/spike_strip.gd")
 const ZONE_THEME_SCRIPT := preload("res://scripts/world/zone_theme.gd")
 const Palette := preload("res://scripts/systems/pixel_palette.gd")
 
+@export var layout: ZoneLayout
+
 var zone_id := ""
 var region_id := ""
 var display_name := ""
@@ -23,6 +25,45 @@ var map_index := 0
 var difficulty := 1
 var is_boss_map := false
 var sequence_index := 0
+
+func build_content() -> void:
+	sequence_index = 0
+	if layout == null:
+		return
+	for object in layout.objects:
+		_spawn_layout_object(object)
+
+func _spawn_layout_object(object: ZoneObjectData) -> void:
+	match object.kind:
+		"ground":
+			_ground(sequence_index + 1, object.position, object.size)
+		"platform":
+			_static_platform(sequence_index + 1, object.position, object.size, object.one_way)
+		"one_way_platform":
+			_one_way_platform(sequence_index + 1, object.position, object.size)
+		"enemy":
+			_enemy(object.label, object.position)
+		"pickup":
+			_pickup(object.position, object.label if not object.label.is_empty() else "coin", object.value)
+		"checkpoint":
+			_checkpoint(object.position)
+		"spring":
+			_spring(object.position)
+		"spike":
+			_spike(object.position, object.size.x)
+		"moving_platform":
+			_moving_platform(object.label, object.position, object.travel, object.period, object.phase)
+		"crumbling_platform":
+			_crumbling_platform(object.position)
+		"portal":
+			_portal(object.label, object.position, object.target_zone_id, object.target_portal_id, false, object.lock_region_id)
+		"boss":
+			_boss()
+		"darkness":
+			_darkness(self, object.float_value)
+		_:
+			push_warning("Unknown zone object kind: %s" % object.kind)
+	sequence_index += 1
 
 func setup(metadata: Dictionary) -> void:
 	zone_id = metadata.get("id", "")

@@ -1,17 +1,42 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/debug_ui.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/ui/debug_ui.gd" id="1_debug"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Debug"]
-bg_color = Color(0, 0, 0, 0.5)
-content_margin_left = 8.0
-content_margin_right = 8.0
-content_margin_top = 4.0
-content_margin_bottom = 4.0
+[sub_resource type="StyleBoxFlat" id="debug_panel"]
+bg_color = Color(0, 0, 0, 0.55)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
 [node name="DebugUI" type="CanvasLayer"]
-script = ExtResource("1_script")
+layer = 25
+script = ExtResource("1_debug")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -104.0
+offset_right = 240.0
+offset_bottom = -12.0
+theme_override_styles/panel = SubResource("debug_panel")
+
+[node name="Box" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+
+[node name="FPSLabel" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="PosLabel" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="StateLabel" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12

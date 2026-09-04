@@ -1,0 +1,84 @@
+[gd_resource type="Resource" script_class="ZoneLayout" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/zone_object_data.gd" id="1_vwrid"]
+[ext_resource type="Script" path="res://scripts/world/zone_layout.gd" id="2_28uwc"]
+
+[sub_resource type="Resource" id="Resource_eu406"]
+script = ExtResource("1_vwrid")
+kind = "checkpoint"
+position = Vector2(180, 470)
+
+[sub_resource type="Resource" id="Resource_qd7dv"]
+script = ExtResource("1_vwrid")
+position = Vector2(1020, 535)
+size = Vector2(1960, 30)
+
+[sub_resource type="Resource" id="Resource_wie3c"]
+script = ExtResource("1_vwrid")
+kind = "platform"
+position = Vector2(620, 360)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_5sdr7"]
+script = ExtResource("1_vwrid")
+kind = "platform"
+position = Vector2(880, 360)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_1lljt"]
+script = ExtResource("1_vwrid")
+kind = "platform"
+position = Vector2(1140, 360)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_8c15a"]
+script = ExtResource("1_vwrid")
+kind = "pickup"
+position = Vector2(720, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_vyawp"]
+script = ExtResource("1_vwrid")
+kind = "pickup"
+position = Vector2(1000, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_bfx2v"]
+script = ExtResource("1_vwrid")
+kind = "pickup"
+position = Vector2(1280, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_km0xk"]
+script = ExtResource("1_vwrid")
+kind = "enemy"
+position = Vector2(1680, 480)
+label = "star_wisp"
+
+[sub_resource type="Resource" id="Resource_sreym"]
+script = ExtResource("1_vwrid")
+kind = "enemy"
+position = Vector2(1680, 480)
+label = "sky_knight"
+
+[sub_resource type="Resource" id="Resource_3j0jc"]
+script = ExtResource("1_vwrid")
+kind = "boss"
+
+[sub_resource type="Resource" id="Resource_s6rwp"]
+script = ExtResource("1_vwrid")
+kind = "portal"
+position = Vector2(95, 468)
+label = "left"
+target_zone_id = "gate_2"
+target_portal_id = "right"
+
+[resource]
+script = ExtResource("2_28uwc")
+objects = Array[ExtResource("1_vwrid")]([SubResource("Resource_eu406"), SubResource("Resource_qd7dv"), SubResource("Resource_wie3c"), SubResource("Resource_5sdr7"), SubResource("Resource_1lljt"), SubResource("Resource_8c15a"), SubResource("Resource_vyawp"), SubResource("Resource_bfx2v"), SubResource("Resource_km0xk"), SubResource("Resource_sreym"), SubResource("Resource_3j0jc"), SubResource("Resource_s6rwp")])

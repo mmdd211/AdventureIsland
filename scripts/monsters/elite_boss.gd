@@ -2,17 +2,18 @@ extends CharacterBody2D
 
 const Palette := preload("res://scripts/systems/pixel_palette.gd")
 const ENEMY_SCENE := preload("res://scenes/monsters/basic_enemy.tscn")
-const WORLD_MAPS := preload("res://scripts/world/world_maps.gd")
 const BOSS_ANIMATOR := preload("res://scripts/monsters/boss_animator.gd")
 const TELEGRAPH := preload("res://scripts/monsters/boss_telegraph.gd")
-const BOSS_HUD := preload("res://scenes/ui/boss_hud_bar.tscn")
+const BOSS_HUD_CONTROLLER := preload("res://scripts/monsters/boss_hud_controller.gd")
+
+enum BossState { IDLE, CHASE, ATTACK, EVOLVE, DEAD }
 
 var region_id := "meadow"
 var map_id := "meadow_3"
-var data := {}
-var forms: Array = []
+var data: BossData
+var forms: Array[BossFormData] = []
 var form_index := 0
-var form_data := {}
+var form_data: BossFormData
 var form_health := 1
 var form_max_health := 1
 var stage := 1
@@ -23,13 +24,17 @@ var state_timer := 0.0
 var is_dead := false
 var evolving := false
 var attacking := false
+var boss_state: BossState = BossState.IDLE
+
 var gravity := 1550.0
 var attack_index := 0
 var collision_shape: CollisionShape2D
 var damage_shape: CollisionShape2D
 var boss_animator: AnimatedSprite2D
-var boss_hud: CanvasLayer
+var boss_hud_controller: BossHudController
 var ring_effect: Line2D
+var hurtbox_component: HurtboxComponent
+var contact_hitbox: HitboxComponent
 var gravity_enabled := true
 var contact_damage := 14
 var move_speed := 88.0
@@ -39,6 +44,11 @@ var body_color := Color.WHITE
 var attacks: Array[String] = ["bee_sting"]
 var skills: Array[String] = ["pollen_cloud", "bee_tide"]
 var basic_attack := "bee_sting"
+
+func transition_state(next_state: BossState) -> void:
+	if boss_state == next_state:
+		return
+	boss_state = next_state
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -53,13 +63,13 @@ func _ready() -> void:
 	_update_hud_visibility()
 
 func _load_data() -> void:
-	var maps := load("res://scripts/world/world_maps.gd")
-	var region: Dictionary = maps.REGIONS.get(region_id, {})
-	var boss: Dictionary = region.get("boss", {})
-	data = boss
-	forms = boss.get("forms", []).duplicate(true)
-	if forms.is_empty():
-		forms = [{"display_name": boss.get("display_name", "Boss"), "max_health": 380, "contact_damage": 14, "collision": Vector2(84, 104), "move_speed": 80.0, "basic_attack": "charge", "skills": ["pollen_swarm"]}]
+	var region := DataCatalog.region(region_id)
+	data = region.boss if region else null
+	if data == null:
+		push_error("Missing boss data for region: %s" % region_id)
+		return
+	forms.clear()
+	forms.assign(data.forms)
 	stage_count = forms.size()
 
 func _build_body() -> void:
@@ -78,78 +88,123 @@ func _build_body() -> void:
 	damage_area.collision_mask = 1
 	damage_area.add_child(damage_shape)
 	add_child(damage_area)
+	hurtbox_component = HurtboxComponent.new()
+	hurtbox_component.name = "HurtboxComponent"
+	add_child(hurtbox_component)
+	hurtbox_component.setup(self)
+	contact_hitbox = HitboxComponent.new()
+	contact_hitbox.name = "ContactHitbox"
+	add_child(contact_hitbox)
+	contact_hitbox.setup(damage_area, self, "player", contact_damage, false)
+	contact_hitbox.apply_knockback = false
 
 func _build_hud() -> void:
-	boss_hud = BOSS_HUD.instantiate()
-	add_child(boss_hud)
-	boss_hud.bind(str(data.get("display_name", "Boss")), region_id)
-	boss_hud.visible = false
+	boss_hud_controller = BOSS_HUD_CONTROLLER.new()
+	boss_hud_controller.create(self, str(data.display_name if data else "Boss"), region_id)
+	boss_hud_controller.set_visible(false)
 
 func _build_pixel_sprite() -> void:
 	boss_animator = AnimatedSprite2D.new()
 	boss_animator.name = "BossAnimator"
 	boss_animator.set_script(BOSS_ANIMATOR)
 	boss_animator.region_id = region_id
-	boss_animator.form_id = str(_form_metadata(0).get("id", "bee"))
+	boss_animator.form_id = _form_metadata(0).id if _form_metadata(0) else "bee"
+	SpriteEffect.set_outline(boss_animator, Color("4a2418"), 1.0)
 	add_child(boss_animator)
 
-func _form_metadata(index: int) -> Dictionary:
-	if index >= 0 and index < forms.size() and typeof(forms[index]) == TYPE_DICTIONARY:
+func _form_metadata(index: int) -> BossFormData:
+	if index >= 0 and index < forms.size():
 		return forms[index]
-	return {}
+	return null
 
 func _apply_form(index: int, announce := true) -> void:
 	form_index = clampi(index, 0, forms.size() - 1)
 	form_data = _form_metadata(form_index)
-	form_max_health = int(form_data.get("max_health", 380))
+	form_max_health = form_data.max_health if form_data else 380
 	form_health = form_max_health
-	contact_damage = int(form_data.get("contact_damage", 14))
-	move_speed = float(form_data.get("move_speed", 80.0))
-	gravity_enabled = bool(form_data.get("gravity_enabled", true))
+	contact_damage = form_data.contact_damage if form_data else 14
+	move_speed = form_data.move_speed if form_data else 80.0
+	gravity_enabled = form_data.gravity_enabled if form_data else true
 	attacks.clear()
-	attacks.append(str(form_data.get("basic_attack", "charge")))
+	attacks.append(form_data.basic_attack if form_data else "charge")
 	skills.clear()
-	for skill in form_data.get("skills", []):
-		skills.append(str(skill))
+	if form_data:
+		for skill in form_data.skills:
+			skills.append(str(skill))
 	if collision_shape and collision_shape.shape is RectangleShape2D:
-		(collision_shape.shape as RectangleShape2D).size = form_data.get("collision", Vector2(84, 104))
+		(collision_shape.shape as RectangleShape2D).size = form_data.collision if form_data else Vector2(84, 104)
 	if damage_shape and damage_shape.shape is RectangleShape2D:
-		(damage_shape.shape as RectangleShape2D).size = form_data.get("collision", Vector2(84, 104)) + Vector2(12, 10)
+		(damage_shape.shape as RectangleShape2D).size = (form_data.collision if form_data else Vector2(84, 104)) + Vector2(12, 10)
 	if boss_animator:
-		boss_animator.set_form(str(form_data.get("id", "bee")))
+		boss_animator.set_form(form_data.id if form_data else "bee")
 		boss_animator.offset.y = -6.0
 	stage = form_index + 1
-	if boss_hud:
-		boss_hud.set_form(str(form_data.get("display_name", "形态")), form_index, forms.size())
-		boss_hud.set_health(form_health, form_max_health)
+	if contact_hitbox:
+		contact_hitbox.set_damage(contact_damage)
+	if boss_hud_controller:
+		boss_hud_controller.set_form(form_data.display_name if form_data else "形态", form_index, forms.size())
+		boss_hud_controller.set_health(form_health, form_max_health)
 	if announce:
-		_show_text("%s · %s" % [data.get("display_name", "Boss"), form_data.get("display_name", "")], Color(Palette.YELLOW_LIGHT))
+		_show_text("%s · %s" % [data.display_name if data else "Boss", form_data.display_name if form_data else ""], Color(Palette.YELLOW_LIGHT))
 
 func _physics_process(delta: float) -> void:
-	if is_dead or evolving:
-		return
 	var player := _find_player()
-	if gravity_enabled:
-		if not is_on_floor():
-			velocity.y = minf(velocity.y + gravity * delta, 920.0)
-		else:
-			velocity.y = 0.0
-	attack_timer = maxf(0.0, attack_timer - delta)
-	state_timer = maxf(0.0, state_timer - delta)
-	if player != null:
-		direction = 1 if player.global_position.x > global_position.x else -1
-		if not attacking and attack_timer <= 0.0 and state_timer <= 0.0:
-			_perform_attack(player)
-		elif state_timer <= 0.0:
-			_follow_player(player, delta)
-		else:
-			move_and_slide()
-	else:
-		velocity.x = move_toward(velocity.x, 0.0, 600.0 * delta)
-		move_and_slide()
+	transition_state(
+		BossState.DEAD if is_dead else
+		(BossState.EVOLVE if evolving else
+		(BossState.ATTACK if attacking else
+		(BossState.CHASE if player != null else BossState.IDLE)))
+	)
+	match boss_state:
+		BossState.DEAD, BossState.EVOLVE:
+			return
+		BossState.ATTACK:
+			_process_attack_state(delta)
+		BossState.CHASE:
+			_process_chase_state(player, delta)
+		BossState.IDLE:
+			_process_idle_state(delta)
 	_apply_contact_damage(player)
 	_update_health_bar()
 	_update_visual()
+
+func _process_gravity(delta: float) -> void:
+	if not gravity_enabled:
+		return
+	if not is_on_floor():
+		velocity.y = minf(velocity.y + gravity * delta, 920.0)
+	else:
+		velocity.y = 0.0
+
+func _process_timers(delta: float) -> void:
+	attack_timer = maxf(0.0, attack_timer - delta)
+	state_timer = maxf(0.0, state_timer - delta)
+
+func _process_attack_state(delta: float) -> void:
+	_process_gravity(delta)
+	_process_timers(delta)
+	move_and_slide()
+
+func _process_chase_state(player: Node2D, delta: float) -> void:
+	if player == null:
+		return
+	_process_gravity(delta)
+	_process_timers(delta)
+	direction = 1 if player.global_position.x > global_position.x else -1
+	if attack_timer <= 0.0 and state_timer <= 0.0:
+		transition_state(BossState.ATTACK)
+		_perform_attack(player)
+		return
+	if state_timer <= 0.0:
+		_follow_player(player, delta)
+	else:
+		move_and_slide()
+
+func _process_idle_state(delta: float) -> void:
+	_process_gravity(delta)
+	_process_timers(delta)
+	velocity.x = move_toward(velocity.x, 0.0, 600.0 * delta)
+	move_and_slide()
 
 func _follow_player(player: Node2D, delta: float) -> void:
 	var distance := absf(player.global_position.x - global_position.x)
@@ -179,6 +234,7 @@ func _perform_attack(player: Node2D) -> void:
 	await get_tree().create_timer(0.28).timeout
 	if not is_dead and not evolving:
 		attacking = false
+		transition_state(BossState.CHASE if _find_player() != null else BossState.IDLE)
 
 func _execute_basic_attack(attack: String, player: Node2D) -> void:
 	match attack:
@@ -408,7 +464,8 @@ func _summon_minions(kind: String, desired_count: int, message := "召唤援军"
 		minion.set("enemy_kind", kind)
 		minion.set("is_boss_minion", true)
 		minion.set_meta("region_id", region_id)
-		minion.set_meta("difficulty", int(WORLD_MAPS.region(region_id).get("difficulty", 1)))
+		var region := DataCatalog.region(region_id)
+		minion.set_meta("difficulty", region.difficulty if region else 1)
 		minion.add_to_group("boss_minions")
 		get_parent().add_child(minion)
 		var angle := TAU * (float(index) + 0.28) / float(maxi(1, count))
@@ -547,18 +604,16 @@ func _teleport_away(player: Node2D) -> void:
 func _apply_contact_damage(player: Node2D) -> void:
 	if player == null or is_dead or evolving:
 		return
-	var damage_area := get_node_or_null("DamageArea") as Area2D
-	if damage_area == null:
-		return
-	for body in damage_area.get_overlapping_bodies():
-		if body.is_in_group("player") and body.has_method("take_damage"):
-			body.call("take_damage", contact_damage, global_position)
+	if contact_hitbox:
+		contact_hitbox.scan_overlaps()
 
 func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
 	if is_dead or evolving:
 		return
 	form_health = maxi(0, form_health - amount)
 	AudioManager.play_sfx("hit")
+	GameFeel.shake(2.5)
+	GameFeel.hit_stop(0.03, 0.16)
 	boss_animator.play_state("hurt")
 	_flash()
 	_update_health_bar()
@@ -576,23 +631,25 @@ func _begin_evolution() -> void:
 		return
 	evolving = true
 	attacking = false
+	transition_state(BossState.EVOLVE)
 	velocity = Vector2.ZERO
 	_cleanup_minions()
 	_cleanup_projectiles()
 	set_deferred("collision_layer", 0)
 	set_deferred("collision_mask", 0)
 	boss_animator.play_action("evolve", "idle")
-	boss_hud.show_evolution("进化")
+	boss_hud_controller.show_evolution(LocalizationSystem.tr_key("evolution"))
 	_show_text("区域Boss · 觉醒", Color(Palette.YELLOW_LIGHT))
 	await get_tree().create_timer(1.35).timeout
 	_apply_form(form_index + 1, true)
 	set_deferred("collision_layer", 4)
 	set_deferred("collision_mask", 18)
 	await get_tree().create_timer(0.25).timeout
-	boss_hud.hide_evolution()
+	boss_hud_controller.hide_evolution()
 	evolving = false
 	attacking = false
 	attack_timer = 1.0
+	transition_state(BossState.CHASE if _find_player() != null else BossState.IDLE)
 
 func _defeat() -> void:
 	if is_dead:
@@ -603,11 +660,12 @@ func _defeat() -> void:
 	velocity = Vector2.ZERO
 	_cleanup_minions()
 	_cleanup_projectiles()
+	transition_state(BossState.DEAD)
 	GameState.grant_boss_rewards(region_id)
 	AudioManager.play_sfx("enemy_death")
 	boss_animator.play_death()
 	_show_text("守卫陨落", Palette.YELLOW_LIGHT)
-	boss_hud.visible = false
+	boss_hud_controller.set_visible(false)
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.75)
 	tween.tween_callback(queue_free)
@@ -621,13 +679,13 @@ func _cleanup_projectiles() -> void:
 		projectile.queue_free()
 
 func _update_health_bar() -> void:
-	if boss_hud:
-		boss_hud.set_health(form_health, form_max_health)
+	if boss_hud_controller:
+		boss_hud_controller.set_health(form_health, form_max_health)
 
 func _update_hud_visibility(_zone_id := "") -> void:
 	var is_current := GameState.current_map_id == map_id or GameState.current_zone_id == map_id
-	if boss_hud:
-		boss_hud.visible = is_current and not is_dead
+	if boss_hud_controller:
+		boss_hud_controller.set_visible(is_current and not is_dead)
 
 func _update_visual() -> void:
 	if boss_animator:
@@ -637,8 +695,8 @@ func _update_visual() -> void:
 		ring_effect.rotation += get_physics_process_delta_time() * 1.5
 
 func _flash() -> void:
-	modulate = Color(2.2, 2.2, 2.2)
-	get_tree().create_timer(0.07).timeout.connect(func(): modulate = Color.WHITE)
+	if boss_animator:
+		SpriteEffect.flash(boss_animator, 0.07)
 
 func _create_stage_ring() -> void:
 	ring_effect = Line2D.new()

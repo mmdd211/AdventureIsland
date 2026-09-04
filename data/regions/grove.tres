@@ -1,0 +1,90 @@
+[gd_resource type="Resource" script_class="RegionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/boss_form_data.gd" id="1_7qk8h"]
+[ext_resource type="Script" path="res://scripts/items/boss_data.gd" id="2_b2fm7"]
+[ext_resource type="Script" path="res://scripts/world/map_data.gd" id="3_dudp1"]
+[ext_resource type="Script" path="res://scripts/world/region_data.gd" id="4_108p4"]
+
+[sub_resource type="Resource" id="Resource_pigae"]
+script = ExtResource("1_7qk8h")
+id = "nest"
+display_name = "根须巢母"
+max_health = 375
+contact_damage = 22
+collision = Vector2(102, 98)
+move_speed = 58.0
+basic_attack = "tendril_slam"
+skills = PackedStringArray("root_veins", "dark_mist")
+
+[sub_resource type="Resource" id="Resource_m1peg"]
+script = ExtResource("1_7qk8h")
+id = "bishop"
+display_name = "低语主教"
+max_health = 355
+contact_damage = 24
+collision = Vector2(72, 116)
+move_speed = 106.0
+basic_attack = "dark_wave"
+skills = PackedStringArray("whisper_judgment", "root_prison")
+
+[sub_resource type="Resource" id="Resource_6smom"]
+script = ExtResource("2_b2fm7")
+id = "whisper_root"
+region_id = "grove"
+display_name = "低语主教"
+body_color = Color(0.49803922, 0.95686275, 0.7882353, 1)
+resource_prefix = "whisper_root"
+forms = Array[ExtResource("1_7qk8h")]([SubResource("Resource_pigae"), SubResource("Resource_m1peg")])
+
+[sub_resource type="Resource" id="Resource_qpjeu"]
+script = ExtResource("3_dudp1")
+id = "grove_1"
+display_name = "根须入口"
+region_id = "grove"
+width = 2500.0
+offset_x = 17000.0
+scene_path = "res://scenes/levels/zone_grove_1.tscn"
+
+[sub_resource type="Resource" id="Resource_26h8r"]
+script = ExtResource("3_dudp1")
+id = "grove_2"
+display_name = "悬根回廊"
+region_id = "grove"
+width = 2700.0
+offset_x = 19500.0
+scene_path = "res://scenes/levels/zone_grove_2.tscn"
+
+[sub_resource type="Resource" id="Resource_drsfb"]
+script = ExtResource("3_dudp1")
+id = "grove_3"
+display_name = "低语之心"
+region_id = "grove"
+width = 2100.0
+offset_x = 22200.0
+scene_path = "res://scenes/levels/zone_grove_3.tscn"
+
+[resource]
+script = ExtResource("4_108p4")
+id = "grove"
+display_name = "低语树洞"
+difficulty = 3
+theme = {
+"accent": "7ff4c9",
+"far": "22564e",
+"ground_body": "3f5657",
+"ground_dark": "182e33",
+"ground_grass": "4bb489",
+"landmark_a": "9fffe0",
+"landmark_b": "276d63",
+"metadata": {
+"motif": "glowing_roots"
+},
+"near": "122d2e",
+"sky_bottom": "336f6b",
+"sky_top": "17324a"
+}
+weapon_id = "glow_hook"
+armor_id = "root_weave"
+map_ids = PackedStringArray("grove_1", "grove_2", "grove_3")
+maps = Array[ExtResource("3_dudp1")]([SubResource("Resource_qpjeu"), SubResource("Resource_26h8r"), SubResource("Resource_drsfb")])
+boss = SubResource("Resource_6smom")

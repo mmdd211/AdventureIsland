@@ -56,9 +56,13 @@ var invulnerable_timer := 0.0
 var step_timer := 0.0
 var is_dead := false
 var control_enabled := true
+var knockback_component: KnockbackComponent
 var base_animator_scale := Vector2.ONE
 var visual_base_scale := Vector2.ONE
 var death_tween: Tween
+var hurtbox_component: HurtboxComponent
+var attack_hitbox: HitboxComponent
+var status_component: StatusEffectComponent
 
 func _ready() -> void:
 	add_to_group("player")
@@ -70,6 +74,24 @@ func _ready() -> void:
 	call_deferred("_capture_animator")
 	GameState.equipment_changed.connect(_refresh_equipment)
 	call_deferred("_refresh_equipment")
+	knockback_component = KnockbackComponent.new()
+	knockback_component.name = "KnockbackComponent"
+	add_child(knockback_component)
+	# 受击击退应覆盖当前速度，与旧实现手感一致，避免移动/下落速度叠加。
+	knockback_component.setup(self, 230.0, -280.0, true)
+	status_component = StatusEffectComponent.new()
+	status_component.name = "StatusEffectComponent"
+	add_child(status_component)
+	status_component.setup(self)
+	hurtbox_component = HurtboxComponent.new()
+	hurtbox_component.name = "HurtboxComponent"
+	add_child(hurtbox_component)
+	hurtbox_component.setup(self)
+	attack_hitbox = HitboxComponent.new()
+	attack_hitbox.name = "AttackHitbox"
+	add_child(attack_hitbox)
+	attack_hitbox.setup(_attack_area(), self, "enemies", 0, true)
+	attack_hitbox.hit_target.connect(_on_attack_hit)
 
 func _capture_animator() -> void:
 	var animator := get_node_or_null("PixelAnimator")
@@ -143,9 +165,10 @@ func _handle_horizontal_movement(delta: float) -> void:
 		return
 
 	var axis := Input.get_axis("move_left", "move_right")
-	var accel := acceleration if is_on_floor() else air_acceleration
+	var slow_factor := 0.55 if status_component.has_effect("slow") else 1.0
+	var accel := (acceleration if is_on_floor() else air_acceleration) * slow_factor
 	if absf(axis) > 0.1:
-		velocity.x = move_toward(velocity.x, axis * move_speed, accel * delta)
+		velocity.x = move_toward(velocity.x, axis * move_speed * slow_factor, accel * delta)
 		facing_direction = 1 if axis > 0.0 else -1
 		step_timer -= delta
 		if is_on_floor() and step_timer <= 0.0:
@@ -193,7 +216,7 @@ func _start_attack(stage: int) -> void:
 	attack_stage = stage
 	var weapon := _weapon()
 	attack_timer = attack_duration / maxf(0.4, weapon.attack_speed)
-	attack_hit_nodes.clear()
+	attack_hitbox.clear_sweep()
 	AudioManager.play_sfx("attack")
 	_play_action("attack")
 	var area := _attack_area()
@@ -209,6 +232,7 @@ func _start_attack(stage: int) -> void:
 	area.position.x = ((56.0 if stage == 1 else 68.0) + reach * 0.5) * facing_direction
 	_create_slash_arc(stage)
 	_apply_squash(Vector2(1.14, 0.90))
+	attack_hitbox.set_damage(weapon.combo_damage[mini(stage, weapon.combo_damage.size()) - 1])
 
 func _process_attack_hits() -> void:
 	if attack_timer <= 0.0:
@@ -216,21 +240,16 @@ func _process_attack_hits() -> void:
 	var elapsed := attack_duration - attack_timer
 	if elapsed < attack_active_from or elapsed > attack_active_until:
 		return
+	attack_hitbox.scan_overlaps()
+
+func _on_attack_hit(target: Node, amount: int) -> void:
 	var weapon := _weapon()
-	for body in _attack_area().get_overlapping_bodies():
-		if body.is_in_group("enemies") and not attack_hit_nodes.has(body):
-			attack_hit_nodes.append(body)
-			var damage: int = int(weapon.combo_damage[mini(attack_stage, weapon.combo_damage.size()) - 1])
-			if body.has_method("take_damage"):
-				body.call("take_damage", damage, global_position)
-			if body.has_method("apply_knockback"):
-				body.call("apply_knockback", global_position)
-			attack_hit.emit(body)
-			_spawn_damage_number(damage, body.global_position)
-			if weapon.special == "star_impact" and attack_stage == 2:
-				_create_star_impact(body.global_position)
-			_hitstop()
-			_shake_camera(4.5 if attack_stage == 1 else 7.0)
+	attack_hit.emit(target)
+	_spawn_damage_number(amount, (target as Node2D).global_position)
+	if weapon.special == "star_impact" and attack_stage == 2:
+		_create_star_impact((target as Node2D).global_position)
+	_hitstop()
+	_shake_camera(4.5 if attack_stage == 1 else 7.0)
 
 func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
 	if is_dead or invulnerable_timer > 0.0:
@@ -240,18 +259,12 @@ func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
 	_shake_camera(8.0)
 	_spawn_floating_text(str(-amount), global_position + Vector2(0, -42), Palette.RED)
 	if GameState.current_hp > 0:
-		var away := signf(global_position.x - source_position.x)
-		if away == 0.0:
-			away = -facing_direction
-		velocity = Vector2(away * 230.0, -280.0)
+		knockback_component.apply(source_position, -facing_direction)
 		_flash(Color(1.0, 0.45, 0.45), 0.16)
 		AudioManager.play_sfx("hurt")
 
 func _hitstop() -> void:
-	if Engine.time_scale < 1.0:
-		return
-	Engine.time_scale = 0.08
-	get_tree().create_timer(0.055, true, false, true).timeout.connect(func(): Engine.time_scale = 1.0)
+	GameFeel.hit_stop(0.055, 0.08)
 
 func _shake_camera(strength: float) -> void:
 	get_tree().call_group("game_camera", "shake", strength)
@@ -281,11 +294,7 @@ func _flash(color: Color, duration: float) -> void:
 		target = get_node_or_null("Visual")
 	if target == null:
 		return
-	target.modulate = color
-	get_tree().create_timer(duration).timeout.connect(func():
-		if is_instance_valid(target):
-			target.modulate = Color.WHITE
-	)
+	SpriteEffect.flash(target, duration, Color(color.r * 2.4, color.g * 2.4, color.b * 2.4, 1.0))
 
 func _play_action(action_name: String) -> void:
 	var animator := get_node_or_null("PixelAnimator")
@@ -341,6 +350,7 @@ func _on_respawn_requested(_zone_id: String, spawn_position: Vector2) -> void:
 	is_dead = false
 	if death_tween:
 		death_tween.kill()
+	status_component.clear_all()
 	global_position = spawn_position
 	velocity = Vector2.ZERO
 	collision_layer = 1

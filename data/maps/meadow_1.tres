@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MapData" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/map_data.gd" id="1_hhhbs"]
+
+[resource]
+script = ExtResource("1_hhhbs")
+id = "meadow_1"
+display_name = "迎风草原"
+region_id = "meadow"
+scene_path = "res://scenes/levels/zone_meadow_1.tscn"

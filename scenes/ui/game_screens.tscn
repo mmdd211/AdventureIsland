@@ -1,6 +1,359 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/game_screens.gd" id="1_screens"]
+[ext_resource type="Theme" path="res://assets/themes/adventure_theme.tres" id="2_theme"]
 
 [node name="GameScreens" type="CanvasLayer"]
+layer = 30
+process_mode = 3
 script = ExtResource("1_screens")
+
+[node name="Root" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme = ExtResource("2_theme")
+
+[node name="PauseDim" type="ColorRect" parent="Root"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.141176, 0.090196, 0.07451, 0.54)
+mouse_filter = 0
+
+[node name="PausePanel" type="CenterContainer" parent="Root/PauseDim"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PanelBox" type="PanelContainer" parent="Root/PauseDim/PausePanel"]
+layout_mode = 2
+theme_type_variation = &"DialogPanel"
+
+[node name="Box" type="VBoxContainer" parent="Root/PauseDim/PausePanel/PanelBox"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="PauseTitle" type="Label" parent="Root/PauseDim/PausePanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.016466, 0.373247, 0.466966, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 9
+theme_override_font_sizes/font_size = 38
+horizontal_alignment = 1
+
+[node name="ResumeButton" type="Button" parent="Root/PauseDim/PausePanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+theme_type_variation = &"PrimaryButton"
+
+[node name="EquipmentButton" type="Button" parent="Root/PauseDim/PausePanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+
+[node name="PauseRestartButton" type="Button" parent="Root/PauseDim/PausePanel/PanelBox/Box"]
+unique_name_in_owner = true
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+
+[node name="PauseBackTitleButton" type="Button" parent="Root/PauseDim/PausePanel/PanelBox/Box"]
+unique_name_in_owner = true
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+
+[node name="DeathDim" type="ColorRect" parent="Root"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.141176, 0.090196, 0.07451, 0.54)
+mouse_filter = 0
+
+[node name="DeathPanel" type="CenterContainer" parent="Root/DeathDim"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PanelBox" type="PanelContainer" parent="Root/DeathDim/DeathPanel"]
+layout_mode = 2
+theme_type_variation = &"DialogPanel"
+
+[node name="Box" type="VBoxContainer" parent="Root/DeathDim/DeathPanel/PanelBox"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="DeathTitle" type="Label" parent="Root/DeathDim/DeathPanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.665552, 0.234951, 0.278476, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 9
+theme_override_font_sizes/font_size = 38
+horizontal_alignment = 1
+
+[node name="RespawnButton" type="Button" parent="Root/DeathDim/DeathPanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+theme_type_variation = &"PrimaryButton"
+
+[node name="DeathRestartButton" type="Button" parent="Root/DeathDim/DeathPanel/PanelBox/Box"]
+unique_name_in_owner = true
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+
+[node name="DeathBackTitleButton" type="Button" parent="Root/DeathDim/DeathPanel/PanelBox/Box"]
+unique_name_in_owner = true
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+
+[node name="CompleteDim" type="ColorRect" parent="Root"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.141176, 0.090196, 0.07451, 0.54)
+mouse_filter = 0
+
+[node name="CompletePanel" type="CenterContainer" parent="Root/CompleteDim"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PanelBox" type="PanelContainer" parent="Root/CompleteDim/CompletePanel"]
+layout_mode = 2
+theme_type_variation = &"DialogPanel"
+
+[node name="Box" type="VBoxContainer" parent="Root/CompleteDim/CompletePanel/PanelBox"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="CompleteTitle" type="Label" parent="Root/CompleteDim/CompletePanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.171832, 0.445114, 0.190103, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 9
+theme_override_font_sizes/font_size = 38
+horizontal_alignment = 1
+
+[node name="Stats" type="Label" parent="Root/CompleteDim/CompletePanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+
+[node name="PlayAgainButton" type="Button" parent="Root/CompleteDim/CompletePanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+theme_type_variation = &"PrimaryButton"
+
+[node name="CompleteBackTitleButton" type="Button" parent="Root/CompleteDim/CompletePanel/PanelBox/Box"]
+unique_name_in_owner = true
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+
+[node name="EquipmentDim" type="ColorRect" parent="Root"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.141176, 0.090196, 0.07451, 0.54)
+mouse_filter = 0
+
+[node name="EquipmentPanel" type="CenterContainer" parent="Root/EquipmentDim"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PanelBox" type="PanelContainer" parent="Root/EquipmentDim/EquipmentPanel"]
+layout_mode = 2
+theme_type_variation = &"DialogPanel"
+
+[node name="Box" type="VBoxContainer" parent="Root/EquipmentDim/EquipmentPanel/PanelBox"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="EquipmentTitle" type="Label" parent="Root/EquipmentDim/EquipmentPanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.016466, 0.373247, 0.466966, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 9
+theme_override_font_sizes/font_size = 38
+horizontal_alignment = 1
+
+[node name="Columns" type="HBoxContainer" parent="Root/EquipmentDim/EquipmentPanel/PanelBox/Box"]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="WeaponColumn" type="VBoxContainer" parent="Root/EquipmentDim/EquipmentPanel/PanelBox/Box/Columns"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="WeaponHeader" type="Label" parent="Root/EquipmentDim/EquipmentPanel/PanelBox/Box/Columns/WeaponColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+
+[node name="ArmorColumn" type="VBoxContainer" parent="Root/EquipmentDim/EquipmentPanel/PanelBox/Box/Columns"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="ArmorHeader" type="Label" parent="Root/EquipmentDim/EquipmentPanel/PanelBox/Box/Columns/ArmorColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+
+[node name="EquipmentBackButton" type="Button" parent="Root/EquipmentDim/EquipmentPanel/PanelBox/Box"]
+unique_name_in_owner = true
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+
+[node name="RewardDim" type="ColorRect" parent="Root"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.141176, 0.090196, 0.07451, 0.54)
+mouse_filter = 0
+
+[node name="RewardPanel" type="CenterContainer" parent="Root/RewardDim"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PanelBox" type="PanelContainer" parent="Root/RewardDim/RewardPanel"]
+layout_mode = 2
+theme_type_variation = &"DialogPanel"
+
+[node name="Box" type="VBoxContainer" parent="Root/RewardDim/RewardPanel/PanelBox"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="RewardTitle" type="Label" parent="Root/RewardDim/RewardPanel/PanelBox/Box"]
+unique_name_in_owner = true
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.729514, 0.565034, 0.179026, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 9
+theme_override_font_sizes/font_size = 38
+horizontal_alignment = 1
+
+[node name="Columns" type="HBoxContainer" parent="Root/RewardDim/RewardPanel/PanelBox/Box"]
+layout_mode = 2
+theme_override_constants/separation = 26
+
+[node name="WeaponColumn" type="VBoxContainer" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns"]
+layout_mode = 2
+
+[node name="WeaponCurrent" type="Label" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/WeaponColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+
+[node name="WeaponNew" type="Label" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/WeaponColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+
+[node name="WeaponIcon" type="TextureRect" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/WeaponColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+
+[node name="WeaponButton" type="Button" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/WeaponColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(118, 40)
+theme_type_variation = &"PrimaryButton"
+
+[node name="WeaponKeepButton" type="Button" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/WeaponColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(104, 40)
+
+[node name="ArmorColumn" type="VBoxContainer" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns"]
+layout_mode = 2
+
+[node name="ArmorCurrent" type="Label" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/ArmorColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+
+[node name="ArmorNew" type="Label" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/ArmorColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+
+[node name="ArmorIcon" type="TextureRect" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/ArmorColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+
+[node name="ArmorButton" type="Button" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/ArmorColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(118, 40)
+theme_type_variation = &"PrimaryButton"
+
+[node name="ArmorKeepButton" type="Button" parent="Root/RewardDim/RewardPanel/PanelBox/Box/Columns/ArmorColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(104, 40)
+
+[node name="ContinueButton" type="Button" parent="Root/RewardDim/RewardPanel/PanelBox/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 44)
+theme_type_variation = &"PrimaryButton"
+disabled = true

@@ -1,0 +1,138 @@
+[gd_resource type="Resource" script_class="ZoneLayout" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/zone_object_data.gd" id="1_b3b1p"]
+[ext_resource type="Script" path="res://scripts/world/zone_layout.gd" id="2_7d03d"]
+
+[sub_resource type="Resource" id="Resource_6wxab"]
+script = ExtResource("1_b3b1p")
+kind = "checkpoint"
+position = Vector2(160, 470)
+
+[sub_resource type="Resource" id="Resource_6lqly"]
+script = ExtResource("1_b3b1p")
+position = Vector2(620, 535)
+size = Vector2(1240, 30)
+
+[sub_resource type="Resource" id="Resource_trx5l"]
+script = ExtResource("1_b3b1p")
+position = Vector2(1800, 535)
+size = Vector2(1400, 30)
+
+[sub_resource type="Resource" id="Resource_sodi4"]
+script = ExtResource("1_b3b1p")
+kind = "platform"
+position = Vector2(520, 410)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_c7j0h"]
+script = ExtResource("1_b3b1p")
+kind = "platform"
+position = Vector2(660, 400)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_5su6c"]
+script = ExtResource("1_b3b1p")
+kind = "platform"
+position = Vector2(1060, 300)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_4luqp"]
+script = ExtResource("1_b3b1p")
+kind = "platform"
+position = Vector2(1480, 380)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_ly66v"]
+script = ExtResource("1_b3b1p")
+kind = "platform"
+position = Vector2(1860, 300)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_xxk7i"]
+script = ExtResource("1_b3b1p")
+kind = "pickup"
+position = Vector2(520, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_4iw47"]
+script = ExtResource("1_b3b1p")
+kind = "pickup"
+position = Vector2(660, 350)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_pqmub"]
+script = ExtResource("1_b3b1p")
+kind = "pickup"
+position = Vector2(1060, 250)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_g7g57"]
+script = ExtResource("1_b3b1p")
+kind = "pickup"
+position = Vector2(1480, 330)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_wgubw"]
+script = ExtResource("1_b3b1p")
+kind = "pickup"
+position = Vector2(1860, 250)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_dy7p1"]
+script = ExtResource("1_b3b1p")
+kind = "enemy"
+position = Vector2(660, 470)
+label = "rock_thrower"
+
+[sub_resource type="Resource" id="Resource_y0m0o"]
+script = ExtResource("1_b3b1p")
+kind = "enemy"
+position = Vector2(1060, 290)
+label = "wind_falcon"
+
+[sub_resource type="Resource" id="Resource_yr0mg"]
+script = ExtResource("1_b3b1p")
+kind = "enemy"
+position = Vector2(1480, 470)
+label = "rock_thrower"
+
+[sub_resource type="Resource" id="Resource_yosfs"]
+script = ExtResource("1_b3b1p")
+kind = "enemy"
+position = Vector2(1860, 280)
+label = "wind_falcon"
+
+[sub_resource type="Resource" id="Resource_uwswp"]
+script = ExtResource("1_b3b1p")
+kind = "crumbling_platform"
+position = Vector2(1280, 450)
+
+[sub_resource type="Resource" id="Resource_xhr42"]
+script = ExtResource("1_b3b1p")
+kind = "portal"
+position = Vector2(95, 468)
+label = "left"
+target_zone_id = "canyon_2"
+target_portal_id = "right"
+
+[sub_resource type="Resource" id="Resource_c5sm5"]
+script = ExtResource("1_b3b1p")
+kind = "portal"
+position = Vector2(2490, 468)
+label = "right"
+target_zone_id = "canyon_4"
+target_portal_id = "left"
+
+[resource]
+script = ExtResource("2_7d03d")
+objects = Array[ExtResource("1_b3b1p")]([SubResource("Resource_6wxab"), SubResource("Resource_6lqly"), SubResource("Resource_trx5l"), SubResource("Resource_sodi4"), SubResource("Resource_c7j0h"), SubResource("Resource_5su6c"), SubResource("Resource_4luqp"), SubResource("Resource_ly66v"), SubResource("Resource_xxk7i"), SubResource("Resource_4iw47"), SubResource("Resource_pqmub"), SubResource("Resource_g7g57"), SubResource("Resource_wgubw"), SubResource("Resource_dy7p1"), SubResource("Resource_y0m0o"), SubResource("Resource_yr0mg"), SubResource("Resource_yosfs"), SubResource("Resource_uwswp"), SubResource("Resource_xhr42"), SubResource("Resource_c5sm5")])

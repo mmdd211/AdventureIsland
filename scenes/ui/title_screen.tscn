@@ -1,10 +1,506 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/title_screen.gd" id="1_title"]
+[ext_resource type="Theme" path="res://assets/themes/adventure_theme.tres" id="2_theme"]
+
+[sub_resource type="Gradient" id="sky_gradient"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.411765, 0.721569, 0.909804, 1, 0.847059, 0.952941, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="sky_texture"]
+gradient = SubResource("sky_gradient")
+fill_from = Vector2(0.5, 0)
+fill_to = Vector2(0.5, 1)
 
 [node name="TitleScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+theme = ExtResource("2_theme")
 script = ExtResource("1_title")
+
+[node name="Sky" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Gradient" type="TextureRect" parent="Sky"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = SubResource("sky_texture")
+expand_mode = 1
+stretch_mode = 0
+mouse_filter = 2
+
+[node name="SunGlow" type="ColorRect" parent="Sky"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 908.0
+offset_top = 58.0
+offset_right = 1092.0
+offset_bottom = 242.0
+color = Color(1, 0.952941, 0.690196, 0.42)
+
+[node name="Sun" type="ColorRect" parent="Sky"]
+layout_mode = 0
+offset_left = 938.0
+offset_top = 88.0
+offset_right = 1062.0
+offset_bottom = 212.0
+color = Color(1, 0.878431, 0.4, 1)
+
+[node name="Cloud1" type="Control" parent="Sky"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 90.0
+offset_top = 96.0
+offset_right = 240.0
+offset_bottom = 134.0
+metadata/speed = 13.0
+
+[node name="Cloud2" type="Control" parent="Sky"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 420.0
+offset_top = 172.0
+offset_right = 570.0
+offset_bottom = 210.0
+scale = Vector2(0.8, 0.8)
+metadata/speed = 21.0
+
+[node name="Cloud3" type="Control" parent="Sky"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 700.0
+offset_top = 84.0
+offset_right = 850.0
+offset_bottom = 122.0
+scale = Vector2(0.95, 0.95)
+metadata/speed = 17.0
+
+[node name="Cloud4" type="Control" parent="Sky"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 980.0
+offset_top = 226.0
+offset_right = 1130.0
+offset_bottom = 264.0
+scale = Vector2(0.62, 0.62)
+metadata/speed = 25.0
+
+[node name="Cloud5" type="Control" parent="Sky"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1150.0
+offset_top = 140.0
+offset_right = 1300.0
+offset_bottom = 178.0
+scale = Vector2(0.88, 0.88)
+metadata/speed = 11.0
+
+[node name="Main" type="ColorRect" parent="Sky/Cloud1"]
+layout_mode = 0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(1, 1, 1, 1)
+
+[node name="Top" type="ColorRect" parent="Sky/Cloud1"]
+layout_mode = 0
+offset_left = 34.0
+offset_top = -18.0
+offset_right = 108.0
+offset_bottom = 4.0
+color = Color(1, 1, 1, 1)
+
+[node name="Shade" type="ColorRect" parent="Sky/Cloud1"]
+layout_mode = 0
+offset_top = 30.0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(0.913725, 0.968627, 1, 1)
+
+[node name="Main" type="ColorRect" parent="Sky/Cloud2"]
+layout_mode = 0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(1, 1, 1, 1)
+
+[node name="Top" type="ColorRect" parent="Sky/Cloud2"]
+layout_mode = 0
+offset_left = 34.0
+offset_top = -18.0
+offset_right = 108.0
+offset_bottom = 4.0
+color = Color(1, 1, 1, 1)
+
+[node name="Shade" type="ColorRect" parent="Sky/Cloud2"]
+layout_mode = 0
+offset_top = 30.0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(0.913725, 0.968627, 1, 1)
+
+[node name="Main" type="ColorRect" parent="Sky/Cloud3"]
+layout_mode = 0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(1, 1, 1, 1)
+
+[node name="Top" type="ColorRect" parent="Sky/Cloud3"]
+layout_mode = 0
+offset_left = 34.0
+offset_top = -18.0
+offset_right = 108.0
+offset_bottom = 4.0
+color = Color(1, 1, 1, 1)
+
+[node name="Shade" type="ColorRect" parent="Sky/Cloud3"]
+layout_mode = 0
+offset_top = 30.0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(0.913725, 0.968627, 1, 1)
+
+[node name="Main" type="ColorRect" parent="Sky/Cloud4"]
+layout_mode = 0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(1, 1, 1, 1)
+
+[node name="Top" type="ColorRect" parent="Sky/Cloud4"]
+layout_mode = 0
+offset_left = 34.0
+offset_top = -18.0
+offset_right = 108.0
+offset_bottom = 4.0
+color = Color(1, 1, 1, 1)
+
+[node name="Shade" type="ColorRect" parent="Sky/Cloud4"]
+layout_mode = 0
+offset_top = 30.0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(0.913725, 0.968627, 1, 1)
+
+[node name="Main" type="ColorRect" parent="Sky/Cloud5"]
+layout_mode = 0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(1, 1, 1, 1)
+
+[node name="Top" type="ColorRect" parent="Sky/Cloud5"]
+layout_mode = 0
+offset_left = 34.0
+offset_top = -18.0
+offset_right = 108.0
+offset_bottom = 4.0
+color = Color(1, 1, 1, 1)
+
+[node name="Shade" type="ColorRect" parent="Sky/Cloud5"]
+layout_mode = 0
+offset_top = 30.0
+offset_right = 150.0
+offset_bottom = 38.0
+color = Color(0.913725, 0.968627, 1, 1)
+
+[node name="Scenery" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Ground" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="GrassTop" type="ColorRect" parent="Ground"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -178.0
+offset_bottom = -164.0
+color = Color(0.556863, 0.831373, 0.352941, 1)
+
+[node name="Grass" type="ColorRect" parent="Ground"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -172.0
+offset_bottom = -104.0
+color = Color(0.345098, 0.701961, 0.290196, 1)
+
+[node name="Dirt" type="ColorRect" parent="Ground"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -148.0
+color = Color(0.541176, 0.352941, 0.207843, 1)
+
+[node name="DirtShade" type="ColorRect" parent="Ground"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+color = Color(0.368627, 0.227451, 0.133333, 1)
+
+[node name="Decor" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Content" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="TitleShadow" type="Label" parent="Content"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 137.0
+offset_right = 1280.0
+offset_bottom = 233.0
+theme_override_colors/font_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_font_sizes/font_size = 76
+horizontal_alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Content"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 132.0
+offset_right = 1280.0
+offset_bottom = 228.0
+theme_override_colors/font_color = Color(1, 0.984314, 0.909804, 1)
+theme_override_colors/font_outline_color = Color(0.184314, 0.478431, 0.203922, 1)
+theme_override_constants/outline_size = 16
+theme_override_font_sizes/font_size = 76
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="Content"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 246.0
+offset_right = 1280.0
+offset_bottom = 278.0
+theme_override_colors/font_color = Color(0.090196, 0.227451, 0.321569, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+
+[node name="Menu" type="VBoxContainer" parent="Content"]
+layout_mode = 0
+offset_left = 520.0
+offset_top = 336.0
+offset_right = 760.0
+offset_bottom = 616.0
+theme_override_constants/separation = 16
+mouse_filter = 2
+
+[node name="StartButton" type="Button" parent="Content/Menu"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 56)
+theme_type_variation = &"PrimaryButton"
+
+[node name="ContinueButton" type="Button" parent="Content/Menu"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(240, 46)
+
+[node name="QuitButton" type="Button" parent="Content/Menu"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 46)
+
+[node name="SettingsButton" type="Button" parent="Content/Menu"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(240, 46)
+
+[node name="SettingsPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+offset_left = 145.0
+offset_top = 80.0
+offset_right = 1135.0
+offset_bottom = 670.0
+theme_type_variation = &"DialogPanel"
+
+[node name="SettingsScroll" type="ScrollContainer" parent="SettingsPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(880, 510)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="SettingsBox" type="HBoxContainer" parent="SettingsPanel/SettingsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 32
+
+[node name="GeneralBox" type="VBoxContainer" parent="SettingsPanel/SettingsScroll/SettingsBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="SettingsTitle" type="Label" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.184314, 0.478431, 0.203922, 1)
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="LanguageRow" type="HBoxContainer" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="LanguageLabel" type="Label" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/LanguageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+theme_override_colors/font_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_font_sizes/font_size = 17
+vertical_alignment = 1
+
+[node name="LanguageOption" type="OptionButton" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/LanguageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(220, 36)
+
+[node name="MusicRow" type="HBoxContainer" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="MusicLabel" type="Label" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/MusicRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+theme_override_colors/font_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_font_sizes/font_size = 17
+vertical_alignment = 1
+
+[node name="MusicSlider" type="HSlider" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/MusicRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(260, 36)
+max_value = 1.0
+step = 0.05
+
+[node name="SfxRow" type="HBoxContainer" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="SfxLabel" type="Label" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/SfxRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+theme_override_colors/font_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_font_sizes/font_size = 17
+vertical_alignment = 1
+
+[node name="SfxSlider" type="HSlider" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/SfxRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(260, 36)
+max_value = 1.0
+step = 0.05
+
+[node name="FullscreenRow" type="HBoxContainer" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="FullscreenLabel" type="Label" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/FullscreenRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+theme_override_colors/font_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_font_sizes/font_size = 17
+vertical_alignment = 1
+
+[node name="FullscreenCheck" type="CheckBox" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/FullscreenRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ShakeRow" type="HBoxContainer" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="ShakeLabel" type="Label" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/ShakeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+theme_override_colors/font_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_font_sizes/font_size = 17
+vertical_alignment = 1
+
+[node name="ShakeCheck" type="CheckBox" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/ShakeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="HitStopRow" type="HBoxContainer" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="HitStopLabel" type="Label" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/HitStopRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+theme_override_colors/font_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_font_sizes/font_size = 17
+vertical_alignment = 1
+
+[node name="HitStopCheck" type="CheckBox" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox/HitStopRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="SettingsSpacer" type="Control" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CloseSettingsButton" type="Button" parent="SettingsPanel/SettingsScroll/SettingsBox/GeneralBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(180, 42)
+size_flags_horizontal = 4
+theme_type_variation = &"PrimaryButton"
+
+[node name="KeybindsBox" type="VBoxContainer" parent="SettingsPanel/SettingsScroll/SettingsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="ControlsTitle" type="Label" parent="SettingsPanel/SettingsScroll/SettingsBox/KeybindsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.184314, 0.478431, 0.203922, 1)
+theme_override_font_sizes/font_size = 24

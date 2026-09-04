@@ -3,7 +3,7 @@ class_name PixelUI
 const Palette := preload("res://scripts/systems/pixel_palette.gd")
 
 
-static func panel_style(bg_color: Color, border_color: Color, corner_radius := 6) -> StyleBoxFlat:
+static func _panel_style(bg_color: Color, border_color: Color, corner_radius := 6) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg_color
 	style.border_color = border_color
@@ -20,7 +20,7 @@ static func style_button(button: Button, primary := false) -> void:
 	var base := Palette.GRASS if primary else Palette.WOOD
 	var hover := Palette.GRASS_LIGHT if primary else Palette.WOOD_LIGHT
 	var pressed := Palette.GRASS_DARK if primary else Palette.WOOD_DARK
-	var normal := panel_style(base, Palette.DIRT_OUTLINE, 6)
+	var normal := _panel_style(base, Palette.DIRT_OUTLINE, 6)
 	normal.set_border_width_all(3)
 	normal.shadow_size = 4
 	normal.shadow_offset = Vector2(0, 3)
@@ -64,37 +64,3 @@ static func icon_button(text: String, texture: Texture2D, action: Callable, prim
 	style_button(button, primary)
 	button.pressed.connect(action)
 	return button
-
-
-static func make_bar(minimum_size: Vector2, base: Color, highlight: Color) -> ProgressBar:
-	var bar := ProgressBar.new()
-	bar.custom_minimum_size = minimum_size
-	bar.show_percentage = false
-	var background := panel_style(Color(Palette.OUTLINE, 0.82), Palette.OUTLINE, 4)
-	background.set_border_width_all(2)
-	background.border_width_bottom = 4
-	background.shadow_size = 0
-	background.content_margin_left = 2.0
-	background.content_margin_right = 2.0
-	background.content_margin_top = 2.0
-	background.content_margin_bottom = 2.0
-
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = base.lerp(highlight, 0.28)
-	fill.border_color = highlight
-	fill.border_width_top = 2
-	fill.set_corner_radius_all(4)
-	fill.corner_detail = 4
-	fill.anti_aliasing = true
-	bar.add_theme_stylebox_override("background", background)
-	bar.add_theme_stylebox_override("fill", fill)
-	return bar
-
-
-static func vertical_gradient_texture(top: Color, bottom: Color) -> ImageTexture:
-	var image := Image.create(4, 16, false, Image.FORMAT_RGBA8)
-	for y in range(image.get_height()):
-		var color := top.lerp(bottom, float(y) / float(image.get_height() - 1))
-		for x in range(image.get_width()):
-			image.set_pixel(x, y, color)
-	return ImageTexture.create_from_image(image)

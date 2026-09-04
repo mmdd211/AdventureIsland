@@ -1,0 +1,91 @@
+[gd_resource type="Resource" script_class="RegionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/boss_form_data.gd" id="1_kr26j"]
+[ext_resource type="Script" path="res://scripts/items/boss_data.gd" id="2_nk1sb"]
+[ext_resource type="Script" path="res://scripts/world/map_data.gd" id="3_3saff"]
+[ext_resource type="Script" path="res://scripts/world/region_data.gd" id="4_1lruj"]
+
+[sub_resource type="Resource" id="Resource_j1mj4"]
+script = ExtResource("1_kr26j")
+id = "whale"
+display_name = "虚空星鲸"
+max_health = 885
+contact_damage = 34
+collision = Vector2(126, 98)
+move_speed = 96.0
+gravity_enabled = false
+basic_attack = "tail_wave"
+skills = PackedStringArray("void_whirl", "star_tide")
+
+[sub_resource type="Resource" id="Resource_7c5gp"]
+script = ExtResource("1_kr26j")
+id = "judge"
+display_name = "星门审判者"
+max_health = 835
+contact_damage = 36
+collision = Vector2(76, 122)
+move_speed = 108.0
+basic_attack = "great_slash"
+skills = PackedStringArray("rift_blade", "judgment_pillars")
+
+[sub_resource type="Resource" id="Resource_726a8"]
+script = ExtResource("2_nk1sb")
+id = "sky_gatekeeper"
+region_id = "gate"
+display_name = "星门审判者"
+body_color = Color(0.40784314, 0.84705883, 1, 1)
+resource_prefix = "sky_gatekeeper"
+forms = Array[ExtResource("1_kr26j")]([SubResource("Resource_j1mj4"), SubResource("Resource_7c5gp")])
+
+[sub_resource type="Resource" id="Resource_auvwc"]
+script = ExtResource("3_3saff")
+id = "gate_1"
+display_name = "门阶浮岛"
+region_id = "gate"
+width = 2500.0
+offset_x = 44100.0
+scene_path = "res://scenes/levels/zone_gate_1.tscn"
+
+[sub_resource type="Resource" id="Resource_owdj7"]
+script = ExtResource("3_3saff")
+id = "gate_2"
+display_name = "群星回桥"
+region_id = "gate"
+width = 2700.0
+offset_x = 46600.0
+scene_path = "res://scenes/levels/zone_gate_2.tscn"
+
+[sub_resource type="Resource" id="Resource_vew21"]
+script = ExtResource("3_3saff")
+id = "gate_3"
+display_name = "天穹之门"
+region_id = "gate"
+width = 2000.0
+offset_x = 49300.0
+scene_path = "res://scenes/levels/zone_gate_3.tscn"
+
+[resource]
+script = ExtResource("4_1lruj")
+id = "gate"
+display_name = "天穹之门"
+difficulty = 6
+theme = {
+"accent": "ffffff",
+"far": "2e55b8",
+"ground_body": "3552b8",
+"ground_dark": "111b55",
+"ground_grass": "68d8ff",
+"landmark_a": "fff0a6",
+"landmark_b": "61d6ff",
+"metadata": {
+"motif": "sky_stars"
+},
+"near": "17337a",
+"sky_bottom": "8cdfff",
+"sky_top": "14256f"
+}
+weapon_id = "star_edge"
+armor_id = "sky_armor"
+map_ids = PackedStringArray("gate_1", "gate_2", "gate_3")
+maps = Array[ExtResource("3_3saff")]([SubResource("Resource_auvwc"), SubResource("Resource_owdj7"), SubResource("Resource_vew21")])
+boss = SubResource("Resource_726a8")

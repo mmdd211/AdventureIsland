@@ -1,0 +1,75 @@
+[gd_resource type="Resource" script_class="EquipmentCatalog" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/equipment_data.gd" id="1_8aclx"]
+[ext_resource type="Script" path="res://scripts/items/equipment_catalog.gd" id="2_ru3xi"]
+
+[sub_resource type="Resource" id="Resource_qn64v"]
+script = ExtResource("1_8aclx")
+id = "none_armor"
+slot = "armor"
+display_name = "无防具"
+icon_color = Color(0.37254903, 0.40784314, 0.4392157, 1)
+
+[sub_resource type="Resource" id="Resource_k1rtw"]
+script = ExtResource("1_8aclx")
+id = "moss_light"
+slot = "armor"
+display_name = "苔花轻甲"
+description = "HP+10，减伤5%"
+hp_bonus = 10
+damage_reduction = 0.05
+icon_color = Color(0.40392157, 0.7882353, 0.3529412, 1)
+
+[sub_resource type="Resource" id="Resource_tyv3x"]
+script = ExtResource("1_8aclx")
+id = "mushroom_shell"
+slot = "armor"
+display_name = "菌壳护甲"
+description = "HP+20，减伤8%"
+hp_bonus = 20
+damage_reduction = 0.08
+icon_color = Color(0.8509804, 0.28235295, 0.21568628, 1)
+
+[sub_resource type="Resource" id="Resource_qsxrh"]
+script = ExtResource("1_8aclx")
+id = "root_weave"
+slot = "armor"
+display_name = "根须披甲"
+description = "HP+30，减伤10%"
+hp_bonus = 30
+damage_reduction = 0.1
+icon_color = Color(0.29411766, 0.7058824, 0.5372549, 1)
+
+[sub_resource type="Resource" id="Resource_mo3q8"]
+script = ExtResource("1_8aclx")
+id = "gale_plate"
+slot = "armor"
+display_name = "风哨胸甲"
+description = "HP+40，减伤12%"
+hp_bonus = 40
+damage_reduction = 0.12
+icon_color = Color(0.9098039, 0.34117648, 0.29411766, 1)
+
+[sub_resource type="Resource" id="Resource_1ht55"]
+script = ExtResource("1_8aclx")
+id = "rune_armor"
+slot = "armor"
+display_name = "遗迹符甲"
+description = "HP+50，减伤15%"
+hp_bonus = 50
+damage_reduction = 0.15
+icon_color = Color(0.46666667, 0.45490196, 0.5294118, 1)
+
+[sub_resource type="Resource" id="Resource_06qj5"]
+script = ExtResource("1_8aclx")
+id = "sky_armor"
+slot = "armor"
+display_name = "天穹圣甲"
+description = "HP+70，减伤18%"
+hp_bonus = 70
+damage_reduction = 0.18
+icon_color = Color(0.38039216, 0.8392157, 1, 1)
+
+[resource]
+script = ExtResource("2_ru3xi")
+items = Array[ExtResource("1_8aclx")]([SubResource("Resource_qn64v"), SubResource("Resource_k1rtw"), SubResource("Resource_tyv3x"), SubResource("Resource_qsxrh"), SubResource("Resource_mo3q8"), SubResource("Resource_1ht55"), SubResource("Resource_06qj5")])

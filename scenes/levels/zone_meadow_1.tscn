@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/zone_builder.gd" id="1_builder"]
+[ext_resource type="Resource" path="res://data/layouts/meadow_1.tres" id="2_layout"]
+
+[node name="ZoneMeadow1" type="Node2D"]
+script = ExtResource("1_builder")
+layout = ExtResource("2_layout")

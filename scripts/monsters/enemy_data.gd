@@ -14,3 +14,5 @@ extends Resource
 @export var detection_range := 180.0
 @export var charge_speed := 240.0
 @export var windup_time := 0.45
+@export var status_on_contact := ""
+@export var status_duration := 0.0

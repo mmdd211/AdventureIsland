@@ -1,6 +1,193 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/game_hud.gd" id="1_hud"]
+[ext_resource type="Theme" path="res://assets/themes/adventure_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://scripts/ui/world_map_display.gd" id="3_minimap"]
 
 [node name="GameHUD" type="CanvasLayer"]
+layer = 20
 script = ExtResource("1_hud")
+
+[node name="Root" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme = ExtResource("2_theme")
+
+[node name="MiniMapPanel" type="PanelContainer" parent="Root"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -314.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 118.0
+theme_type_variation = &"MiniMapPanel"
+
+[node name="ZoneMiniMap" type="Control" parent="Root/MiniMapPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(286, 84)
+script = ExtResource("3_minimap")
+compact = true
+
+[node name="ZoneBanner" type="PanelContainer" parent="Root"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -190.0
+offset_top = 108.0
+offset_right = 190.0
+offset_bottom = 164.0
+custom_minimum_size = Vector2(380, 56)
+mouse_filter = 2
+
+[node name="BannerLabel" type="Label" parent="Root/ZoneBanner"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.184314, 0.478431, 0.203922, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 7
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StatusPanel" type="PanelContainer" parent="Root"]
+theme_type_variation = &"StatusPanel"
+
+[node name="Stack" type="VBoxContainer" parent="Root/StatusPanel"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="HPRow" type="HBoxContainer" parent="Root/StatusPanel/Stack"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HPIcon" type="Label" parent="Root/StatusPanel/Stack/HPRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(18, 17)
+theme_override_colors/font_color = Color(0.847059, 0.25098, 0.301961, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.92)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 15
+text = "♥"
+horizontal_alignment = 1
+
+[node name="HPBar" type="ProgressBar" parent="Root/StatusPanel/Stack/HPRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(148, 16)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_type_variation = &"HPBar"
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="HPValue" type="Label" parent="Root/StatusPanel/Stack/HPRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.92)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
+text = "100 / 100"
+
+[node name="EXPRow" type="HBoxContainer" parent="Root/StatusPanel/Stack"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EXPIcon" type="Label" parent="Root/StatusPanel/Stack/EXPRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(18, 17)
+theme_override_colors/font_color = Color(0.172549, 0.560784, 0.721569, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.92)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 14
+text = "★"
+horizontal_alignment = 1
+
+[node name="EXPBar" type="ProgressBar" parent="Root/StatusPanel/Stack/EXPRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(148, 16)
+layout_mode = 2
+theme_type_variation = &"ExpBar"
+max_value = 100.0
+show_percentage = false
+
+[node name="EXPValue" type="Label" parent="Root/StatusPanel/Stack/EXPRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.92)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
+text = "Lv.1 0/100"
+
+[node name="DataRow" type="HBoxContainer" parent="Root/StatusPanel/Stack"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LevelLabel" type="Label" parent="Root/StatusPanel/Stack/DataRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.184314, 0.478431, 0.203922, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.92)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "Lv.1"
+
+[node name="CoinIcon" type="TextureRect" parent="Root/StatusPanel/Stack/DataRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(17, 17)
+layout_mode = 2
+stretch_mode = 5
+
+[node name="CoinLabel" type="Label" parent="Root/StatusPanel/Stack/DataRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.184314, 0.109804, 0.066667, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.92)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "0"
+
+[node name="ScoreLabel" type="Label" parent="Root/StatusPanel/Stack/DataRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.92)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 10
+text = "SCORE 0"
+
+[node name="TimeLabel" type="Label" parent="Root/StatusPanel/Stack/DataRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.141176, 0.101961, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.92)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
+text = "00:00"
+
+[node name="EquipmentRow" type="HBoxContainer" parent="Root/StatusPanel/Stack"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 2
+
+[node name="WeaponIcon" type="TextureRect" parent="Root/StatusPanel/Stack/EquipmentRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+
+[node name="ArmorIcon" type="TextureRect" parent="Root/StatusPanel/Stack/EquipmentRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1

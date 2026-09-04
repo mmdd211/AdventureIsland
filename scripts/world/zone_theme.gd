@@ -4,9 +4,11 @@ const AMBIENT_SCRIPT := preload("res://scripts/effects/zone_ambient.gd")
 
 static func build(zone: Node2D) -> void:
 	var theme: Dictionary = zone.zone_theme
+	_add_parallax(zone, theme)
 	_add_backdrop(zone, theme)
 	_add_landmarks(zone, theme)
 	_add_ambient(zone, theme)
+	_add_region_lighting(zone, theme)
 
 static func _add_backdrop(zone: Node2D, theme: Dictionary) -> void:
 	var backdrop := TextureRect.new()
@@ -18,6 +20,29 @@ static func _add_backdrop(zone: Node2D, theme: Dictionary) -> void:
 	backdrop.z_index = -100
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	zone.add_child(backdrop)
+
+static func _add_parallax(zone: Node2D, theme: Dictionary) -> void:
+	var root := Parallax2D.new()
+	root.name = "ThemeParallax"
+	root.scroll_scale = Vector2(0.24, 0.72)
+	root.repeat_size = Vector2(820.0, 0.0)
+	root.z_index = -110
+	zone.add_child(root)
+
+	var far_color := Color(str(theme.far)).darkened(0.18)
+	for layer_index in range(3):
+		var layer := Polygon2D.new()
+		layer.name = "FarLayer%d" % layer_index
+		layer.color = Color(far_color, 0.34 - float(layer_index) * 0.07)
+		var base_x := float(layer_index) * 270.0
+		var points := PackedVector2Array([
+			Vector2(base_x, 420.0),
+			Vector2(base_x + 140.0, 250.0 - float(layer_index) * 28.0),
+			Vector2(base_x + 300.0, 335.0 - float(layer_index) * 12.0),
+			Vector2(base_x + 440.0, 415.0),
+		])
+		layer.polygon = points
+		root.add_child(layer)
 
 static func _add_landmarks(zone: Node2D, theme: Dictionary) -> void:
 	var root := Node2D.new()
@@ -60,6 +85,57 @@ static func _add_ambient(zone: Node2D, theme: Dictionary) -> void:
 		mote.set_meta("phase", random.randf_range(0.0, TAU))
 		mote.set_meta("drift", random.randf_range(5.0, 16.0))
 		ambient.add_child(mote)
+
+static func _add_region_lighting(zone: Node2D, theme: Dictionary) -> void:
+	var motif := _motif(theme)
+	if not motif in ["mushroom_canopy", "wind_mesas", "mossy_arches"]:
+		return
+	var light_color := Color(str(theme.accent))
+	var light_positions: Array = []
+	match motif:
+		"mushroom_canopy":
+			light_color = Color("9fffcc")
+			light_positions = [
+				Vector2(520, 360), Vector2(1240, 330), Vector2(1860, 375),
+				Vector2(2480, 330),
+			]
+		"wind_mesas":
+			light_color = Color("fff0b0")
+			light_positions = [
+				Vector2(420, 260), Vector2(1160, 300), Vector2(1880, 260),
+				Vector2(2500, 330),
+			]
+		"mossy_arches":
+			light_color = Color("d9d2ea")
+			light_positions = [
+				Vector2(560, 340), Vector2(1280, 310), Vector2(1980, 350),
+				Vector2(2540, 310),
+			]
+	var root := Node2D.new()
+	root.name = "RegionLights"
+	root.z_index = 30
+	zone.add_child(root)
+	var texture := _create_light_texture(light_color)
+	for index in range(light_positions.size()):
+		var light := PointLight2D.new()
+		light.name = "RegionLight%d" % index
+		light.texture = texture
+		light.color = Color(light_color, 0.55)
+		light.energy = 0.55 + 0.08 * float(index % 3)
+		light.texture_scale = 3.6 + 0.4 * float(index % 2)
+		light.position = light_positions[index]
+		root.add_child(light)
+
+static func _create_light_texture(color: Color) -> ImageTexture:
+	var size := 128
+	var center := float(size - 1) * 0.5
+	var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in range(size):
+		for x in range(size):
+			var distance := Vector2(float(x) - center, float(y) - center).length() / center
+			var alpha := clampf(1.0 - distance, 0.0, 1.0)
+			image.set_pixel(x, y, Color(color, pow(alpha, 1.8)))
+	return ImageTexture.create_from_image(image)
 
 
 static func _create_ambient_texture(theme: Dictionary) -> ImageTexture:

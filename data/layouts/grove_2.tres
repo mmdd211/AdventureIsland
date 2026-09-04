@@ -1,0 +1,146 @@
+[gd_resource type="Resource" script_class="ZoneLayout" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/zone_object_data.gd" id="1_8mb86"]
+[ext_resource type="Script" path="res://scripts/world/zone_layout.gd" id="2_pdmmf"]
+
+[sub_resource type="Resource" id="Resource_gg6oe"]
+script = ExtResource("1_8mb86")
+kind = "checkpoint"
+position = Vector2(160, 470)
+
+[sub_resource type="Resource" id="Resource_ruqvf"]
+script = ExtResource("1_8mb86")
+position = Vector2(620, 535)
+size = Vector2(1240, 30)
+
+[sub_resource type="Resource" id="Resource_scpch"]
+script = ExtResource("1_8mb86")
+position = Vector2(1850, 535)
+size = Vector2(1500, 30)
+
+[sub_resource type="Resource" id="Resource_eegpv"]
+script = ExtResource("1_8mb86")
+kind = "platform"
+position = Vector2(500, 410)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_233i0"]
+script = ExtResource("1_8mb86")
+kind = "platform"
+position = Vector2(620, 420)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_532nj"]
+script = ExtResource("1_8mb86")
+kind = "platform"
+position = Vector2(980, 330)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_yv02h"]
+script = ExtResource("1_8mb86")
+kind = "platform"
+position = Vector2(1380, 390)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_2djwc"]
+script = ExtResource("1_8mb86")
+kind = "platform"
+position = Vector2(1740, 310)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_8fwfv"]
+script = ExtResource("1_8mb86")
+kind = "pickup"
+position = Vector2(500, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_pn3yc"]
+script = ExtResource("1_8mb86")
+kind = "pickup"
+position = Vector2(620, 370)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_igrkn"]
+script = ExtResource("1_8mb86")
+kind = "pickup"
+position = Vector2(980, 280)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_wo755"]
+script = ExtResource("1_8mb86")
+kind = "pickup"
+position = Vector2(1380, 340)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_bmom6"]
+script = ExtResource("1_8mb86")
+kind = "pickup"
+position = Vector2(1740, 260)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_x02pm"]
+script = ExtResource("1_8mb86")
+kind = "enemy"
+position = Vector2(620, 505)
+label = "root_ambusher"
+
+[sub_resource type="Resource" id="Resource_7p7dk"]
+script = ExtResource("1_8mb86")
+kind = "enemy"
+position = Vector2(980, 320)
+label = "glow_bat"
+
+[sub_resource type="Resource" id="Resource_1mo1n"]
+script = ExtResource("1_8mb86")
+kind = "enemy"
+position = Vector2(1380, 505)
+label = "root_ambusher"
+
+[sub_resource type="Resource" id="Resource_d648j"]
+script = ExtResource("1_8mb86")
+kind = "enemy"
+position = Vector2(1740, 300)
+label = "glow_bat"
+
+[sub_resource type="Resource" id="Resource_ta7rj"]
+script = ExtResource("1_8mb86")
+kind = "moving_platform"
+position = Vector2(1180, 420)
+label = "Grove"
+travel = Vector2(130, 55)
+period = 3.3
+
+[sub_resource type="Resource" id="Resource_rjcte"]
+script = ExtResource("1_8mb86")
+kind = "darkness"
+float_value = 0.36
+
+[sub_resource type="Resource" id="Resource_5f8mf"]
+script = ExtResource("1_8mb86")
+kind = "portal"
+position = Vector2(95, 468)
+label = "left"
+target_zone_id = "grove_1"
+target_portal_id = "right"
+
+[sub_resource type="Resource" id="Resource_4xd44"]
+script = ExtResource("1_8mb86")
+kind = "portal"
+position = Vector2(2590, 468)
+label = "right"
+target_zone_id = "grove_3"
+target_portal_id = "left"
+
+[resource]
+script = ExtResource("2_pdmmf")
+objects = Array[ExtResource("1_8mb86")]([SubResource("Resource_gg6oe"), SubResource("Resource_ruqvf"), SubResource("Resource_scpch"), SubResource("Resource_eegpv"), SubResource("Resource_233i0"), SubResource("Resource_532nj"), SubResource("Resource_yv02h"), SubResource("Resource_2djwc"), SubResource("Resource_8fwfv"), SubResource("Resource_pn3yc"), SubResource("Resource_igrkn"), SubResource("Resource_wo755"), SubResource("Resource_bmom6"), SubResource("Resource_x02pm"), SubResource("Resource_7p7dk"), SubResource("Resource_1mo1n"), SubResource("Resource_d648j"), SubResource("Resource_ta7rj"), SubResource("Resource_rjcte"), SubResource("Resource_5f8mf"), SubResource("Resource_4xd44")])

@@ -15,10 +15,8 @@ signal boss_defeated(region_id: String)
 
 const BASE_MAX_HP := 100
 const BASE_REQUIRED_EXP := 100
-const INITIAL_ZONE_ID := "meadow"
+const INITIAL_ZONE_ID := "meadow_1"
 const INITIAL_MAP_ID := "meadow_1"
-const EQUIPMENT_SCRIPT := preload("res://scripts/items/equipment_library.gd")
-
 var max_hp := BASE_MAX_HP
 var current_hp := BASE_MAX_HP
 var level_hp_bonus := 0
@@ -47,6 +45,8 @@ var final_time := 0.0
 var level_finished := false
 # 点击开始/重开后是否先走加载界面：由 title_screen、game_screens 置位，world_map 消费。
 var pending_loading_screen := false
+# 由标题屏置位：加载完成后不从初始点开始，而是恢复 checkpoint 位置与区域。
+var pending_restore_save := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -137,14 +137,13 @@ func activate_zone(zone_id: String, spawn_position: Vector2) -> void:
 	map_state_changed.emit()
 
 func activate_map(map_id: String, spawn_position: Vector2) -> void:
-	var maps := load("res://scripts/world/world_maps.gd")
-	var metadata: Dictionary = maps.map_metadata(map_id)
+	var metadata := DataCatalog.map_metadata(map_id)
 	current_map_id = map_id
 	current_region_id = str(metadata.get("region_id", "meadow"))
 	activate_zone(map_id, spawn_position)
 
 func get_equipment(id_value: String) -> EquipmentData:
-	return EQUIPMENT_SCRIPT.create(id_value)
+	return DataCatalog.equipment(id_value)
 
 func get_current_weapon() -> EquipmentData:
 	return get_equipment(equipped_weapon_id)
@@ -195,8 +194,7 @@ func equip(id_value: String) -> bool:
 	return true
 
 func _region_metadata(region_id: String) -> Dictionary:
-	var maps := load("res://scripts/world/world_maps.gd")
-	return maps.REGIONS.get(region_id, {})
+	return DataCatalog.region_metadata(region_id)
 
 func _recalculate_max_hp() -> void:
 	var armor := get_equipment(equipped_armor_id)
@@ -246,6 +244,99 @@ func complete_level() -> void:
 	level_finished = true
 	final_time = elapsed_time
 	level_completed.emit()
+
+func create_snapshot() -> Dictionary:
+	var checkpoints := {}
+	for map_id in zone_checkpoints:
+		var position_value := zone_checkpoints[map_id] as Vector2
+		checkpoints[str(map_id)] = [position_value.x, position_value.y]
+	return {
+		"version": 1,
+		"max_hp": max_hp,
+		"current_hp": current_hp,
+		"level_hp_bonus": level_hp_bonus,
+		"current_exp": current_exp,
+		"required_exp": required_exp,
+		"current_level": current_level,
+		"coins": coins,
+		"score": score,
+		"kills": kills,
+		"deaths": deaths,
+		"total_coin_pickups": total_coin_pickups,
+		"collected_coin_pickups": collected_coin_pickups,
+		"current_zone_id": current_zone_id,
+		"current_map_id": current_map_id,
+		"current_region_id": current_region_id,
+		"discovered_zones": discovered_zones.duplicate(),
+		"zone_checkpoints": checkpoints,
+		"checkpoint_zone_id": checkpoint_zone_id,
+		"checkpoint_position": [checkpoint_position.x, checkpoint_position.y],
+		"owned_equipment": owned_equipment.duplicate(),
+		"equipped_weapon_id": equipped_weapon_id,
+		"equipped_armor_id": equipped_armor_id,
+		"defeated_bosses": defeated_bosses.duplicate(),
+		"elapsed_time": elapsed_time,
+		"final_time": final_time,
+		"level_finished": level_finished,
+	}
+
+func restore_snapshot(data: Dictionary) -> bool:
+	if int(data.get("version", 0)) != 1:
+		return false
+	max_hp = maxi(1, int(data.get("max_hp", max_hp)))
+	current_hp = clampi(int(data.get("current_hp", max_hp)), 0, max_hp)
+	level_hp_bonus = maxi(0, int(data.get("level_hp_bonus", 0)))
+	current_exp = maxi(0, int(data.get("current_exp", 0)))
+	required_exp = maxi(1, int(data.get("required_exp", BASE_REQUIRED_EXP)))
+	current_level = maxi(1, int(data.get("current_level", 1)))
+	coins = maxi(0, int(data.get("coins", 0)))
+	score = maxi(0, int(data.get("score", 0)))
+	kills = maxi(0, int(data.get("kills", 0)))
+	deaths = maxi(0, int(data.get("deaths", 0)))
+	total_coin_pickups = maxi(0, int(data.get("total_coin_pickups", 0)))
+	collected_coin_pickups = maxi(0, int(data.get("collected_coin_pickups", 0)))
+	current_zone_id = str(data.get("current_zone_id", INITIAL_ZONE_ID))
+	current_map_id = str(data.get("current_map_id", INITIAL_MAP_ID))
+	current_region_id = str(data.get("current_region_id", "meadow"))
+	discovered_zones.clear()
+	for zone_id in data.get("discovered_zones", [INITIAL_ZONE_ID]):
+		discovered_zones.append(str(zone_id))
+	if not discovered_zones.has(INITIAL_ZONE_ID):
+		discovered_zones.append(INITIAL_ZONE_ID)
+	zone_checkpoints.clear()
+	var saved_checkpoints: Dictionary = data.get("zone_checkpoints", {})
+	for map_id in saved_checkpoints:
+		var coords: Array = saved_checkpoints[map_id]
+		if coords.size() >= 2:
+			zone_checkpoints[str(map_id)] = Vector2(float(coords[0]), float(coords[1]))
+	checkpoint_zone_id = str(data.get("checkpoint_zone_id", current_map_id))
+	var checkpoint_data = data.get("checkpoint_position", [120.0, 460.0])
+	if checkpoint_data is Vector2:
+		checkpoint_position = checkpoint_data
+	elif checkpoint_data is Array and (checkpoint_data as Array).size() >= 2:
+		var checkpoint_coords := checkpoint_data as Array
+		checkpoint_position = Vector2(float(checkpoint_coords[0]), float(checkpoint_coords[1]))
+	owned_equipment.clear()
+	for item_id in data.get("owned_equipment", ["grass_blade", "none_armor"]):
+		owned_equipment.append(str(item_id))
+	if not owned_equipment.has("grass_blade"):
+		owned_equipment.append("grass_blade")
+	if not owned_equipment.has("none_armor"):
+		owned_equipment.append("none_armor")
+	equipped_weapon_id = str(data.get("equipped_weapon_id", "grass_blade"))
+	equipped_armor_id = str(data.get("equipped_armor_id", "none_armor"))
+	defeated_bosses.clear()
+	for region_id in data.get("defeated_bosses", []):
+		defeated_bosses.append(str(region_id))
+	elapsed_time = maxf(0.0, float(data.get("elapsed_time", 0.0)))
+	final_time = maxf(0.0, float(data.get("final_time", 0.0)))
+	level_finished = bool(data.get("level_finished", false))
+	_recalculate_max_hp()
+	current_hp = clampi(current_hp, 0, max_hp)
+	_emit_all()
+	equipment_changed.emit()
+	map_state_changed.emit()
+	return true
 
 func get_formatted_time(value := -1.0) -> String:
 	var shown := final_time if value < 0.0 else value

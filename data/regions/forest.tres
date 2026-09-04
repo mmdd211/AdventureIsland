@@ -1,0 +1,99 @@
+[gd_resource type="Resource" script_class="RegionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/boss_form_data.gd" id="1_dnuef"]
+[ext_resource type="Script" path="res://scripts/items/boss_data.gd" id="2_gt8sq"]
+[ext_resource type="Script" path="res://scripts/world/map_data.gd" id="3_moq2w"]
+[ext_resource type="Script" path="res://scripts/world/region_data.gd" id="4_f1ok5"]
+
+[sub_resource type="Resource" id="Resource_st8aa"]
+script = ExtResource("1_dnuef")
+id = "turtle"
+display_name = "巨孢菌龟"
+max_health = 290
+contact_damage = 18
+collision = Vector2(106, 88)
+move_speed = 66.0
+basic_attack = "spore_spit"
+skills = PackedStringArray("spore_pool", "shell_roll")
+
+[sub_resource type="Resource" id="Resource_b5r2p"]
+script = ExtResource("1_dnuef")
+id = "gatekeeper"
+display_name = "酒馆守门人"
+max_health = 270
+contact_damage = 20
+collision = Vector2(82, 102)
+move_speed = 94.0
+basic_attack = "hammer_slam"
+skills = PackedStringArray("barrel_spill", "cap_bulwark")
+
+[sub_resource type="Resource" id="Resource_l6wc0"]
+script = ExtResource("2_gt8sq")
+id = "mushroom_guardian"
+region_id = "forest"
+display_name = "菌王班布"
+body_color = Color(0.8862745, 0.41568628, 0.3529412, 1)
+resource_prefix = "mushroom_guardian"
+forms = Array[ExtResource("1_dnuef")]([SubResource("Resource_st8aa"), SubResource("Resource_b5r2p")])
+
+[sub_resource type="Resource" id="Resource_8r1u1"]
+script = ExtResource("3_moq2w")
+id = "forest_1"
+display_name = "蘑菇前林"
+region_id = "forest"
+width = 2500.0
+offset_x = 7100.0
+scene_path = "res://scenes/levels/zone_forest_1.tscn"
+
+[sub_resource type="Resource" id="Resource_qlmkf"]
+script = ExtResource("3_moq2w")
+id = "forest_2"
+display_name = "菌帽栈道"
+region_id = "forest"
+width = 2700.0
+offset_x = 9600.0
+scene_path = "res://scenes/levels/zone_forest_2.tscn"
+
+[sub_resource type="Resource" id="Resource_mlwhl"]
+script = ExtResource("3_moq2w")
+id = "forest_3"
+display_name = "孢子湿地"
+region_id = "forest"
+width = 2600.0
+offset_x = 12300.0
+scene_path = "res://scenes/levels/zone_forest_3.tscn"
+
+[sub_resource type="Resource" id="Resource_25iwk"]
+script = ExtResource("3_moq2w")
+id = "forest_4"
+display_name = "巨菇祭坛"
+region_id = "forest"
+width = 2100.0
+offset_x = 14900.0
+scene_path = "res://scenes/levels/zone_forest_4.tscn"
+
+[resource]
+script = ExtResource("4_f1ok5")
+id = "forest"
+display_name = "蘑菇森林"
+difficulty = 2
+theme = {
+"accent": "e26a5a",
+"far": "2b7854",
+"ground_body": "6c472c",
+"ground_dark": "352113",
+"ground_grass": "4fae4d",
+"landmark_a": "f2d7a6",
+"landmark_b": "d94837",
+"metadata": {
+"motif": "mushroom_canopy"
+},
+"near": "174d39",
+"sky_bottom": "b8e6a4",
+"sky_top": "5fb7a7"
+}
+weapon_id = "spore_edge"
+armor_id = "mushroom_shell"
+map_ids = PackedStringArray("forest_1", "forest_2", "forest_3", "forest_4")
+maps = Array[ExtResource("3_moq2w")]([SubResource("Resource_8r1u1"), SubResource("Resource_qlmkf"), SubResource("Resource_mlwhl"), SubResource("Resource_25iwk")])
+boss = SubResource("Resource_l6wc0")

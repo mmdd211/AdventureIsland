@@ -1,0 +1,100 @@
+[gd_resource type="Resource" script_class="RegionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/boss_form_data.gd" id="1_xmkqr"]
+[ext_resource type="Script" path="res://scripts/items/boss_data.gd" id="2_e7x1o"]
+[ext_resource type="Script" path="res://scripts/world/map_data.gd" id="3_3pioi"]
+[ext_resource type="Script" path="res://scripts/world/region_data.gd" id="4_kslep"]
+
+[sub_resource type="Resource" id="Resource_6xbs4"]
+script = ExtResource("1_xmkqr")
+id = "eagle"
+display_name = "岩翼石鹰"
+max_health = 495
+contact_damage = 26
+collision = Vector2(112, 92)
+move_speed = 118.0
+gravity_enabled = false
+basic_attack = "talon_gust"
+skills = PackedStringArray("stone_feathers", "hawk_roar")
+
+[sub_resource type="Resource" id="Resource_4qjsh"]
+script = ExtResource("1_xmkqr")
+id = "hunter"
+display_name = "风哨猎手"
+max_health = 465
+contact_damage = 28
+collision = Vector2(70, 112)
+move_speed = 142.0
+basic_attack = "blade_gale"
+skills = PackedStringArray("arrow_rain", "dive_line")
+
+[sub_resource type="Resource" id="Resource_oier8"]
+script = ExtResource("2_e7x1o")
+id = "canyon_rock_eagle"
+region_id = "canyon"
+display_name = "鹰哨统领"
+body_color = Color(0.84313726, 0.6509804, 0.29411766, 1)
+resource_prefix = "canyon_rock_eagle"
+forms = Array[ExtResource("1_xmkqr")]([SubResource("Resource_6xbs4"), SubResource("Resource_4qjsh")])
+
+[sub_resource type="Resource" id="Resource_0bm6t"]
+script = ExtResource("3_3pioi")
+id = "canyon_1"
+display_name = "风口裂谷"
+region_id = "canyon"
+width = 2500.0
+offset_x = 24300.0
+scene_path = "res://scenes/levels/zone_canyon_1.tscn"
+
+[sub_resource type="Resource" id="Resource_wakef"]
+script = ExtResource("3_3pioi")
+id = "canyon_2"
+display_name = "峡壁栈道"
+region_id = "canyon"
+width = 2700.0
+offset_x = 26800.0
+scene_path = "res://scenes/levels/zone_canyon_2.tscn"
+
+[sub_resource type="Resource" id="Resource_tlhlf"]
+script = ExtResource("3_3pioi")
+id = "canyon_3"
+display_name = "流沙石道"
+region_id = "canyon"
+width = 2600.0
+offset_x = 29500.0
+scene_path = "res://scenes/levels/zone_canyon_3.tscn"
+
+[sub_resource type="Resource" id="Resource_ikj45"]
+script = ExtResource("3_3pioi")
+id = "canyon_4"
+display_name = "哨塔之巅"
+region_id = "canyon"
+width = 2100.0
+offset_x = 32100.0
+scene_path = "res://scenes/levels/zone_canyon_4.tscn"
+
+[resource]
+script = ExtResource("4_kslep")
+id = "canyon"
+display_name = "风哨峡谷"
+difficulty = 4
+theme = {
+"accent": "fff0d0",
+"far": "c7764c",
+"ground_body": "925136",
+"ground_dark": "47231b",
+"ground_grass": "d7a64b",
+"landmark_a": "e8574b",
+"landmark_b": "ffe6a1",
+"metadata": {
+"motif": "wind_mesas"
+},
+"near": "74432f",
+"sky_bottom": "ffe4a8",
+"sky_top": "f6b15f"
+}
+weapon_id = "gale_rock"
+armor_id = "gale_plate"
+map_ids = PackedStringArray("canyon_1", "canyon_2", "canyon_3", "canyon_4")
+maps = Array[ExtResource("3_3pioi")]([SubResource("Resource_0bm6t"), SubResource("Resource_wakef"), SubResource("Resource_tlhlf"), SubResource("Resource_ikj45")])
+boss = SubResource("Resource_oier8")

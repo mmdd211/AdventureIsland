@@ -19,56 +19,25 @@ func _ready() -> void:
 
 func make_enemy_texture(kind: String) -> ImageTexture:
 	# 暴露给加载界面：用于展示弹跳的史莱姆。
-	return _create_enemy_texture(kind)
+	return EnemyAssetLibrary.texture(kind)
 
 func make_boss_texture(region_id: String) -> ImageTexture:
 	return ArtLibrary.boss_texture(region_id)
 
 func make_boss_frames(region_id: String, form_id: String = "bee") -> SpriteFrames:
-	if region_id == "meadow":
-		var resource_frames := _load_pollen_queen_frames(form_id)
+	var region := DataCatalog.region(region_id)
+	if region and region.boss and not region.boss.resource_prefix.is_empty():
+		var resource_frames := BossAssetLibrary.load_frames(region.boss.resource_prefix, form_id)
 		if resource_frames != null:
 			return resource_frames
 	return load("res://scripts/monsters/boss_form_painter.gd").build_frames(region_id, form_id)
-
-func _load_pollen_queen_frames(form_id: String) -> SpriteFrames:
-	var base_path := "res://assets/sprites/monsters/pollen_queen/pollen_queen_%s" % form_id
-	var state_map := {
-		"idle": [6, 8.0, true],
-		"move": [6, 10.0, true],
-		"attack": [7, 14.0, false],
-		"skill": [8, 12.0, false],
-		"hurt": [3, 14.0, false],
-		"evolve": [8, 8.0, false],
-		"death": [6, 8.0, false],
-	}
-	var frames := SpriteFrames.new()
-	if frames.has_animation("default"):
-		frames.remove_animation("default")
-	for state in state_map.keys():
-		var settings: Array = state_map[state]
-		var count: int = settings[0]
-		var fps: float = settings[1]
-		var looping: bool = settings[2]
-		frames.add_animation(state)
-		frames.set_animation_speed(state, fps)
-		frames.set_animation_loop(state, looping)
-		for index in range(count):
-			var texture_path := "%s_%s_%02d.png" % [base_path, state, index]
-			if not FileAccess.file_exists(ProjectSettings.globalize_path(texture_path)):
-				return null
-			var image := Image.new()
-			if image.load(ProjectSettings.globalize_path(texture_path)) != OK:
-				return null
-			frames.add_frame(state, ImageTexture.create_from_image(image))
-	return frames
 
 func make_equipment_texture(item_id: String) -> ImageTexture:
 	return ArtLibrary.equipment_texture(item_id)
 
 func make_coin_texture() -> ImageTexture:
 	# 暴露给标题屏：装饰用的旋转金币。
-	return _create_coin_texture()
+	return EnemyAssetLibrary.coin_texture()
 
 func _tick_style_work() -> void:
 	# 仅在异步路径设置了 _style_work_total 时才 emit 进度；旧式调用不 emit。
@@ -76,18 +45,6 @@ func _tick_style_work() -> void:
 		return
 	_style_work_done += 1
 	style_progress.emit(_style_work_done, _style_work_total)
-
-func apply_pixel_style() -> void:
-	# 兼容旧用法：处理所有 zone，但跨帧让步，每个 zone 之间 await 一帧。
-	await get_tree().create_timer(0.2).timeout
-
-	await _apply_to_player()
-	await _apply_to_enemies()
-	# 单层关卡（如 world01.tscn）的 ground/platform/portal/pickup 直接挂在 root 下。
-	await _style_one_zone(null)
-	for zone in _collect_zones(false):
-		await _style_one_zone(zone)
-		await get_tree().process_frame
 
 func apply_pixel_style_for_active() -> void:
 	# 首次进入世界：只处理当前 process_mode != DISABLED 的 zone（通常只有 meadow），
@@ -100,9 +57,6 @@ func apply_pixel_style_for_active() -> void:
 	style_progress.emit(0, _style_work_total)
 	await _apply_to_player()
 	await _apply_to_enemies()
-	# 单层关卡（无 world_zone）也走这条路径：只画 root 直挂的非 zone 节点，
-	# 非活跃 zone 留给玩家进区时懒加载。
-	await _style_nodes(_root_level_nodes(_style_root()))
 	for zone in _collect_zones(true):
 		await _style_one_zone(zone)
 		# 记录已处理的 zone，玩家之后回到该 zone 时不必重新生成位图。
@@ -138,8 +92,6 @@ func _style_one_zone(zone: Node) -> void:
 	var root := _style_root()
 	if root == null:
 		return
-	# zone == null 表示处理 root 下所有非 zone 子节点（单层关卡如 world01，
-	# 以及兼容旧用法）；否则只处理指定 zone 的子节点。
 	await _style_nodes(_styleable_nodes(root, zone))
 
 func _find_owning_zone(node: Node) -> Node:
@@ -177,7 +129,7 @@ func _apply_to_player() -> void:
 
 		var animator := AnimatedSprite2D.new()
 		animator.name = "PixelAnimator"
-		animator.sprite_frames = _create_player_frames()
+		animator.sprite_frames = PlayerAssetLibrary.frames()
 		animator.scale = Vector2(2, 2)
 		animator.z_index = 10
 		animator.play("idle")
@@ -210,7 +162,7 @@ func _apply_sprite_to_enemy(enemy: Node) -> void:
 		kind = "mushroom"
 	var sprite := Sprite2D.new()
 	sprite.name = "PixelSprite"
-	sprite.texture = _create_enemy_texture(str(kind))
+	sprite.texture = EnemyAssetLibrary.texture(str(kind))
 	var mini = enemy.get("is_mini") if enemy.get("is_mini") != null else false
 	sprite.scale = Vector2(1.55, 1.55) if mini else Vector2(2, 2)
 	sprite.z_index = 10
@@ -310,21 +262,11 @@ func _apply_coin_style_for_nodes(nodes: Array) -> void:
 			old_sprite.queue_free()
 		var sprite := Sprite2D.new()
 		sprite.name = "PixelSprite"
-		sprite.texture = _create_coin_texture()
+		sprite.texture = EnemyAssetLibrary.coin_texture()
 		sprite.scale = Vector2(1.25, 1.25)
 		sprite.z_index = 10
 		child.add_child(sprite)
 		_tick_style_work()
-
-func _root_level_nodes(root: Node) -> Array:
-	# root 直挂的非 zone 子节点（单层关卡的 ground/portal 等）。
-	var result: Array = []
-	if root == null:
-		return result
-	for child in root.get_children():
-		if not child.is_in_group("world_zone"):
-			result.append(child)
-	return result
 
 func _is_styleable_child(child: Node) -> bool:
 	# 真正需要像素美术处理的节点，用于统计工作量（进度条分母）。
@@ -351,9 +293,6 @@ func _count_work_items(only_active: bool) -> int:
 		count += 1
 	var root := _style_root()
 	if root != null:
-		for child in _root_level_nodes(root):
-			if _is_styleable_child(child):
-				count += 1
 		for zone in _collect_zones(only_active):
 			for child in zone.get_children():
 				if _is_styleable_child(child):
@@ -385,14 +324,9 @@ func _style_root() -> Node:
 
 func _styleable_nodes(root: Node, zone_filter: Node = null) -> Array:
 	var result: Array = []
-	# 单层关卡（如 world01.tscn）的 ground/platform 直接挂在 root 下。
-	if zone_filter == null:
-		for child in root.get_children():
-			if not child.is_in_group("world_zone"):
-				result.append(child)
 	# 多区域世界地图的 world_zone 可能挂在 ZoneRoot 之类的容器下，递归收集。
 	for zone in _world_zones(root):
-		if zone_filter == null or zone == zone_filter:
+		if zone == zone_filter:
 			result.append_array(zone.get_children())
 	return result
 
@@ -497,160 +431,6 @@ func _create_portal_frame(frame_index: int, theme := {}) -> ImageTexture:
 
 	return ImageTexture.create_from_image(img)
 
-func _create_player_frames() -> SpriteFrames:
-	var frames := SpriteFrames.new()
-	if frames.has_animation("default"):
-		frames.remove_animation("default")
-
-	var definitions := {
-		"idle": {"fps": 6.0, "loop": true, "poses": ["idle"]},
-		"walk": {"fps": 10.0, "loop": true, "poses": ["walk_step_a", "walk_pass_a", "walk_step_b", "walk_pass_b"]},
-		"jump": {"fps": 8.0, "loop": false, "poses": ["jump"]},
-		"fall": {"fps": 8.0, "loop": false, "poses": ["fall"]},
-		"attack": {"fps": 15.0, "loop": false, "poses": ["attack_wind", "attack_hit", "attack_recover"]},
-	}
-	for animation_name in definitions:
-		var config = definitions[animation_name]
-		frames.add_animation(animation_name)
-		frames.set_animation_speed(animation_name, config.fps)
-		frames.set_animation_loop(animation_name, config.loop)
-		for pose in config.poses:
-			frames.add_frame(animation_name, _create_player_pose_texture(pose))
-	return frames
-
-func _create_player_texture() -> ImageTexture:
-	return _create_player_pose_texture("idle")
-
-func _create_player_pose_texture(pose: String) -> ImageTexture:
-	var img = Image.create(32, 24, false, Image.FORMAT_RGBA8)
-	var outline := Palette.OUTLINE
-	var hair := Color(0.34, 0.20, 0.13)
-	var skin := Color(1.00, 0.87, 0.71)
-	var skin_shadow := Color(0.90, 0.70, 0.56)
-	var blush := Color(0.98, 0.65, 0.58)
-	var eye := Color(0.13, 0.10, 0.13)
-	var shirt := Color("3a6fd8")
-	var shirt_dark := Color("2650a8")
-	var belt := Palette.YELLOW
-	var pants := Color(0.20, 0.26, 0.48)
-	var boots := Color(0.48, 0.30, 0.17)
-	var blade := Color(0.82, 0.88, 0.95)
-	var blade_dark := Color(0.48, 0.56, 0.68)
-	var slash := Palette.YELLOW_LIGHT
-
-	# 帽子和头部
-	_fill_rect(img, 12, 2, 8, 1, outline)
-	_fill_rect(img, 11, 3, 10, 2, Color("e0574f"))
-	_fill_rect(img, 10, 5, 12, 1, Color("b23c40"))
-	_fill_rect(img, 11, 6, 10, 1, hair)
-	_fill_rect(img, 12, 7, 8, 5, skin)
-	_fill_rect(img, 14, 9, 2, 2, eye)
-	_fill_rect(img, 18, 9, 2, 2, eye)
-	_fill_rect(img, 12, 11, 8, 1, skin_shadow)
-	_fill_rect(img, 14, 12, 5, 1, blush)
-
-	# 上半身
-	var body_y := 13
-	var body_x := 11
-	if pose == "attack_hit":
-		body_x = 12
-	elif pose == "attack_wind":
-		body_x = 10
-	_fill_rect(img, body_x, body_y + 3, 10, 1, outline)
-	_fill_rect(img, body_x + 1, body_y, 8, 3, shirt)
-	_fill_rect(img, body_x + 1, body_y + 2, 8, 1, shirt_dark)
-	_fill_rect(img, body_x + 1, body_y + 3, 8, 1, belt)
-
-	# 手臂姿态
-	if pose == "jump" or pose == "fall":
-		_fill_rect(img, 9, 8, 2, 5, shirt)
-		_fill_rect(img, 21, 8, 2, 5, shirt)
-		_fill_rect(img, 9, 13, 2, 2, skin)
-		_fill_rect(img, 21, 13, 2, 2, skin)
-	elif pose == "attack_wind":
-		_fill_rect(img, 7, 12, 4, 2, shirt)
-		_fill_rect(img, 20, 14, 2, 2, skin)
-		_fill_rect(img, 4, 7, 2, 6, blade_dark)
-		_fill_rect(img, 6, 11, 3, 2, blade)
-	elif pose.begins_with("walk_"):
-		if pose == "walk_step_a":
-			_fill_rect(img, 6, 14, 2, 4, shirt)
-			_fill_rect(img, 22, 13, 2, 4, shirt)
-			_fill_rect(img, 6, 18, 2, 2, skin)
-			_fill_rect(img, 22, 17, 2, 2, skin)
-		elif pose == "walk_step_b":
-			_fill_rect(img, 7, 13, 2, 4, shirt)
-			_fill_rect(img, 21, 14, 2, 4, shirt)
-			_fill_rect(img, 7, 17, 2, 2, skin)
-			_fill_rect(img, 21, 18, 2, 2, skin)
-		else:
-			_fill_rect(img, 9, 13, 2, 5, shirt)
-			_fill_rect(img, 21, 13, 2, 5, shirt)
-			_fill_rect(img, 9, 18, 2, 2, skin)
-			_fill_rect(img, 21, 18, 2, 2, skin)
-	elif pose == "attack_hit":
-		_fill_rect(img, 20, 12, 4, 2, skin)
-		_fill_rect(img, 23, 10, 7, 2, blade)
-		_fill_rect(img, 23, 12, 6, 1, blade_dark)
-		_fill_rect(img, 22, 7, 8, 1, slash)
-		_fill_rect(img, 25, 8, 6, 1, slash)
-		_fill_rect(img, 22, 14, 8, 1, slash)
-	else:
-		_fill_rect(img, 9, 13, 2, 5, shirt)
-		_fill_rect(img, 21, 13, 2, 5, shirt)
-		_fill_rect(img, 9, 18, 2, 2, skin)
-		_fill_rect(img, 21, 18, 2, 2, skin)
-		if pose == "attack_recover":
-			_fill_rect(img, 23, 15, 5, 2, blade)
-			_fill_rect(img, 23, 17, 4, 1, blade_dark)
-
-	# 腿部和鞋子
-	if pose == "jump":
-		_fill_rect(img, 12, 17, 3, 3, pants)
-		_fill_rect(img, 17, 17, 3, 3, pants)
-		_fill_rect(img, 10, 19, 5, 2, boots)
-		_fill_rect(img, 17, 19, 5, 2, boots)
-		_fill_rect(img, 10, 21, 12, 1, outline)
-	elif pose == "fall":
-		_fill_rect(img, 11, 17, 3, 5, pants)
-		_fill_rect(img, 18, 17, 3, 5, pants)
-		_fill_rect(img, 8, 21, 5, 2, boots)
-		_fill_rect(img, 19, 21, 5, 2, boots)
-		_fill_rect(img, 8, 23, 16, 1, outline)
-	elif pose == "idle" or pose == "attack_recover" or pose == "attack_wind":
-		_fill_rect(img, 12, 17, 3, 4, pants)
-		_fill_rect(img, 17, 17, 3, 4, pants)
-		_fill_rect(img, 10, 21, 5, 2, boots)
-		_fill_rect(img, 17, 21, 5, 2, boots)
-		_fill_rect(img, 10, 23, 12, 1, outline)
-
-	if pose == "walk_step_a":
-		_fill_rect(img, 9, 17, 3, 3, pants)
-		_fill_rect(img, 18, 17, 3, 3, pants)
-		_fill_rect(img, 7, 20, 4, 2, boots)
-		_fill_rect(img, 18, 21, 5, 2, boots)
-		_fill_rect(img, 7, 23, 16, 1, outline)
-	elif pose == "walk_pass_a":
-		_fill_rect(img, 11, 17, 3, 4, pants)
-		_fill_rect(img, 16, 17, 3, 3, pants)
-		_fill_rect(img, 10, 21, 5, 2, boots)
-		_fill_rect(img, 15, 20, 5, 2, boots)
-		_fill_rect(img, 10, 23, 10, 1, outline)
-	elif pose == "walk_step_b":
-		_fill_rect(img, 18, 17, 3, 3, pants)
-		_fill_rect(img, 11, 17, 3, 3, pants)
-		_fill_rect(img, 20, 20, 4, 2, boots)
-		_fill_rect(img, 8, 21, 5, 2, boots)
-		_fill_rect(img, 8, 23, 16, 1, outline)
-	elif pose == "walk_pass_b":
-		_fill_rect(img, 16, 17, 3, 4, pants)
-		_fill_rect(img, 11, 17, 3, 3, pants)
-		_fill_rect(img, 15, 21, 5, 2, boots)
-		_fill_rect(img, 10, 20, 5, 2, boots)
-		_fill_rect(img, 10, 23, 10, 1, outline)
-
-	return ImageTexture.create_from_image(img)
-
 func _fill_rect(img: Image, x: int, y: int, width: int, height: int, color: Color) -> void:
 	for py in range(y, y + height):
 		for px in range(x, x + width):
@@ -663,194 +443,6 @@ func _fill_ellipse(image: Image, center: Vector2, radius: Vector2, color: Color)
 			var offset := (Vector2(x, y) - center) / radius
 			if offset.length_squared() <= 1.0:
 				image.set_pixel(x, y, color)
-
-func _create_player_rows_texture() -> ImageTexture:
-	var rows := PackedStringArray([
-		"................",
-		"................",
-		"....OOOOOOOO....",
-		"...ORRRRRRRRO...",
-		"...ORrrrrrrRO...",
-		"..OrrrrrrrrrrO..",
-		"...OHHHHHHHHO...",
-		"...OHSSSSSSHO...",
-		"...OSKWSSWKSO...",
-		"...OSKWSSWKSO...",
-		"...OSSSSSSSSO...",
-		"....OsPPPPsO....",
-		".....OOOOOO.....",
-		"..OSBBBBBBBBSO..",
-		"..OSBBBBBBBBSO..",
-		"..OSBBBBBBBBSO..",
-		"...ObBBBBBBbO...",
-		"...OYYYYYYYYO...",
-		"...ONNO..ONNO...",
-		"...ONNO..ONNO...",
-		"...ONNO..ONNO...",
-		"..OTTTTOOTTTTO..",
-		"..OTTTTOOTTTTO..",
-		"..OOOOOOOOOOOO..",
-	])
-	var palette := {
-		"O": Palette.OUTLINE,
-		"R": Color("e0574f"),
-		"r": Color("b23c40"),
-		"H": Color(0.34, 0.20, 0.13),
-		"S": Color(1.00, 0.87, 0.71),
-		"s": Color(0.90, 0.70, 0.56),
-		"P": Color(0.98, 0.65, 0.58),
-		"K": Palette.OUTLINE,
-		"B": Color("3a6fd8"),
-		"b": Color("2650a8"),
-		"Y": Palette.YELLOW,
-		"N": Color(0.20, 0.26, 0.48),
-		"T": Color(0.48, 0.30, 0.17),
-	}
-	return _texture_from_rows(rows, palette)
-
-func _create_enemy_texture(kind: String) -> ImageTexture:
-	if kind in ["pollen_bee", "thorn_roller", "spore_lobber", "spore_puppet", "root_ambusher", "glow_bat", "wind_falcon", "rock_thrower", "moss_guard", "rune_weaver", "star_wisp", "sky_knight"]:
-		return ArtLibrary.enemy_texture(kind)
-	if kind == "snail":
-		return _create_snail_texture()
-	if kind == "slime":
-		return _create_slime_texture()
-	return _create_mushroom_texture()
-
-func _create_creature_texture(color: Color, flying := false, armored := false, pod := false, root := false, robed := false) -> ImageTexture:
-	var image := Image.create(16, 16, false, Image.FORMAT_RGBA8)
-	var outline := Palette.OUTLINE
-	var center := Vector2(7.5, 8.5 if not flying else 7.5)
-	var radius := Vector2(5.5, 5.5)
-	_fill_ellipse(image, center, radius, outline)
-	_fill_ellipse(image, center, radius - Vector2(1, 1), color)
-	if flying:
-		_fill_rect(image, 0, 4, 3, 2, Color.WHITE)
-		_fill_rect(image, 13, 4, 3, 2, Color.WHITE)
-		_fill_rect(image, 2, 3, 2, 1, color.lightened(0.3))
-		_fill_rect(image, 12, 3, 2, 1, color.lightened(0.3))
-	if armored:
-		_fill_rect(image, 3, 5, 10, 2, outline)
-		_fill_rect(image, 4, 6, 8, 1, color.lightened(0.25))
-	if pod:
-		_fill_rect(image, 6, 3, 4, 2, color.lightened(0.4))
-	if root:
-		_fill_rect(image, 6, 11, 1, 4, color.darkened(0.15))
-		_fill_rect(image, 9, 11, 1, 4, color.darkened(0.15))
-	if robed:
-		_fill_rect(image, 4, 10, 8, 5, color.darkened(0.2))
-		_fill_rect(image, 6, 11, 4, 1, Palette.YELLOW)
-	_fill_rect(image, 5, 6, 2, 2, Color.WHITE)
-	_fill_rect(image, 9, 6, 2, 2, Color.WHITE)
-	_fill_rect(image, 6, 7, 1, 1, outline)
-	_fill_rect(image, 10, 7, 1, 1, outline)
-	return ImageTexture.create_from_image(image)
-
-func _create_mushroom_texture() -> ImageTexture:
-	var rows := PackedStringArray([
-		"......OOO......",
-		"....OORRROO....",
-		"..ORRRRRRRRRO..",
-		".ORRWRRRRRWRRRO",
-		".OrrRRRRRRRrrO.",
-		".ORRRRRRRRRRRO.",
-		"..OOOOOOOOOOO..",
-		"...OWWWWWWO...",
-		"...OWKWWKWO...",
-		"...OWWKKWWO...",
-		"...OsWWWWsO...",
-		"...OsWWWWsO...",
-		"....OWWWWO....",
-		"....OWWWWO....",
-		".....OOOO.....",
-	])
-	var palette := {
-		"O": Palette.OUTLINE,
-		"R": Color("e07a3c"),
-		"r": Palette.YELLOW,
-		"W": Color(1.00, 0.95, 0.82),
-		"s": Color(0.91, 0.81, 0.66),
-		"K": Palette.OUTLINE,
-	}
-	return _texture_from_rows(rows, palette)
-
-func _create_snail_texture() -> ImageTexture:
-	var rows := PackedStringArray([
-		"...K.....K....",
-		"...O.....O....",
-		"...Y..BB.O....",
-		"..OBBBBBBBO...",
-		".OBbbBBBBBbBO.",
-		"OBWBBBBBBWBBBO",
-		"OBWBBBBBBWBBBO",
-		"OBBBBBBBBBBBBO",
-		"OBbBBBBBBBBbBO",
-		".OBBBBBBBBBBO.",
-		"..OBBBBBBBBO..",
-		".OYYYYYYYYYYO.",
-		"OYYKYYYYYYKYYO",
-		".OOOOOOOOOOOO.",
-		"..............",
-	])
-	var palette := {
-		"O": Palette.OUTLINE,
-		"B": Color("4f83d8"),
-		"b": Color("31599f"),
-		"W": Color(0.85, 0.94, 1.00),
-		"Y": Palette.YELLOW,
-		"K": Palette.OUTLINE,
-	}
-	return _texture_from_rows(rows, palette)
-
-func _create_slime_texture() -> ImageTexture:
-	var rows := PackedStringArray([
-		"..............",
-		".....OOOO.....",
-		"...OOGGGGOO...",
-		"..OGGggggGGO..",
-		".OGGggggggGGO.",
-		".OGWGGGGGWGGO.",
-		"OGWKGGGGGKWGGO",
-		"OGGGGGGGGGGGO.",
-		"OGGGGKKGGGGGGO",
-		"OGgGGGGGGGGgGO",
-		".OGggggggggGO.",
-		"..OOGggggOOO..",
-		"....OOOOOO....",
-		"..............",
-		"..............",
-	])
-	var palette := {
-		"O": Palette.GRASS_OUTLINE,
-		"G": Palette.GRASS,
-		"g": Palette.GRASS_LIGHT,
-		"W": Color(0.88, 1.00, 0.90),
-		"K": Palette.GRASS_OUTLINE,
-	}
-	return _texture_from_rows(rows, palette)
-
-func _create_coin_texture() -> ImageTexture:
-	var img = Image.create(16, 16, false, Image.FORMAT_RGBA8)
-	for y in range(2, 14):
-		for x in range(2, 14):
-			var dist = Vector2(x - 7.5, y - 7.5).length()
-			if dist <= 6.2:
-				img.set_pixel(x, y, Palette.YELLOW)
-			if dist <= 4.8:
-				img.set_pixel(x, y, Color("f7c948"))
-			if dist <= 2.4 and x < 8 and y < 8:
-				img.set_pixel(x, y, Palette.YELLOW_LIGHT)
-	for x in range(3, 13):
-		_set_pixel_if_empty(img, x, 2, Palette.OUTLINE)
-		_set_pixel_if_empty(img, x, 13, Palette.OUTLINE)
-	for y in range(3, 13):
-		_set_pixel_if_empty(img, 2, y, Palette.OUTLINE)
-		_set_pixel_if_empty(img, 13, y, Palette.OUTLINE)
-	return ImageTexture.create_from_image(img)
-
-func _set_pixel_if_empty(img: Image, x: int, y: int, color: Color) -> void:
-	if x >= 0 and x < img.get_width() and y >= 0 and y < img.get_height() and img.get_pixel(x, y).a == 0.0:
-		img.set_pixel(x, y, color)
 
 func _apply_terrain_decorations(body: Node2D, allow_sign: bool) -> void:
 	var theme := _body_theme(body)

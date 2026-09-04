@@ -1,0 +1,164 @@
+[gd_resource type="Resource" script_class="EnemyCatalog" format=3]
+
+[ext_resource type="Script" path="res://scripts/monsters/enemy_data.gd" id="1_8dvsp"]
+[ext_resource type="Script" path="res://scripts/monsters/enemy_catalog.gd" id="2_vhfni"]
+
+[sub_resource type="Resource" id="Resource_mfbcj"]
+script = ExtResource("1_8dvsp")
+max_health = 58
+move_speed = 46.0
+contact_damage = 15
+exp_reward = 26
+coin_reward = 3
+
+[sub_resource type="Resource" id="Resource_eafpr"]
+script = ExtResource("1_8dvsp")
+kind = "snail"
+display_name = "蜗牛"
+max_health = 42
+move_speed = 32.0
+exp_reward = 30
+coin_reward = 4
+front_guard = true
+detection_range = 230.0
+charge_speed = 275.0
+windup_time = 0.48
+
+[sub_resource type="Resource" id="Resource_lhhpm"]
+script = ExtResource("1_8dvsp")
+kind = "slime"
+display_name = "史莱姆"
+max_health = 26
+move_speed = 28.0
+contact_damage = 8
+exp_reward = 22
+can_split = true
+detection_range = 280.0
+
+[sub_resource type="Resource" id="Resource_441f6"]
+script = ExtResource("1_8dvsp")
+kind = "pollen_bee"
+behavior = "flyer"
+display_name = "花粉蜂"
+max_health = 34
+move_speed = 110.0
+detection_range = 260.0
+charge_speed = 300.0
+
+[sub_resource type="Resource" id="Resource_pi1d7"]
+script = ExtResource("1_8dvsp")
+kind = "thorn_roller"
+behavior = "charger"
+display_name = "荆棘滚虫"
+max_health = 62
+move_speed = 48.0
+contact_damage = 16
+detection_range = 240.0
+charge_speed = 330.0
+
+[sub_resource type="Resource" id="Resource_78ysi"]
+script = ExtResource("1_8dvsp")
+kind = "spore_lobber"
+behavior = "caster"
+display_name = "孢子投手"
+max_health = 44
+move_speed = 18.0
+detection_range = 360.0
+status_on_contact = "slow"
+status_duration = 1.2
+
+[sub_resource type="Resource" id="Resource_ck88o"]
+script = ExtResource("1_8dvsp")
+kind = "spore_puppet"
+display_name = "孢荚傀儡"
+max_health = 72
+move_speed = 55.0
+contact_damage = 14
+detection_range = 310.0
+
+[sub_resource type="Resource" id="Resource_afwu7"]
+script = ExtResource("1_8dvsp")
+kind = "root_ambusher"
+behavior = "ambusher"
+display_name = "悬根伏击者"
+max_health = 58
+move_speed = 90.0
+contact_damage = 18
+
+[sub_resource type="Resource" id="Resource_dnevv"]
+script = ExtResource("1_8dvsp")
+kind = "glow_bat"
+behavior = "flyer"
+display_name = "荧光蝠"
+max_health = 38
+move_speed = 130.0
+contact_damage = 12
+detection_range = 320.0
+
+[sub_resource type="Resource" id="Resource_n2dfy"]
+script = ExtResource("1_8dvsp")
+kind = "wind_falcon"
+behavior = "flyer"
+display_name = "风隼"
+max_health = 46
+move_speed = 170.0
+contact_damage = 14
+detection_range = 380.0
+charge_speed = 420.0
+
+[sub_resource type="Resource" id="Resource_phiq0"]
+script = ExtResource("1_8dvsp")
+kind = "rock_thrower"
+behavior = "caster"
+display_name = "沙岩投石兵"
+max_health = 86
+move_speed = 24.0
+contact_damage = 18
+detection_range = 420.0
+
+[sub_resource type="Resource" id="Resource_bxcjw"]
+script = ExtResource("1_8dvsp")
+kind = "moss_guard"
+behavior = "guard"
+display_name = "苔石守卫"
+max_health = 110
+move_speed = 34.0
+contact_damage = 22
+front_guard = true
+detection_range = 280.0
+charge_speed = 330.0
+
+[sub_resource type="Resource" id="Resource_mkana"]
+script = ExtResource("1_8dvsp")
+kind = "rune_weaver"
+behavior = "caster"
+display_name = "符文织师"
+max_health = 66
+move_speed = 40.0
+contact_damage = 14
+detection_range = 430.0
+
+[sub_resource type="Resource" id="Resource_hgo23"]
+script = ExtResource("1_8dvsp")
+kind = "star_wisp"
+behavior = "flyer"
+display_name = "星浮灵"
+max_health = 54
+move_speed = 100.0
+contact_damage = 16
+detection_range = 440.0
+
+[sub_resource type="Resource" id="Resource_h1x2t"]
+script = ExtResource("1_8dvsp")
+kind = "sky_knight"
+behavior = "charger"
+display_name = "天穹骑士"
+max_health = 128
+move_speed = 82.0
+contact_damage = 24
+detection_range = 340.0
+charge_speed = 470.0
+
+[resource]
+script = ExtResource("2_vhfni")
+items = Array[ExtResource("1_8dvsp")]([SubResource("Resource_mfbcj"), SubResource("Resource_eafpr"), SubResource("Resource_lhhpm"), SubResource("Resource_441f6"), SubResource("Resource_pi1d7"), SubResource("Resource_78ysi"), SubResource("Resource_ck88o"), SubResource("Resource_afwu7"), SubResource("Resource_dnevv"), SubResource("Resource_n2dfy"), SubResource("Resource_phiq0"), SubResource("Resource_bxcjw"), SubResource("Resource_mkana"), SubResource("Resource_hgo23"), SubResource("Resource_h1x2t")])

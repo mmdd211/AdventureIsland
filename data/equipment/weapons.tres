@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="EquipmentCatalog" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/equipment_data.gd" id="1_0ltj7"]
+[ext_resource type="Script" path="res://scripts/items/equipment_catalog.gd" id="2_nk8d2"]
+
+[sub_resource type="Resource" id="Resource_5fehm"]
+script = ExtResource("1_0ltj7")
+id = "grass_blade"
+display_name = "草叶短刃"
+description = "初始武器"
+icon_color = Color(0.5568628, 0.83137256, 0.3529412, 1)
+
+[sub_resource type="Resource" id="Resource_sfsrk"]
+script = ExtResource("1_0ltj7")
+id = "petal_blade"
+display_name = "花刃短剑"
+description = "更轻的花瓣斩击"
+combo_damage = Array[int]([13, 18])
+reach_bonus = 4.0
+attack_speed = 1.05
+icon_color = Color(1, 0.4862745, 0.65882355, 1)
+
+[sub_resource type="Resource" id="Resource_vr1v7"]
+script = ExtResource("1_0ltj7")
+id = "spore_edge"
+display_name = "孢子长刃"
+description = "更长攻击距离"
+combo_damage = Array[int]([16, 22])
+reach_bonus = 10.0
+icon_color = Color(0.30980393, 0.68235296, 0.3019608, 1)
+
+[sub_resource type="Resource" id="Resource_4adm8"]
+script = ExtResource("1_0ltj7")
+id = "glow_hook"
+display_name = "荧光钩刃"
+description = "攻速更快"
+combo_damage = Array[int]([19, 26])
+reach_bonus = 8.0
+attack_speed = 1.12
+icon_color = Color(0.49803922, 0.95686275, 0.7882353, 1)
+
+[sub_resource type="Resource" id="Resource_dl3mk"]
+script = ExtResource("1_0ltj7")
+id = "gale_rock"
+display_name = "风岩重刃"
+description = "击退更强"
+combo_damage = Array[int]([23, 31])
+reach_bonus = 10.0
+attack_speed = 0.92
+knockback = 1.8
+icon_color = Color(0.84313726, 0.6509804, 0.29411766, 1)
+
+[sub_resource type="Resource" id="Resource_5xs6n"]
+script = ExtResource("1_0ltj7")
+id = "rune_blade"
+display_name = "符文战刃"
+description = "新增第三段连击"
+combo_damage = Array[int]([26, 36, 44])
+reach_bonus = 12.0
+special = "third_combo"
+icon_color = Color(0.6627451, 0.827451, 0.42745098, 1)
+
+[sub_resource type="Resource" id="Resource_tj8qg"]
+script = ExtResource("1_0ltj7")
+id = "star_edge"
+display_name = "星辉天刃"
+description = "第二段附带星辉冲击"
+combo_damage = Array[int]([31, 42])
+reach_bonus = 16.0
+attack_speed = 1.08
+special = "star_impact"
+icon_color = Color(0.40784314, 0.84705883, 1, 1)
+
+[resource]
+script = ExtResource("2_nk8d2")
+items = Array[ExtResource("1_0ltj7")]([SubResource("Resource_5fehm"), SubResource("Resource_sfsrk"), SubResource("Resource_vr1v7"), SubResource("Resource_4adm8"), SubResource("Resource_dl3mk"), SubResource("Resource_5xs6n"), SubResource("Resource_tj8qg")])

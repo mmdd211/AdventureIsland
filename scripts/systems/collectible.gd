@@ -33,7 +33,7 @@ func _build_visual() -> void:
 		old_visual.visible = false
 	var sprite := Sprite2D.new()
 	sprite.name = "PickupSprite"
-	sprite.texture = PixelStyleManager._create_coin_texture() if pickup_type == "coin" else _create_heart_texture()
+	sprite.texture = EnemyAssetLibrary.coin_texture() if pickup_type == "coin" else _create_heart_texture()
 	sprite.scale = Vector2(1.25, 1.25) if pickup_type == "coin" else Vector2(1.5, 1.5)
 	sprite.z_index = 20
 	add_child(sprite)

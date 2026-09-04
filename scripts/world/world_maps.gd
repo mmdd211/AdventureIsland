@@ -210,9 +210,6 @@ static func ui_position(map_id: String) -> Vector2:
 static func build(zone) -> void:
 	var map_id := str(zone.zone_id)
 	match map_id:
-		"meadow_1": _build_meadow_1(zone)
-		"meadow_2": _build_meadow_2(zone)
-		"meadow_3": _build_meadow_3(zone)
 		"forest_1": _build_forest_1(zone)
 		"forest_2": _build_forest_2(zone)
 		"forest_3": _build_forest_3(zone)
@@ -259,29 +256,6 @@ static func _boss_arena(zone, enemy_kinds: Array) -> void:
 static func _platform_line(zone, start: Vector2, count: int, spacing: float) -> void:
 	for index in range(count):
 		zone._static_platform(index + 1, start + Vector2(spacing * index, 0.0), Vector2(140, 14), true)
-
-static func _build_meadow_1(zone) -> void:
-	_base(zone, [
-		["mushroom", Vector2(760, 480)], ["pollen_bee", Vector2(1180, 360)]
-	], [[420, 480], [760, 300], [1180, 300], [1540, 480]], [
-		[1, 420, 420, 140, true], [2, 760, 350, 150, true], [3, 1180, 350, 150, true]
-	])
-	zone._portal("right", Vector2(zone.zone_width - 110, 468), next_map(str(zone.zone_id)), "left")
-
-static func _build_meadow_2(zone) -> void:
-	_base(zone, [
-		["thorn_roller", Vector2(700, 480)], ["mushroom", Vector2(1320, 480)], ["pollen_bee", Vector2(1700, 340)]
-	], [[520, 480], [900, 340], [1320, 280], [1700, 280], [2050, 480]], [
-		[1, 520, 420, 140, true], [2, 900, 390, 150, true], [3, 1320, 330, 160, true], [4, 1700, 330, 150, true]
-	])
-	zone._moving_platform("Meadow", Vector2(1960, 430), Vector2(150, 0), 3.1)
-	zone._portal("left", Vector2(95, 468), previous_map(str(zone.zone_id)), "right")
-	zone._portal("right", Vector2(zone.zone_width - 110, 468), next_map(str(zone.zone_id)), "left")
-
-static func _build_meadow_3(zone) -> void:
-	_boss_arena(zone, ["pollen_bee"])
-	zone._portal("left", Vector2(95, 468), previous_map(str(zone.zone_id)), "right")
-	zone._portal("right", Vector2(zone.zone_width - 110, 468), next_map(str(zone.zone_id)), "left", false, "meadow")
 
 static func _build_forest_1(zone) -> void:
 	_base(zone, [

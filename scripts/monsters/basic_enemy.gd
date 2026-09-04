@@ -3,9 +3,9 @@ extends CharacterBody2D
 const Palette := preload("res://scripts/systems/pixel_palette.gd")
 
 const ENEMY_DATA_SCRIPT := preload("res://scripts/monsters/enemy_data.gd")
-const COIN_SCENE := preload("res://scenes/systems/coin.tscn")
-
+const ENEMY_LIBRARY := preload("res://scripts/monsters/enemy_library.gd")
 @export var data: Resource
+@export var enemy_data: EnemyData
 @export var enemy_kind := "mushroom"
 @export var is_mini := false
 @export var is_boss_minion := false
@@ -19,12 +19,10 @@ const EXTRA_DETECTION_RANGE := 70.0
 
 enum State { PATROL, WINDUP, CHARGE, RECOVER }
 
-var health := 30
 var direction := 1
 var state: State = State.PATROL
 var state_timer := 0.0
 var hop_timer := 0.0
-var flash_timer := 0.0
 var turn_cooldown := 0.0
 var spawn_grace_timer := 0.0
 var inherited_contact_damage := 0
@@ -38,11 +36,18 @@ var attack_cooldown := 1.5
 var base_y := 0.0
 var phase := 0.0
 var is_hidden := false
+var health_component: HealthComponent
+var knockback_component: KnockbackComponent
+var hurtbox_component: HurtboxComponent
+var contact_hitbox: HitboxComponent
+var status_component: StatusEffectComponent
+var drop_component: DropComponent
 
 func _ready() -> void:
 	add_to_group("enemies")
 	if data == null:
 		data = _create_default_data(enemy_kind)
+	enemy_data = data as EnemyData
 	if is_mini:
 		data = _create_default_data("slime")
 		data.max_health = 12
@@ -52,7 +57,6 @@ func _ready() -> void:
 		data.exp_reward = 6
 		data.coin_reward = 1
 		data.can_split = false
-	health = data.max_health
 	if spawn_facing != 0:
 		direction = spawn_facing
 	else:
@@ -65,129 +69,16 @@ func _ready() -> void:
 	_apply_region_scaling()
 	_apply_minion_profile()
 	_apply_enemy_range_profile()
+	enemy_data = data as EnemyData
+	_setup_combat_components()
 	_refresh_visual_scale()
 
 func _create_default_data(kind_value: String) -> Resource:
-	var result: Resource = ENEMY_DATA_SCRIPT.new()
-	result.kind = kind_value
-	result.behavior = _behavior_for_kind(kind_value)
-	match kind_value:
-		"snail":
-			result.display_name = "蜗牛"
-			result.max_health = 42
-			result.move_speed = 32.0
-			result.contact_damage = 10
-			result.exp_reward = 30
-			result.coin_reward = 4
-			result.front_guard = true
-			result.detection_range = 230.0
-			result.charge_speed = 275.0
-			result.windup_time = 0.48
-		"slime":
-			result.display_name = "史莱姆"
-			result.max_health = 26
-			result.move_speed = 28.0
-			result.contact_damage = 8
-			result.exp_reward = 22
-			result.coin_reward = 2
-			result.can_split = true
-			result.detection_range = 280.0
-		_:
-			result.display_name = "蘑菇"
-			result.kind = "mushroom"
-			result.max_health = 58
-			result.move_speed = 46.0
-			result.contact_damage = 15
-			result.exp_reward = 26
-			result.coin_reward = 3
-		"pollen_bee":
-			result.display_name = "花粉蜂"
-			result.max_health = 34
-			result.move_speed = 110.0
-			result.contact_damage = 10
-			result.detection_range = 260.0
-			result.charge_speed = 300.0
-		"thorn_roller":
-			result.display_name = "荆棘滚虫"
-			result.max_health = 62
-			result.move_speed = 48.0
-			result.contact_damage = 16
-			result.detection_range = 240.0
-			result.charge_speed = 330.0
-		"spore_lobber":
-			result.display_name = "孢子投手"
-			result.max_health = 44
-			result.move_speed = 18.0
-			result.contact_damage = 10
-			result.detection_range = 360.0
-		"spore_puppet":
-			result.display_name = "孢荚傀儡"
-			result.max_health = 72
-			result.move_speed = 55.0
-			result.contact_damage = 14
-			result.detection_range = 310.0
-		"root_ambusher":
-			result.display_name = "悬根伏击者"
-			result.max_health = 58
-			result.move_speed = 90.0
-			result.contact_damage = 18
-			result.detection_range = 180.0
-		"glow_bat":
-			result.display_name = "荧光蝠"
-			result.max_health = 38
-			result.move_speed = 130.0
-			result.contact_damage = 12
-			result.detection_range = 320.0
-		"wind_falcon":
-			result.display_name = "风隼"
-			result.max_health = 46
-			result.move_speed = 170.0
-			result.contact_damage = 14
-			result.detection_range = 380.0
-			result.charge_speed = 420.0
-		"rock_thrower":
-			result.display_name = "沙岩投石兵"
-			result.max_health = 86
-			result.move_speed = 24.0
-			result.contact_damage = 18
-			result.detection_range = 420.0
-		"moss_guard":
-			result.display_name = "苔石守卫"
-			result.max_health = 110
-			result.move_speed = 34.0
-			result.contact_damage = 22
-			result.detection_range = 280.0
-			result.front_guard = true
-			result.charge_speed = 330.0
-		"rune_weaver":
-			result.display_name = "符文织师"
-			result.max_health = 66
-			result.move_speed = 40.0
-			result.contact_damage = 14
-			result.detection_range = 430.0
-		"star_wisp":
-			result.display_name = "星浮灵"
-			result.max_health = 54
-			result.move_speed = 100.0
-			result.contact_damage = 16
-			result.detection_range = 440.0
-		"sky_knight":
-			result.display_name = "天穹骑士"
-			result.max_health = 128
-			result.move_speed = 82.0
-			result.contact_damage = 24
-			result.detection_range = 340.0
-			result.charge_speed = 470.0
-	return result
-
-func _behavior_for_kind(kind_value: String) -> String:
-	match kind_value:
-		"pollen_bee", "glow_bat", "wind_falcon", "star_wisp": return "flyer"
-		"thorn_roller", "sky_knight", "wind_falcon": return "charger"
-		"spore_lobber", "rock_thrower", "rune_weaver": return "caster"
-		"root_ambusher": return "ambusher"
-		"moss_guard": return "guard"
-		_: return "patrol"
+	var resource_enemy := DataCatalog.enemy(kind_value)
+	if resource_enemy:
+		# 共享资源必须复制后再改写，否则难度缩放会跨出生点累积。
+		return resource_enemy.duplicate()
+	return ENEMY_LIBRARY.create(kind_value)
 
 func _apply_region_scaling() -> void:
 	var difficulty := int(get_meta("difficulty", 1))
@@ -214,18 +105,49 @@ func _apply_minion_profile() -> void:
 	data.move_speed *= 0.88
 	data.charge_speed *= 0.88
 	data.detection_range = maxf(250.0, data.detection_range * 0.85)
-	health = data.max_health
-
 func _scale_collision_shape(shape_node: CollisionShape2D, scale_value: float) -> void:
 	if shape_node == null or shape_node.shape == null:
 		return
 	var shape := shape_node.shape.duplicate()
 	if shape is RectangleShape2D:
 		shape.size *= Vector2(scale_value, scale_value)
-		shape_node.shape = shape
 	elif shape is CircleShape2D:
 		shape.radius *= scale_value
-		shape_node.shape = shape
+	shape_node.shape = shape
+
+func _setup_combat_components() -> void:
+	health_component = HealthComponent.new()
+	health_component.name = "HealthComponent"
+	add_child(health_component)
+	health_component.setup(data.max_health, data.max_health)
+	health_component.health_changed.connect(func(_current, _maximum): _update_health_bar())
+	health_component.died.connect(die)
+
+	knockback_component = KnockbackComponent.new()
+	knockback_component.name = "KnockbackComponent"
+	knockback_component.enabled = not data.front_guard
+	add_child(knockback_component)
+	knockback_component.setup(self, 170.0, -150.0, true)
+	hurtbox_component = HurtboxComponent.new()
+	hurtbox_component.name = "HurtboxComponent"
+	add_child(hurtbox_component)
+	hurtbox_component.setup(self)
+	contact_hitbox = HitboxComponent.new()
+	contact_hitbox.name = "ContactHitbox"
+	add_child(contact_hitbox)
+	contact_hitbox.setup(get_node_or_null("DamageArea") as Area2D, self, "player", data.contact_damage, false)
+	contact_hitbox.apply_knockback = false
+	contact_hitbox.hit_target.connect(_on_contact_hit)
+
+	status_component = StatusEffectComponent.new()
+	status_component.name = "StatusEffectComponent"
+	add_child(status_component)
+	status_component.setup(self)
+
+	drop_component = DropComponent.new()
+	drop_component.name = "DropComponent"
+	add_child(drop_component)
+	drop_component.setup(self, data.coin_reward, data.exp_reward)
 
 func _apply_enemy_range_profile() -> void:
 	if is_mini:
@@ -273,10 +195,6 @@ func _physics_process(delta: float) -> void:
 		spawn_grace_timer = maxf(0.0, spawn_grace_timer - delta)
 		modulate = Color(1.0, 1.0, 1.0, 0.55 + 0.45 * absf(sin(spawn_grace_timer * 22.0)))
 		if spawn_grace_timer <= 0.0:
-			modulate = Color.WHITE
-	if flash_timer > 0.0:
-		flash_timer -= delta
-		if flash_timer <= 0.0:
 			modulate = Color.WHITE
 	turn_cooldown = maxf(0.0, turn_cooldown - delta)
 
@@ -499,15 +417,26 @@ func _update_facing() -> void:
 		if visual:
 			visual.scale.x = absf(visual.scale.x) * direction
 
+func _flash_visual() -> void:
+	var visual := get_node_or_null("PixelSprite") as CanvasItem
+	if visual == null:
+		visual = get_node_or_null("Visual") as CanvasItem
+	if visual:
+		SpriteEffect.flash(visual, 0.09)
+
 func _apply_contact_damage() -> void:
 	if spawn_grace_timer > 0.0:
 		return
-	var damage_area := get_node_or_null("DamageArea") as Area2D
-	if damage_area == null:
+	if contact_hitbox:
+		contact_hitbox.set_damage(data.contact_damage)
+		contact_hitbox.scan_overlaps()
+
+func _on_contact_hit(target: Node, _amount: int) -> void:
+	if target == null or not is_instance_valid(target) or data.status_on_contact.is_empty():
 		return
-	for body in damage_area.get_overlapping_bodies():
-		if body.is_in_group("player") and body.has_method("take_damage"):
-			body.call("take_damage", data.contact_damage, global_position)
+	var target_status := target.get("status_component") as StatusEffectComponent
+	if target_status:
+		target_status.apply(data.status_on_contact, data.status_duration)
 
 func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
 	if is_dead or spawn_grace_timer > 0.0:
@@ -523,23 +452,16 @@ func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
 			shown_amount = amount * 2
 			_spawn_text("背击!", Palette.YELLOW)
 
-	health -= shown_amount
-	flash_timer = 0.09
-	modulate = Color(3.0, 3.0, 3.0)
+	_flash_visual()
 	AudioManager.play_sfx("hit")
-	_update_health_bar()
-	if shown_amount > 0:
+	var applied := health_component.damage(shown_amount, source_position)
+	if applied and shown_amount > 0:
 		_spawn_text(str(shown_amount), Color.WHITE)
-	if health <= 0:
-		die()
 
 func apply_knockback(source_position: Vector2) -> void:
 	if is_dead or data.front_guard:
 		return
-	var away := signf(global_position.x - source_position.x)
-	if away == 0.0:
-		away = -direction
-	velocity += Vector2(away * 170.0, -150.0)
+	knockback_component.apply(source_position, -direction)
 
 func die() -> void:
 	if is_dead:
@@ -547,9 +469,11 @@ func die() -> void:
 	is_dead = true
 	set_deferred("collision_layer", 0)
 	set_deferred("collision_mask", 0)
+	status_component.clear_all()
 	GameState.register_kill()
-	GameState.add_experience(data.exp_reward)
-	_spawn_coin_rewards()
+	drop_component.coin_count = data.coin_reward
+	drop_component.experience = data.exp_reward
+	drop_component.drop()
 	_spawn_text("+%d EXP" % [data.exp_reward], Palette.YELLOW)
 	AudioManager.play_sfx("enemy_death")
 	_create_death_effect()
@@ -583,20 +507,9 @@ func _refresh_split_styles() -> void:
 	if PixelStyleManager.has_method("refresh_enemy_styles"):
 		PixelStyleManager.call("refresh_enemy_styles")
 
-func _spawn_coin_rewards() -> void:
-	var parent := get_parent()
-	for index in range(data.coin_reward):
-		var coin := COIN_SCENE.instantiate() as Node2D
-		coin.set("pickup_type", "coin")
-		coin.set("value", 1)
-		var angle := TAU * float(index) / maxf(1.0, float(data.coin_reward))
-		var spawn_global := global_position + Vector2(cos(angle) * 14.0, -8.0)
-		coin.set("position", parent.to_local(spawn_global))
-		parent.call_deferred("add_child", coin)
-
 func _update_health_bar() -> void:
 	if health_fill:
-		health_fill.size.x = maxf(0.0, 36.0 * float(maxi(health, 0)) / float(data.max_health))
+		health_fill.size.x = maxf(0.0, 36.0 * float(health_component.current_health) / float(health_component.max_health))
 
 func _spawn_text(text_value: String, color: Color) -> void:
 	var label := Label.new()

@@ -1,0 +1,86 @@
+[gd_resource type="Resource" script_class="ZoneLayout" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/zone_object_data.gd" id="1_obj"]
+[ext_resource type="Script" path="res://scripts/world/zone_layout.gd" id="2_layout"]
+
+[sub_resource type="Resource" id="Resource_checkpoint"]
+script = ExtResource("1_obj")
+kind = "checkpoint"
+position = Vector2(160, 470)
+
+[sub_resource type="Resource" id="Resource_ground_1"]
+script = ExtResource("1_obj")
+kind = "ground"
+position = Vector2(620, 535)
+size = Vector2(1240, 30)
+
+[sub_resource type="Resource" id="Resource_ground_2"]
+script = ExtResource("1_obj")
+kind = "ground"
+position = Vector2(1700, 535)
+size = Vector2(1200, 30)
+
+[sub_resource type="Resource" id="Resource_platform_1"]
+script = ExtResource("1_obj")
+kind = "platform"
+position = Vector2(420, 420)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_platform_2"]
+script = ExtResource("1_obj")
+kind = "platform"
+position = Vector2(760, 350)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_platform_3"]
+script = ExtResource("1_obj")
+kind = "platform"
+position = Vector2(1180, 350)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_pickup_1"]
+script = ExtResource("1_obj")
+kind = "pickup"
+position = Vector2(420, 480)
+
+[sub_resource type="Resource" id="Resource_pickup_2"]
+script = ExtResource("1_obj")
+kind = "pickup"
+position = Vector2(760, 300)
+
+[sub_resource type="Resource" id="Resource_pickup_3"]
+script = ExtResource("1_obj")
+kind = "pickup"
+position = Vector2(1180, 300)
+
+[sub_resource type="Resource" id="Resource_pickup_4"]
+script = ExtResource("1_obj")
+kind = "pickup"
+position = Vector2(1540, 480)
+
+[sub_resource type="Resource" id="Resource_enemy_1"]
+script = ExtResource("1_obj")
+kind = "enemy"
+label = "mushroom"
+position = Vector2(760, 480)
+
+[sub_resource type="Resource" id="Resource_enemy_2"]
+script = ExtResource("1_obj")
+kind = "enemy"
+label = "pollen_bee"
+position = Vector2(1180, 360)
+
+[sub_resource type="Resource" id="Resource_portal"]
+script = ExtResource("1_obj")
+kind = "portal"
+label = "right"
+position = Vector2(2290, 468)
+target_zone_id = "meadow_2"
+target_portal_id = "left"
+
+[resource]
+script = ExtResource("2_layout")
+objects = Array[ExtResource("1_obj")]([SubResource("Resource_checkpoint"), SubResource("Resource_ground_1"), SubResource("Resource_ground_2"), SubResource("Resource_platform_1"), SubResource("Resource_platform_2"), SubResource("Resource_platform_3"), SubResource("Resource_pickup_1"), SubResource("Resource_pickup_2"), SubResource("Resource_pickup_3"), SubResource("Resource_pickup_4"), SubResource("Resource_enemy_1"), SubResource("Resource_enemy_2"), SubResource("Resource_portal")])

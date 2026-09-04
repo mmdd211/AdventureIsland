@@ -3,9 +3,11 @@ extends Camera2D
 @export var follow_speed := 7.5
 @export var look_ahead := Vector2(55.0, -35.0)
 @export var follow_enabled := true
+@export var shake_falloff := 10.0
 
 var target: Node2D
 var shake_strength := 0.0
+var _shake_noise_phase := 0.0
 
 func _ready() -> void:
 	add_to_group("game_camera")
@@ -26,8 +28,11 @@ func _physics_process(delta: float) -> void:
 	desired.y += clampf(target_velocity.y * 0.055, -45.0, 75.0)
 	position = position.lerp(desired, 1.0 - exp(-follow_speed * delta))
 	if shake_strength > 0.01:
-		offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * shake_strength
-		shake_strength = lerpf(shake_strength, 0.0, minf(1.0, 10.0 * delta))
+		_shake_noise_phase += delta * 42.0
+		var horizontal := sin(_shake_noise_phase * 2.17) * 0.65 + randf_range(-0.35, 0.35)
+		var vertical := cos(_shake_noise_phase * 1.73) * 0.65 + randf_range(-0.35, 0.35)
+		offset = Vector2(horizontal, vertical) * shake_strength
+		shake_strength = lerpf(shake_strength, 0.0, minf(1.0, shake_falloff * delta))
 	else:
 		offset = Vector2.ZERO
 

@@ -54,9 +54,18 @@ func set_form(new_form_id: String) -> void:
 	play("idle")
 
 func _visual_scale() -> float:
+	if region_id == "forest":
+		return 1.15 if form_id == "turtle" else 0.90
 	if region_id != "meadow":
 		return 2.1
 	return 0.88 if form_id == "dancer" else 0.82
+
+func _aura_color() -> Color:
+	if region_id == "forest":
+		return Color("9a5bd6")
+	if region_id == "meadow":
+		return Color("ff6a70")
+	return Color("61d6ff")
 
 func _process(_delta: float) -> void:
 	flip_h = direction > 0
@@ -67,7 +76,7 @@ func _process(_delta: float) -> void:
 			pulse = 0.24 + sin(Time.get_ticks_msec() * 0.02) * 0.05
 		elif visual_state == "attack":
 			pulse = 0.18
-		aura.modulate = Color(Color("ff6a70"), 0.0 + float(stage - 1) * 0.11 + pulse)
+		aura.modulate = Color(_aura_color(), 0.0 + float(stage - 1) * 0.11 + pulse)
 		aura.scale = Vector2(2.14 + stage * 0.03 + pulse * 0.18, 2.14 + stage * 0.03 + pulse * 0.18)
 	if visual_state in ["idle", "move"] and not is_playing():
 		play(visual_state)
@@ -82,6 +91,6 @@ func _build_aura() -> void:
 	aura.name = "StageAura"
 	aura.texture = sprite_frames.get_frame_texture("idle", 0)
 	aura.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	aura.modulate = Color(Color("ff6a70"), 0.0)
+	aura.modulate = Color(_aura_color(), 0.0)
 	aura.z_index = 8
 	add_child(aura)

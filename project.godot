@@ -15,13 +15,19 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="冒险岛物语Demo"
+config/icon="res://icon.svg"
 run/main_scene="res://scenes/ui/title_screen.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
 GameState="*res://scripts/systems/game_state.gd"
+DataCatalog="*res://scripts/systems/data_catalog.gd"
+GameFeel="*res://scripts/systems/game_feel.gd"
+SaveSystem="*res://scripts/systems/save_system.gd"
 AudioManager="*res://scripts/systems/audio_manager.gd"
+SettingsSystem="*res://scripts/systems/settings_system.gd"
+LocalizationSystem="*res://scripts/systems/localization_system.gd"
 PixelStyleManager="*res://scripts/systems/pixel_style_manager.gd"
 
 [display]

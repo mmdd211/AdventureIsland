@@ -1,6 +1,108 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/boss_hud_bar.gd" id="1_bar"]
+[ext_resource type="Script" path="res://scripts/ui/boss_hud_bar.gd" id="1_bosshud"]
+
+[sub_resource type="StyleBoxFlat" id="boss_panel"]
+bg_color = Color(0.231373, 0.141176, 0.101961, 0.92)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.952941, 0.690196, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [node name="BossHudBar" type="CanvasLayer"]
-script = ExtResource("1_bar")
+layer = 25
+process_mode = 3
+script = ExtResource("1_bosshud")
+
+[node name="Root" type="Control" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Root"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -290.0
+offset_top = 12.0
+offset_right = 290.0
+offset_bottom = 83.0
+theme_override_styles/panel = SubResource("boss_panel")
+
+[node name="Content" type="VBoxContainer" parent="Root/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TitleRow" type="HBoxContainer" parent="Root/Panel/Content"]
+layout_mode = 2
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="Root/Panel/Content/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.984314, 0.909804, 1)
+theme_override_colors/font_outline_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 15
+
+[node name="Spacer" type="Control" parent="Root/Panel/Content/TitleRow"]
+custom_minimum_size = Vector2(22, 0)
+layout_mode = 2
+
+[node name="FormLabel" type="Label" parent="Root/Panel/Content/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.984314, 0.909804, 1)
+theme_override_colors/font_outline_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 15
+
+[node name="Bar" type="Control" parent="Root/Panel/Content"]
+custom_minimum_size = Vector2(520, 21)
+layout_mode = 2
+
+[node name="Background" type="ColorRect" parent="Root/Panel/Content/Bar"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.141176, 0.090196, 0.07451, 0.8)
+
+[node name="DamageFill" type="ColorRect" parent="Root/Panel/Content/Bar"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.607843, 0.141176, 0.192157, 1)
+
+[node name="Fill" type="ColorRect" parent="Root/Panel/Content/Bar"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 517.0
+offset_bottom = 18.0
+color = Color(1, 0.819608, 0.4, 1)
+
+[node name="EvolveLabel" type="Label" parent="Root"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+theme_override_colors/font_color = Color(1, 0.984314, 0.909804, 1)
+theme_override_colors/font_outline_color = Color(0.141176, 0.090196, 0.07451, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1

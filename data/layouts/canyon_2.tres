@@ -1,0 +1,147 @@
+[gd_resource type="Resource" script_class="ZoneLayout" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/zone_object_data.gd" id="1_mpdna"]
+[ext_resource type="Script" path="res://scripts/world/zone_layout.gd" id="2_ajpo2"]
+
+[sub_resource type="Resource" id="Resource_jeu7v"]
+script = ExtResource("1_mpdna")
+kind = "checkpoint"
+position = Vector2(160, 470)
+
+[sub_resource type="Resource" id="Resource_k1cyu"]
+script = ExtResource("1_mpdna")
+position = Vector2(620, 535)
+size = Vector2(1240, 30)
+
+[sub_resource type="Resource" id="Resource_pnbbd"]
+script = ExtResource("1_mpdna")
+position = Vector2(1850, 535)
+size = Vector2(1500, 30)
+
+[sub_resource type="Resource" id="Resource_g56ks"]
+script = ExtResource("1_mpdna")
+kind = "platform"
+position = Vector2(500, 410)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_hlmnl"]
+script = ExtResource("1_mpdna")
+kind = "platform"
+position = Vector2(680, 310)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_uvjnl"]
+script = ExtResource("1_mpdna")
+kind = "platform"
+position = Vector2(1080, 370)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_r4my8"]
+script = ExtResource("1_mpdna")
+kind = "platform"
+position = Vector2(1520, 300)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_udaop"]
+script = ExtResource("1_mpdna")
+kind = "platform"
+position = Vector2(1940, 370)
+size = Vector2(150, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_nk1pu"]
+script = ExtResource("1_mpdna")
+kind = "pickup"
+position = Vector2(500, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_mfjir"]
+script = ExtResource("1_mpdna")
+kind = "pickup"
+position = Vector2(680, 260)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_elejc"]
+script = ExtResource("1_mpdna")
+kind = "pickup"
+position = Vector2(1080, 320)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_1e8fy"]
+script = ExtResource("1_mpdna")
+kind = "pickup"
+position = Vector2(1520, 250)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_w8xei"]
+script = ExtResource("1_mpdna")
+kind = "pickup"
+position = Vector2(1940, 320)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_46o1y"]
+script = ExtResource("1_mpdna")
+kind = "enemy"
+position = Vector2(680, 300)
+label = "wind_falcon"
+
+[sub_resource type="Resource" id="Resource_6xatp"]
+script = ExtResource("1_mpdna")
+kind = "enemy"
+position = Vector2(1080, 470)
+label = "rock_thrower"
+
+[sub_resource type="Resource" id="Resource_1qr51"]
+script = ExtResource("1_mpdna")
+kind = "enemy"
+position = Vector2(1520, 290)
+label = "wind_falcon"
+
+[sub_resource type="Resource" id="Resource_pdie7"]
+script = ExtResource("1_mpdna")
+kind = "enemy"
+position = Vector2(1940, 480)
+label = "mushroom"
+
+[sub_resource type="Resource" id="Resource_1lgsl"]
+script = ExtResource("1_mpdna")
+kind = "moving_platform"
+position = Vector2(1280, 420)
+label = "CanyonA"
+travel = Vector2(170, 0)
+period = 3.2
+
+[sub_resource type="Resource" id="Resource_8puvk"]
+script = ExtResource("1_mpdna")
+kind = "spike"
+position = Vector2(1800, 515)
+size = Vector2(180, 22)
+
+[sub_resource type="Resource" id="Resource_pptb7"]
+script = ExtResource("1_mpdna")
+kind = "portal"
+position = Vector2(95, 468)
+label = "left"
+target_zone_id = "canyon_1"
+target_portal_id = "right"
+
+[sub_resource type="Resource" id="Resource_wm1l5"]
+script = ExtResource("1_mpdna")
+kind = "portal"
+position = Vector2(2590, 468)
+label = "right"
+target_zone_id = "canyon_3"
+target_portal_id = "left"
+
+[resource]
+script = ExtResource("2_ajpo2")
+objects = Array[ExtResource("1_mpdna")]([SubResource("Resource_jeu7v"), SubResource("Resource_k1cyu"), SubResource("Resource_pnbbd"), SubResource("Resource_g56ks"), SubResource("Resource_hlmnl"), SubResource("Resource_uvjnl"), SubResource("Resource_r4my8"), SubResource("Resource_udaop"), SubResource("Resource_nk1pu"), SubResource("Resource_mfjir"), SubResource("Resource_elejc"), SubResource("Resource_1e8fy"), SubResource("Resource_w8xei"), SubResource("Resource_46o1y"), SubResource("Resource_6xatp"), SubResource("Resource_1qr51"), SubResource("Resource_pdie7"), SubResource("Resource_1lgsl"), SubResource("Resource_8puvk"), SubResource("Resource_pptb7"), SubResource("Resource_wm1l5")])

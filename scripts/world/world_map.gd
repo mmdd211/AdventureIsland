@@ -7,7 +7,7 @@ const HUD_SCENE := preload("res://scenes/ui/game_hud.tscn")
 const SCREENS_SCENE := preload("res://scenes/ui/game_screens.tscn")
 const DEBUG_SCENE := preload("res://scenes/ui/debug_ui.tscn")
 const CAMERA_SCRIPT := preload("res://scripts/systems/camera_follow.gd")
-const LOADING_OVERLAY := preload("res://scripts/ui/loading_overlay.gd")
+const LOADING_OVERLAY := preload("res://scenes/ui/loading_overlay.tscn")
 
 signal loading_finished
 
@@ -18,14 +18,19 @@ var camera: Camera2D
 var fade_rect: ColorRect
 var transitioning := false
 var loading_overlay: CanvasLayer
+var _restore_save_on_load := false
 
 func _ready() -> void:
 	add_to_group("pixel_style_root")
 	if GameState.pending_loading_screen:
 		# 从标题屏/重开进入：在加载界面下分阶段搭建世界，避免长时间卡死。
 		GameState.pending_loading_screen = false
-		GameState.reset_run()
-		_start_loading_flow()
+		var restore_save := GameState.pending_restore_save
+		GameState.pending_restore_save = false
+		if not restore_save:
+			GameState.reset_run()
+		_restore_save_on_load = restore_save
+		_start_loading_flow(restore_save)
 		return
 	AudioManager.play_music("level")
 	GameState.reset_run()
@@ -44,15 +49,25 @@ func _ready() -> void:
 	call_deferred("_apply_pixel_style")
 
 func _build_zones() -> void:
-	WORLD_MAPS.initialize_offsets()
 	zone_root = Node2D.new()
 	zone_root.name = "ZoneRoot"
 	add_child(zone_root)
-	for zone_id in WORLD_MAPS.ORDER:
+	for zone_id in DataCatalog.map_order():
 		_build_one_zone(str(zone_id))
 
 func _build_one_zone(zone_id: String) -> void:
-	var metadata: Dictionary = WORLD_MAPS.map_metadata(zone_id)
+	var metadata := DataCatalog.map_metadata(zone_id)
+	var map := DataCatalog.map(zone_id) as MapData
+	if map and not map.scene_path.is_empty():
+		var scene := load(map.scene_path) as PackedScene
+		var scene_zone := scene.instantiate() as Node2D
+		scene_zone.setup(metadata)
+		scene_zone.build_common()
+		scene_zone.build_content()
+		zone_root.add_child(scene_zone)
+		zones[zone_id] = scene_zone
+		return
+
 	var zone: Node2D = ZONE_BUILDER.new()
 	zone.setup(metadata)
 	zone_root.add_child(zone)
@@ -60,8 +75,7 @@ func _build_one_zone(zone_id: String) -> void:
 	WORLD_MAPS.build(zone)
 	zones[zone_id] = zone
 
-func _start_loading_flow() -> void:
-	WORLD_MAPS.initialize_offsets()
+func _start_loading_flow(restore_save := false) -> void:
 	# 先搭好摄像机/玩家/UI/过渡层，再暂停游戏并显示加载界面，
 	# 随后在 _run_loading_steps 里分阶段完成音乐、地形、唤醒、美术。
 	zone_root = Node2D.new()
@@ -73,40 +87,45 @@ func _start_loading_flow() -> void:
 	_build_transition_layer()
 	player.control_enabled = false
 	get_tree().paused = true
-	loading_overlay = LOADING_OVERLAY.new()
+	loading_overlay = LOADING_OVERLAY.instantiate()
 	loading_overlay.name = "LoadingOverlay"
 	add_child(loading_overlay)
-	call_deferred("_run_loading_steps")
+	call_deferred("_run_loading_steps", _restore_save_on_load)
 
-func _run_loading_steps() -> void:
+func _run_loading_steps(restore_save := false) -> void:
 	# ① 分块预载关卡 BGM：同步合成 17 万帧波形会阻塞数秒。
 	var music_progress := func(music_name: String, progress: float):
 		if music_name == "level":
 			loading_overlay.set_progress(0.18 * progress)
 	AudioManager.music_preload_progress.connect(music_progress)
-	loading_overlay.set_stage("正在谱写冒险曲…")
+	loading_overlay.set_stage(LocalizationSystem.tr_key("loading_music"))
 	await AudioManager.preload_music_async("level")
 	AudioManager.music_preload_progress.disconnect(music_progress)
 
 	# ② 逐个搭建六大区域，每完成一个汇报一次进度。
-	var total_zones := WORLD_MAPS.ORDER.size()
+	var zone_ids := DataCatalog.map_order()
+	var total_zones := zone_ids.size()
 	for i in total_zones:
-		var zone_id: String = WORLD_MAPS.ORDER[i]
-		var metadata: Dictionary = WORLD_MAPS.map_metadata(str(zone_id))
-		loading_overlay.set_stage("正在搭建「%s」…" % str(metadata["display_name"]))
+		var zone_id: String = zone_ids[i]
+		var metadata := DataCatalog.map_metadata(str(zone_id))
+		loading_overlay.set_stage(LocalizationSystem.tr_key("loading_build") % str(metadata["display_name"]))
 		_build_one_zone(zone_id)
 		zones[zone_id].process_mode = Node.PROCESS_MODE_DISABLED
 		loading_overlay.set_progress(0.18 + 0.50 * float(i + 1) / float(total_zones))
 		await get_tree().process_frame
 
 	# ③ 唤醒世界：连接传送门、激活初始区域、放置玩家。
-	loading_overlay.set_stage("正在唤醒世界…")
+	loading_overlay.set_stage(LocalizationSystem.tr_key("loading_wake"))
 	_connect_portals()
 	GameState.boss_defeated.connect(_unlock_region_portals)
-	_activate_zone(GameState.INITIAL_MAP_ID, false)
-	player.position = Vector2(110, 492)
+	# 恢复存档按 checkpoint 所在地图定位；旧数据无对应地图时回退当前地图。
+	var saved_map_id := GameState.checkpoint_zone_id if restore_save else GameState.current_map_id
+	var start_map_id := saved_map_id if DataCatalog.map(saved_map_id) != null else GameState.current_map_id
+	var spawn_position := GameState.checkpoint_position if restore_save else Vector2(110, 492)
+	_activate_zone(start_map_id, false)
+	player.position = spawn_position
 	player.velocity = Vector2.ZERO
-	GameState.activate_map(GameState.INITIAL_MAP_ID, player.position)
+	GameState.activate_map(start_map_id, player.position)
 	camera.global_position = player.global_position
 	camera.reset_smoothing()
 	loading_overlay.set_progress(0.68)
@@ -117,12 +136,12 @@ func _run_loading_steps() -> void:
 		if total > 0:
 			loading_overlay.set_progress(0.68 + 0.30 * float(done) / float(total))
 	PixelStyleManager.style_progress.connect(style_progress)
-	loading_overlay.set_stage("正在描绘像素画…")
+	loading_overlay.set_stage(LocalizationSystem.tr_key("loading_pixel"))
 	await PixelStyleManager.apply_pixel_style_for_active()
 	PixelStyleManager.style_progress.disconnect(style_progress)
 
 	# ⑤ 完成：起音乐、解除暂停、淡出加载界面。
-	loading_overlay.set_stage("出发！")
+	loading_overlay.set_stage(LocalizationSystem.tr_key("loading_go"))
 	loading_overlay.set_progress(1.0)
 	AudioManager.play_music("level")
 	get_tree().paused = false

@@ -2,6 +2,7 @@
 .godot/
 tests/
 tools/__pycache__/
+export/
 
 # Operating system files
 Thumbs.db

@@ -1,0 +1,98 @@
+[gd_resource type="Resource" script_class="ZoneLayout" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/zone_object_data.gd" id="1_ptmtl"]
+[ext_resource type="Script" path="res://scripts/world/zone_layout.gd" id="2_1bv3y"]
+
+[sub_resource type="Resource" id="Resource_3vo8t"]
+script = ExtResource("1_ptmtl")
+kind = "checkpoint"
+position = Vector2(180, 470)
+
+[sub_resource type="Resource" id="Resource_7q3qd"]
+script = ExtResource("1_ptmtl")
+position = Vector2(1070, 535)
+size = Vector2(2060, 30)
+
+[sub_resource type="Resource" id="Resource_trucl"]
+script = ExtResource("1_ptmtl")
+kind = "platform"
+position = Vector2(620, 360)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_etypl"]
+script = ExtResource("1_ptmtl")
+kind = "platform"
+position = Vector2(880, 360)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_uak6f"]
+script = ExtResource("1_ptmtl")
+kind = "platform"
+position = Vector2(1140, 360)
+size = Vector2(140, 14)
+one_way = true
+
+[sub_resource type="Resource" id="Resource_2fmva"]
+script = ExtResource("1_ptmtl")
+kind = "pickup"
+position = Vector2(720, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_4qr4r"]
+script = ExtResource("1_ptmtl")
+kind = "pickup"
+position = Vector2(1000, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_jvelp"]
+script = ExtResource("1_ptmtl")
+kind = "pickup"
+position = Vector2(1280, 480)
+label = "coin"
+value = 1
+
+[sub_resource type="Resource" id="Resource_rovri"]
+script = ExtResource("1_ptmtl")
+kind = "enemy"
+position = Vector2(1780, 480)
+label = "glow_bat"
+
+[sub_resource type="Resource" id="Resource_de7bq"]
+script = ExtResource("1_ptmtl")
+kind = "enemy"
+position = Vector2(1780, 480)
+label = "root_ambusher"
+
+[sub_resource type="Resource" id="Resource_ewxne"]
+script = ExtResource("1_ptmtl")
+kind = "boss"
+
+[sub_resource type="Resource" id="Resource_4ywcx"]
+script = ExtResource("1_ptmtl")
+kind = "darkness"
+float_value = 0.42
+
+[sub_resource type="Resource" id="Resource_8rqb7"]
+script = ExtResource("1_ptmtl")
+kind = "portal"
+position = Vector2(95, 468)
+label = "left"
+target_zone_id = "grove_2"
+target_portal_id = "right"
+
+[sub_resource type="Resource" id="Resource_ahnfc"]
+script = ExtResource("1_ptmtl")
+kind = "portal"
+position = Vector2(1990, 468)
+label = "right"
+target_zone_id = "canyon_1"
+target_portal_id = "left"
+lock_region_id = "grove"
+
+[resource]
+script = ExtResource("2_1bv3y")
+objects = Array[ExtResource("1_ptmtl")]([SubResource("Resource_3vo8t"), SubResource("Resource_7q3qd"), SubResource("Resource_trucl"), SubResource("Resource_etypl"), SubResource("Resource_uak6f"), SubResource("Resource_2fmva"), SubResource("Resource_4qr4r"), SubResource("Resource_jvelp"), SubResource("Resource_rovri"), SubResource("Resource_de7bq"), SubResource("Resource_ewxne"), SubResource("Resource_4ywcx"), SubResource("Resource_8rqb7"), SubResource("Resource_ahnfc")])
