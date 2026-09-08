@@ -52,12 +52,15 @@ var attack_input_held := false
 var dash_timer := 0.0
 var dash_cooldown_timer := 0.0
 var invulnerable_timer := 0.0
+var hurt_timer := 0.0
+var landing_timer := 0.0
 
 var step_timer := 0.0
 var is_dead := false
 var control_enabled := true
 var knockback_component: KnockbackComponent
 var base_animator_scale := Vector2.ONE
+var base_animator_offset := Vector2.ZERO
 var visual_base_scale := Vector2.ONE
 var death_tween: Tween
 var hurtbox_component: HurtboxComponent
@@ -97,6 +100,7 @@ func _capture_animator() -> void:
 	var animator := get_node_or_null("PixelAnimator")
 	if animator:
 		base_animator_scale = animator.scale
+		base_animator_offset = animator.offset
 
 func _physics_process(delta: float) -> void:
 	if is_dead:
@@ -120,6 +124,8 @@ func _update_timers(delta: float) -> void:
 	jump_buffer_timer = maxf(0.0, jump_buffer_timer - delta)
 	dash_cooldown_timer = maxf(0.0, dash_cooldown_timer - delta)
 	invulnerable_timer = maxf(0.0, invulnerable_timer - delta)
+	hurt_timer = maxf(0.0, hurt_timer - delta)
+	landing_timer = maxf(0.0, landing_timer - delta)
 	attack_timer = maxf(0.0, attack_timer - delta)
 	if Input.is_action_just_pressed("jump"):
 		jump_buffer_timer = jump_buffer_time
@@ -129,9 +135,11 @@ func _apply_gravity(delta: float) -> void:
 	if on_floor:
 		air_jumps_left = max_air_jumps
 		coyote_timer = coyote_time
-		if not was_on_floor:
+		if not was_on_floor and velocity.y > 0.0:
 			AudioManager.play_sfx("land")
 			_create_land_dust()
+			landing_timer = 0.24
+			_play_action("landing")
 	else:
 		var current_gravity := gravity * (fall_multiplier if velocity.y > 0.0 else 1.0)
 		if dash_timer <= 0.0:
@@ -157,7 +165,7 @@ func _perform_jump(is_air_jump: bool) -> void:
 		AudioManager.play_sfx("jump")
 	coyote_timer = 0.0
 	jump_buffer_timer = 0.0
-	_apply_squash(Vector2(0.72, 1.24))
+	_play_action("jump")
 
 func _handle_horizontal_movement(delta: float) -> void:
 	if dash_timer > 0.0:
@@ -191,6 +199,7 @@ func _handle_dash(delta: float) -> void:
 	velocity.y = 0.0
 	AudioManager.play_sfx("dash")
 	_create_dash_trail()
+	_play_action("run")
 
 func _handle_attack() -> void:
 	var pressed := Input.is_action_just_pressed("attack") or (Input.is_action_pressed("attack") and not attack_input_held)
@@ -218,7 +227,7 @@ func _start_attack(stage: int) -> void:
 	attack_timer = attack_duration / maxf(0.4, weapon.attack_speed)
 	attack_hitbox.clear_sweep()
 	AudioManager.play_sfx("attack")
-	_play_action("attack")
+	_play_action("attack1" if stage == 1 else "attack2")
 	var area := _attack_area()
 	var shape_node := area.get_node_or_null("CollisionShape2D") as CollisionShape2D
 	var rectangle := RectangleShape2D.new()
@@ -231,7 +240,6 @@ func _start_attack(stage: int) -> void:
 	)
 	area.position.x = ((56.0 if stage == 1 else 68.0) + reach * 0.5) * facing_direction
 	_create_slash_arc(stage)
-	_apply_squash(Vector2(1.14, 0.90))
 	attack_hitbox.set_damage(weapon.combo_damage[mini(stage, weapon.combo_damage.size()) - 1])
 
 func _process_attack_hits() -> void:
@@ -255,6 +263,7 @@ func take_damage(amount: int, source_position := Vector2.ZERO) -> void:
 	if is_dead or invulnerable_timer > 0.0:
 		return
 	invulnerable_timer = hurt_invulnerability
+	hurt_timer = 0.33
 	GameState.damage_player(amount)
 	_shake_camera(8.0)
 	_spawn_floating_text(str(-amount), global_position + Vector2(0, -42), Palette.RED)
@@ -298,37 +307,39 @@ func _flash(color: Color, duration: float) -> void:
 
 func _play_action(action_name: String) -> void:
 	var animator := get_node_or_null("PixelAnimator")
-	if animator and animator.sprite_frames and animator.sprite_frames.has_animation(action_name):
+	if animator == null or animator.sprite_frames == null or not animator.sprite_frames.has_animation(action_name):
+		return
+	if animator.animation != action_name:
 		animator.play(action_name)
+	var config = PlayerAssetLibrary.animation_config(action_name)
+	if config != null:
+		base_animator_scale = config["display_scale"]
+		base_animator_offset = config["display_offset"]
+		animator.scale = base_animator_scale
+		animator.offset = base_animator_offset
 
 func _update_visual() -> void:
 	var animator := get_node_or_null("PixelAnimator")
 	if animator:
 		animator.flip_h = facing_direction < 0
-	if attack_timer <= 0.0:
-		if is_on_floor():
-			_play_action("walk" if absf(velocity.x) > 20.0 else "idle")
-		else:
-			_play_action("jump" if velocity.y < 0.0 else "fall")
+	var weapon_sprite := get_node_or_null("WeaponSprite") as Sprite2D
+	if weapon_sprite:
+		weapon_sprite.flip_h = facing_direction < 0
+		weapon_sprite.position.x = 14.0 * facing_direction
+	if hurt_timer > 0.0:
+		_play_action("hurt")
+	elif attack_timer > 0.0:
+		_play_action("attack1" if attack_stage == 1 else "attack2")
+	elif landing_timer > 0.0:
+		_play_action("landing")
+	elif dash_timer > 0.0:
+		_play_action("run")
+	elif is_on_floor():
+		_play_action("run" if absf(velocity.x) > 20.0 else "idle")
+	else:
+		_play_action("jump" if velocity.y < 0.0 else "fall")
 	var alpha := 0.45 if invulnerable_timer > 0.0 and Engine.get_frames_drawn() % 8 < 4 else 1.0
 	modulate.a = alpha
-	_decay_squash()
-
-func _apply_squash(scale_value: Vector2) -> void:
-	var animator := get_node_or_null("PixelAnimator")
-	if animator:
-		animator.scale = base_animator_scale * scale_value
-	var visual := get_node_or_null("Visual")
-	if visual:
-		visual.scale = visual_base_scale * scale_value
-
-func _decay_squash() -> void:
-	var animator := get_node_or_null("PixelAnimator")
-	if animator:
-		animator.scale = animator.scale.lerp(base_animator_scale, 0.16)
-	var visual := get_node_or_null("Visual")
-	if visual:
-		visual.scale = visual.scale.lerp(visual_base_scale, 0.16)
 
 func _attack_area() -> Area2D:
 	return get_node("AttackArea") as Area2D
@@ -341,7 +352,7 @@ func _on_player_died() -> void:
 	set_deferred("collision_layer", 0)
 	set_deferred("collision_mask", 0)
 	modulate = Color(1.0, 0.55, 0.55, 0.75)
-	_play_action("fall")
+	_play_action("death")
 	death_tween = create_tween()
 	death_tween.tween_property(self, "position:y", position.y - 35.0, 0.22)
 	death_tween.tween_property(self, "position:y", position.y + 120.0, 0.45)
@@ -358,6 +369,7 @@ func _on_respawn_requested(_zone_id: String, spawn_position: Vector2) -> void:
 	modulate = Color.WHITE
 	invulnerable_timer = 1.0
 	air_jumps_left = max_air_jumps
+	landing_timer = 0.0
 	_play_action("idle")
 
 func _create_land_dust() -> void:
@@ -426,22 +438,17 @@ func _refresh_equipment() -> void:
 			get_node("WeaponSprite").queue_free()
 		if has_node("ArmorSprite"):
 			get_node("ArmorSprite").queue_free()
-		var weapon_sprite := Sprite2D.new()
-		weapon_sprite.name = "WeaponSprite"
-		weapon_sprite.texture = PixelStyleManager.make_equipment_texture(weapon.id)
-		weapon_sprite.position = Vector2(14, 2)
-		weapon_sprite.scale = Vector2(1.4, 1.4)
-		weapon_sprite.z_index = 12
-		add_child(weapon_sprite)
+		# The generated hero frames already carry the starter sword.
+		if weapon.id != "grass_blade":
+			var weapon_sprite := Sprite2D.new()
+			weapon_sprite.name = "WeaponSprite"
+			weapon_sprite.texture = PixelStyleManager.make_equipment_texture(weapon.id)
+			weapon_sprite.position = Vector2(14, 2)
+			weapon_sprite.scale = Vector2(1.4, 1.4)
+			weapon_sprite.z_index = 12
+			add_child(weapon_sprite)
 		var armor := GameState.get_current_armor()
 		if armor != null and armor.id != "none_armor":
-			var outline := ColorRect.new()
-			outline.name = "ArmorOutline"
-			outline.color = Color(armor.icon_color, 0.20)
-			outline.position = Vector2(-17, -26)
-			outline.size = Vector2(34, 52)
-			outline.z_index = -1
-			add_child(outline)
 			var armor_sprite := Sprite2D.new()
 			armor_sprite.name = "ArmorSprite"
 			armor_sprite.texture = PixelStyleManager.make_equipment_texture(armor.id)

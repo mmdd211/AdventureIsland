@@ -130,7 +130,8 @@ func _apply_to_player() -> void:
 		var animator := AnimatedSprite2D.new()
 		animator.name = "PixelAnimator"
 		animator.sprite_frames = PlayerAssetLibrary.frames()
-		animator.scale = Vector2(2, 2)
+		animator.scale = Vector2(0.25, 0.25)
+		animator.offset = Vector2(0, -1)
 		animator.z_index = 10
 		animator.play("idle")
 		player.add_child(animator)

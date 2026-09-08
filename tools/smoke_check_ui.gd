@@ -1,4 +1,4 @@
-extends Node
+extends SceneTree
 
 const UI_SCENES := {
 	"res://scenes/ui/title_screen.tscn": [
@@ -24,7 +24,11 @@ const UI_SCENES := {
 	"res://scenes/ui/boss_hud_bar.tscn": ["NameLabel", "FormLabel", "Fill", "EvolveLabel"],
 }
 
-func _ready() -> void:
+func _init() -> void:
+	call_deferred("_run_check")
+
+
+func _run_check() -> void:
 	var failures := 0
 	for scene_path in UI_SCENES:
 		var expected: Array = UI_SCENES[scene_path]
@@ -38,7 +42,7 @@ func _ready() -> void:
 			printerr("UI scene failed to instantiate: %s" % scene_path)
 			failures += 1
 			continue
-		add_child(instance)
+		root.add_child(instance)
 		for node_name in expected:
 			if instance.get_node_or_null(NodePath("%%%s" % str(node_name))) == null:
 				printerr("UI scene missing unique node %%%s: %s" % [str(node_name), scene_path])
@@ -49,4 +53,4 @@ func _ready() -> void:
 		print("UI scene smoke check passed.")
 	else:
 		printerr("UI scene smoke check failed with %d issue(s)." % failures)
-	get_tree().quit(failures)
+	quit(failures)

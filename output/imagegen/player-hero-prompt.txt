@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: game player sprite sheet
+Primary request: pixel art, chibi 2-head-tall cat-ear girl, short black hair and black cat ears, brown eyes, smile. White shirt, black cape with gold-edged badge, dark blue pleated skirt, black short boots, holding a wooden sword. Idle loop animation, 4 frames, side view.
+Scene/backdrop: transparent background for processing, solid #FF00FF only in the raw generation sheet.
+Style/medium: pixel art with hard pixel edges, no anti-aliasing, clean flat color blocks, no blur or gradient noise.
+Composition/framing: 2x2 raw animation grid, then assemble the final 1x4 sheet. Keep the same character in every frame, same scale and camera distance, full body centered in each cell inside the central 60-70% safe area, stable feet/bottom anchor, no limbs, hair, cape, sword, dust or effects crossing cell edges.
+Color palette: black hair and ears, brown eyes, white shirt, black cape with gold badge trim, dark blue skirt, black boots, clean restrained highlight shading.
+Constraints: 4-frame idle loop with subtle breathing, cape and hair motion, wooden sword held consistently; side view facing left or right consistently across frames.
+Avoid: text, watermark, extra characters, anti-aliasing, blur, gradients, noise, cell-edge clipping, detached weapon or effects.

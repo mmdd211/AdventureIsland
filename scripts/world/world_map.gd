@@ -156,8 +156,6 @@ func _build_camera() -> void:
 	camera.name = "Camera2D"
 	camera.limit_top = -520
 	camera.limit_bottom = 800
-	camera.position_smoothing_enabled = true
-	camera.position_smoothing_speed = 7.5
 	camera.set_script(CAMERA_SCRIPT)
 	add_child(camera)
 

@@ -1,14 +1,23 @@
-extends Node
+extends SceneTree
 
 const KNOWN_KINDS := [
 	"ground", "platform", "one_way_platform", "enemy", "pickup", "checkpoint",
 	"spring", "spike", "moving_platform", "crumbling_platform", "portal", "boss", "darkness",
 ]
 
-func _ready() -> void:
+func _init() -> void:
+	call_deferred("_run_check")
+
+
+func _run_check() -> void:
 	var failures := 0
-	for map_id in DataCatalog.map_order():
-		var map := DataCatalog.map(map_id) as MapData
+	var data_catalog: Node = root.get_node_or_null("/root/DataCatalog")
+	if data_catalog == null:
+		printerr("DataCatalog autoload is missing")
+		quit(1)
+		return
+	for map_id in data_catalog.map_order():
+		var map := data_catalog.map(map_id) as MapData
 		if map == null or map.scene_path.is_empty():
 			printerr("Missing scene path: %s" % map_id)
 			failures += 1
@@ -59,4 +68,4 @@ func _ready() -> void:
 		print("Zone scene smoke check passed.")
 	else:
 		printerr("Zone scene smoke check failed with %d issue(s)." % failures)
-	get_tree().quit(failures)
+	quit(failures)
