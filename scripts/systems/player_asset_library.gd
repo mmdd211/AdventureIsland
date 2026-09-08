@@ -21,8 +21,6 @@ const HERO_ANIMATIONS := {
 		"loop": true,
 		"display_scale": 0.25,
 		"display_offset": Vector2(0, -4),
-		# 只用与 idle 同批次（木剑）的 run-1~4；run-5~8 为另一生成批次
-		# （红剑+猫尾+比例不一致），混用会导致武器闪变与脚底悬浮。
 		"frames": [
 			"res://data/player/normalized/run-frame-1.png",
 			"res://data/player/normalized/run-frame-2.png",
