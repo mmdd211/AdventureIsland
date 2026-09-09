@@ -6,7 +6,6 @@ func _init() -> void:
 	var expected := {
 		"idle": 4,
 		"run": 8,
-		"walk": 8,
 		"jump": 4,
 		"fall": 4,
 		"landing": 4,

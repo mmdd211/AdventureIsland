@@ -41,6 +41,20 @@ def split_grid(grid_path, prefix, out_dir):
         count += 1
     return count
 
+def split_row_sheet(grid_path, prefix, out_dir, cols, start_index=1):
+    """拆分横向精灵表：按列切成 cols 个等宽方块，起始序号为 start_index（1-based）"""
+    img = Image.open(grid_path).convert("RGBA")
+    w, h = img.size
+    cell_w = w // cols
+    count = 0
+    for i in range(cols):
+        box = (i * cell_w, 0, (i + 1) * cell_w, h)
+        frame = img.crop(box)
+        fname = f"{prefix}{start_index + i}.png"
+        frame.save(os.path.join(out_dir, fname))
+        count += 1
+    return count
+
 # 处理所有 raw 目录下的 2×2 网格图
 total = 0
 for action, prefix in ACTION_MAP.items():
@@ -54,5 +68,17 @@ for action, prefix in ACTION_MAP.items():
             break
     else:
         print(f"WARNING: {action}-2x2 not found!")
+
+# 处理 run 的 1×4 横向精灵表（跑步 8 帧素材重制）
+for name, start in (("run-sheet-a-1x4", 1), ("run-sheet-b-1x4", 5)):
+    for ext in (".jpg", ".png"):
+        grid_path = os.path.join(RAW, f"{name}{ext}")
+        if os.path.exists(grid_path):
+            n = split_row_sheet(grid_path, "run-frame-", OUT, 4, start)
+            print(f"{name}{ext} → {n} frames (run-frame-{start}~run-frame-{start + n - 1}.png)")
+            total += n
+            break
+    else:
+        print(f"WARNING: {name} not found!")
 
 print(f"\ntotal: {total} frames")

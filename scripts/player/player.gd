@@ -21,6 +21,7 @@ signal attack_hit(enemy: Node)
 @export var gravity := 1750.0
 @export var fall_multiplier := 1.45
 @export var max_fall_speed := 940.0
+@export var cape_unfold_fall_distance := 60.0
 
 @export_group("攻击")
 @export var attack_cooldown := 0.16
@@ -66,6 +67,7 @@ var death_tween: Tween
 var hurtbox_component: HurtboxComponent
 var attack_hitbox: HitboxComponent
 var status_component: StatusEffectComponent
+var _apeak_y := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -335,9 +337,14 @@ func _update_visual() -> void:
 	elif dash_timer > 0.0:
 		_play_action("run")
 	elif is_on_floor():
-		_play_action("run" if absf(velocity.x) > 20.0 else "idle")
+		_play_action("run" if absf(velocity.x) > 0.1 else "idle")
 	else:
-		_play_action("jump" if velocity.y < 0.0 else "fall")
+		if velocity.y < 0.0:
+			_apeak_y = global_position.y
+			_play_action("jump")
+		else:
+			var fall_dist := global_position.y - _apeak_y
+			_play_action("fall" if fall_dist > cape_unfold_fall_distance else "fall_short")
 	var alpha := 0.45 if invulnerable_timer > 0.0 and Engine.get_frames_drawn() % 8 < 4 else 1.0
 	modulate.a = alpha
 

@@ -10,7 +10,7 @@ from collections import deque
 sys.stdout.reconfigure(encoding="utf-8")
 
 CLEANED = r"D:\KAFA\Workspace\ohter\AdventureIsland\data\player\cleaned"
-NORMALIZED = r"D:\KAFA\Workspace\ohter\AdventureIsland\data\player\normalized"
+NORMALIZED = r"D:\KAFA\Workspace\ohter\AdventureIsland\assets\sprites\player"
 SIZE = 256
 BASELINE = 244   # 脚底线
 HEAD_X = 140     # 头部锚点 x

@@ -1,7 +1,7 @@
 extends SceneTree
 
 const SOURCE_DIR := "res://data/player/cleaned"
-const OUTPUT_DIR := "res://data/player/normalized"
+const OUTPUT_DIR := "res://assets/sprites/player"
 const FRAME_SIZE := Vector2i(256, 256)
 const TARGET_BASELINE := 244
 const TARGET_HEAD_ANCHOR_X := 140
@@ -15,7 +15,6 @@ const FRAME_NAMES := [
 	"frame-1.png", "frame-2.png", "frame-3.png", "frame-4.png",
 	"run-frame-1.png", "run-frame-2.png", "run-frame-3.png", "run-frame-4.png",
 	"run-frame-5.png", "run-frame-6.png", "run-frame-7.png", "run-frame-8.png",
-	"walk-frame-1.png", "walk-frame-2.png", "walk-frame-3.png", "walk-frame-4.png",
 	"jump-takeoff-frame-1.png", "jump-takeoff-frame-2.png",
 	"jump-takeoff-frame-3.png", "jump-takeoff-frame-4.png",
 	"fall-frame-1.png", "fall-frame-2.png", "fall-frame-3.png", "fall-frame-4.png",

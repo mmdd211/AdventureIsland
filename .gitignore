@@ -4,6 +4,19 @@ tests/
 tools/__pycache__/
 export/
 
+# IDE / editor internal
+.trae/
+
+# AI-generated raw sprite sheets (large, regenerable)
+data/player/raw/
+
+# Temporary preview / verification images
+tools/run_previews/
+tools/player_previews/
+
+# Godot .import files in data pipeline (auto-generated)
+data/player/**/*.import
+
 # Operating system files
 Thumbs.db
 Desktop.ini
