@@ -22,12 +22,19 @@ def is_near_white(r: int, g: int, b: int) -> bool:
 def is_key_color(r: int, g: int, b: int, a: int, key: str = "magenta") -> bool:
     if a < 20:
         return True
-    # white sheet gutters from image_gen grids
+    if key == "green":
+        # 奶白/粉裙是合法主体：绿幕模式绝不把 near-white 当背景
+        return g > 180 and r < 110 and b < 110 and g > r + 60 and g > b + 60
+    # white sheet gutters from image_gen grids (magenta path only)
     if is_near_white(r, g, b):
         return True
-    if key == "green":
-        return g > 180 and r < 110 and b < 110 and g > r + 60 and g > b + 60
-    return r > 190 and b > 190 and g < 90 and r > g + 80 and b > g + 80
+    # 放宽容差以识别 AI 生成的偏色洋红背景(b 通道偏差可达 60+)
+    return r >= 150 and b >= 130 and g <= 120 and (r - g) >= 50 and (b - g) >= 50
+
+
+def is_magenta(r: int, g: int, b: int) -> bool:
+    """供 detect_grid 使用的洋红检测别名。"""
+    return is_key_color(r, g, b, 255, "magenta")
 
 
 def key_bg(img: Image.Image, key: str = "magenta") -> Image.Image:
@@ -63,6 +70,48 @@ def key_bg(img: Image.Image, key: str = "magenta") -> Image.Image:
         visited[y][x] = True
         px[x, y] = (0, 0, 0, 0)
         q.extend(((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)))
+    if key == "green":
+        rgba = despill_green(rgba)
+    return rgba
+
+
+def despill_green(img: Image.Image) -> Image.Image:
+    """Clamp green fringe on soft chroma edges (AI sheets bleed #00FF00)."""
+    rgba = img.convert("RGBA")
+    px = rgba.load()
+    w, h = rgba.size
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if a < 20:
+                continue
+            if g > r + 12 and g > b + 12:
+                px[x, y] = (r, max(r, b), b, a)
+    return rgba
+
+
+def fill_pinholes(img: Image.Image) -> Image.Image:
+    """Fill 1px transparent pinholes left by filtered resample + alpha harden."""
+    rgba = img.convert("RGBA")
+    px = rgba.load()
+    w, h = rgba.size
+    to_fill: list[tuple[int, int, tuple[int, int, int, int]]] = []
+    for y in range(1, h - 1):
+        for x in range(1, w - 1):
+            if px[x, y][3] >= 20:
+                continue
+            opaque_neighbors = []
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                n = px[x + dx, y + dy]
+                if n[3] >= 20:
+                    opaque_neighbors.append(n)
+            if len(opaque_neighbors) >= 3:
+                r = sum(n[0] for n in opaque_neighbors) // len(opaque_neighbors)
+                g = sum(n[1] for n in opaque_neighbors) // len(opaque_neighbors)
+                b = sum(n[2] for n in opaque_neighbors) // len(opaque_neighbors)
+                to_fill.append((x, y, (r, g, b, 255)))
+    for x, y, c in to_fill:
+        px[x, y] = c
     return rgba
 
 
@@ -145,20 +194,23 @@ def largest_component_bbox(img: Image.Image):
     return minx, miny, maxx, maxy
 
 
-def detect_grid(img: Image.Image) -> tuple[int, int]:
-    """Find cols/rows by scanning for magenta gutters."""
+def detect_grid(img: Image.Image, key: str = "magenta") -> tuple[int, int]:
+    """Find cols/rows by scanning for chroma gutters (magenta or green)."""
     w, h = img.size
     px = img.load()
 
+    def is_gutter_pixel(r: int, g: int, b: int) -> bool:
+        return is_key_color(r, g, b, 255, key) or is_near_white(r, g, b)
+
     def col_is_gutter(x: int) -> bool:
         for y in range(0, h, 4):
-            if not is_magenta(*px[x, y]):
+            if not is_gutter_pixel(*px[x, y][:3]):
                 return False
         return True
 
     def row_is_gutter(y: int) -> bool:
         for x in range(0, w, 4):
-            if not is_magenta(*px[x, y]):
+            if not is_gutter_pixel(*px[x, y][:3]):
                 return False
         return True
 
@@ -219,7 +271,16 @@ def place_to_target_height(img: Image.Image, target_h: int, size: int = SIZE) ->
         nw = max(1, int(round(cw * scale)))
         nh = max(1, int(round(ch * scale)))
     if (nw, nh) != (cw, ch):
-        crop = crop.resize((nw, nh), Image.NEAREST)
+        # Downscale AI sheets with LANCZOS (NEAREST discards detail → mush).
+        # Upscale stays NEAREST to keep hard pixel edges.
+        resample = Image.Resampling.LANCZOS if scale < 1.0 else Image.Resampling.NEAREST
+        crop = crop.resize((nw, nh), resample)
+        # Re-harden alpha after filtered resample so cutout edges stay 1-bit.
+        cpx = crop.load()
+        for y in range(crop.height):
+            for x in range(crop.width):
+                r, g, b, a = cpx[x, y]
+                cpx[x, y] = (r, g, b, 255 if a >= HARDEN else 0)
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     canvas.paste(crop, ((size - nw) // 2, (size - nh) // 2), crop)
     return canvas
@@ -286,7 +347,7 @@ def main() -> None:
     if args.cols and args.rows:
         cols, rows = args.cols, args.rows
     else:
-        cols, rows = detect_grid(sheet)
+        cols, rows = detect_grid(sheet, args.key)
     print(f"grid {cols}x{rows} cell {sheet.width // cols}x{sheet.height // rows}")
 
     cells = split_cells(sheet, cols, rows, args.key)
@@ -328,6 +389,9 @@ def main() -> None:
         framed = place_to_target_height(cells[cell_i], target_h, size)
         # two-round precise center alignment on the final canvas
         framed = refine_center_alignment(framed, size, rounds=2)
+        if args.key == "green":
+            framed = despill_green(framed)
+            framed = fill_pinholes(framed)
 
         n = opaque_count(framed)
         bb = content_bbox(framed)
