@@ -9,7 +9,7 @@ var aura: Sprite2D
 
 func _ready() -> void:
 	name = "BossAnimator"
-	sprite_frames = PixelStyleManager.make_boss_frames(region_id, form_id)
+	sprite_frames = _style().make_boss_frames(region_id, form_id)
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var visual_scale := _visual_scale()
 	scale = Vector2(visual_scale, visual_scale)
@@ -17,6 +17,9 @@ func _ready() -> void:
 	_build_aura()
 	animation_finished.connect(_on_animation_finished)
 	play("idle")
+
+func _style() -> Node:
+	return get_node_or_null("/root/PixelStyleManager")
 
 func play_state(state: String) -> void:
 	if visual_state == "death" or not sprite_frames.has_animation(state):
@@ -47,7 +50,7 @@ func set_form(new_form_id: String) -> void:
 	if form_id == new_form_id:
 		return
 	form_id = new_form_id
-	sprite_frames = PixelStyleManager.make_boss_frames(region_id, form_id)
+	sprite_frames = _style().make_boss_frames(region_id, form_id)
 	var visual_scale := _visual_scale()
 	scale = Vector2(visual_scale, visual_scale)
 	offset.y = -30.0 if region_id == "meadow" and form_id == "dancer" else -6.0
@@ -60,6 +63,15 @@ func _visual_scale() -> float:
 		return 2.1
 	return 0.88 if form_id == "dancer" else 0.82
 
+func _faces_head_right() -> bool:
+	return faces_head_right(region_id, form_id)
+
+static func faces_head_right(region: String, form: String) -> bool:
+	return region == "meadow" and form == "bee"
+
+static func compute_flip_h(region: String, form: String, dir: int) -> bool:
+	return dir < 0 if faces_head_right(region, form) else dir > 0
+
 func _aura_color() -> Color:
 	if region_id == "forest":
 		return Color("9a5bd6")
@@ -68,7 +80,8 @@ func _aura_color() -> Color:
 	return Color("61d6ff")
 
 func _process(_delta: float) -> void:
-	flip_h = direction > 0
+	# bee art is authored head-right / abdomen-left; other forms keep legacy flip
+	flip_h = compute_flip_h(region_id, form_id, direction)
 	if aura:
 		aura.flip_h = flip_h
 		var pulse := 0.0

@@ -9,10 +9,26 @@ export/
 
 # AI-generated raw sprite sheets (large, regenerable)
 data/player/raw/
+data/monsters/raw/
+generated-*.png
+
+# Scratch / one-off pipelines (not shipped)
+_cast_frames_temp/
+_cast_preview_temp/
+_cast_temp_cells/
+tmp_banbu/
+tools/_*.py
+tools/scrub_ai_watermark.py
+tools/scrub_engine_watermark.py
+tools/scan_ai_watermark.py
+tools/verify_banbu_walk_9frames.py
+_check_banbu_v2.py
 
 # Temporary preview / verification images
 tools/run_previews/
 tools/player_previews/
+data/monsters/raw/qa_*.png
+data/monsters/raw/watermark_report.txt
 
 # Godot .import files in data pipeline (auto-generated)
 data/player/**/*.import
