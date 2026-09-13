@@ -3,7 +3,7 @@ feature: pollen-queen-dancer-sprites
 status: delivered
 updated: 2026-09-13
 branch: master
-commits: 
+commits: 78528f6..78c0740
 ---
 
 # 花粉女爵·二形态（花冠舞姬）idle 舞步素材
