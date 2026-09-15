@@ -165,5 +165,40 @@ python tools/process_boss_sheet.py \
 
 - [x] A1: image_edit 身份锁 2×4 攻击表 — acceptance: 源图在 raw；7 姿与 idle 同一只；绿幕（covers: S2c）
 - [x] A2: 处理写入 attack 00..06 — acceptance: 7 张 224×224；无绿残留/贴边；奶白扇裙在（covers: S2c; depends: A1）
-- [ ] A3: 用户目视确认同一只 — acceptance: 与 idle 并排无换角（covers: S2c; depends: A2）
+- [x] A3: 用户目视确认同一只 — acceptance: 与 idle 并排无换角（covers: S2c; depends: A2）— 用户确认后进入 skill
 - [x] A4: 烟雾 attack=7 — acceptance: SMOKE_PASS（covers: S2c; depends: A2）— attack=7, idle/move=6
+
+## [S2d] Skill「花瓣迷径」阶段
+
+### 项目契约 vs 用户文案
+
+| 用户文案 | 项目落地 |
+|----------|----------|
+| 网格 2×3，6 帧 | **2×4 = 8 格全用**（`BOSS_FRAME_STATES.skill=8`） |
+| 底色 `#FF00FF` | **绿幕 `#00FF00`** |
+| 画布 | **224×224**，target-h 150 |
+| 身份 | **image_edit + idle 母版**，禁止文生图换角 |
+| 朝向 | 与 attack/idle 相同：**左侧视**，扇/路径主向偏左 |
+| 引擎技能 | `petal_paths`：4 条竖向 lane 预警 + 下落弹，粉 `#ff9ec4`，约 0.9s |
+
+### 8 帧语义
+
+| out | 语义 |
+|-----|------|
+| 00 | 舞蹈准备：扇收拢，一臂前伸（偏左），脚边少量花粉 |
+| 01 | 扇向前（左）展开，第一圈花瓣绕身生成 |
+| 02 | 快速旋转，花瓣路径向两侧延伸 |
+| 03 | 路径加厚成墙，迷宫感出现 |
+| 04 | 峰值：花瓣迷宫最密，金花粉连接 |
+| 05 | 迷宫开始收缩，旋转减速 |
+| 06 | 花瓣回流，扇渐合 |
+| 07 | 结束：少量漂浮花瓣，回战斗姿 |
+
+特效必须绕主体、压在 Cell 内；禁止巨型独立法阵。
+
+### Skill Tasks
+
+- [x] S1: image_edit 身份锁 2×4 花瓣迷径 — acceptance: 与 idle 同一只；左侧视；绿幕（covers: S2d）
+- [x] S2: 处理写入 skill 00..07 — acceptance: 8 张 224×224；无绿/贴边（covers: S2d; depends: S1）
+- [ ] S3: 用户确认 — acceptance: 与 idle/attack 并排同一只（covers: S2d; depends: S2）
+- [x] S4: 烟雾 skill=8 — acceptance: SMOKE_PASS（covers: S2d; depends: S2）— skill=8, attack=7
