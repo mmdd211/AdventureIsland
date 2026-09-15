@@ -322,9 +322,9 @@ python tools/process_boss_sheet.py \
 
 ### Roadmap Tasks
 
-- [ ] R0: 提交 skill_bees + 可选动画槽代码 — acceptance: commit 后烟雾 8 animations；bee SMOKE_PASS（covers: S2e, S2f）
-- [ ] R1: hurt 身份锁 3 帧写入 — acceptance: hurt_00..02 与 idle 同一只，无绿/贴边（covers: S2f; depends: R0）
-- [ ] R2: death 身份锁 6 帧写入 — acceptance: death_00..05 同一只，烟雾 death=6（covers: S2f; depends: R0）
+- [x] R0: 提交 skill_bees + 可选动画槽代码 — acceptance: commit 后烟雾 8 animations；bee SMOKE_PASS（covers: S2e, S2f）— `b898cfc`
+- [x] R1: hurt 身份锁 3 帧写入 — acceptance: hurt_00..02 与 idle 同一只，无绿/贴边（covers: S2f; depends: R0）— 审计通过，待提交
+- [x] R2: death 身份锁 6 帧写入 — acceptance: death_00..05 同一只，烟雾 death=6（covers: S2f; depends: R0）— 审计通过，待提交
 - [ ] R3: 用户确认 hurt+death — acceptance: 并排过关（covers: S2f; depends: R1, R2）
 - [ ] R4: 全状态审计 + 实机复核 — acceptance: 审计图全绿项；meadow_3 无换角（covers: S2f; depends: R3）
 - [ ] R5:（可选）evolve 重做 — acceptance: 仅当用户要求；否则跳过并在 Report 记旧帧（covers: S2f）
