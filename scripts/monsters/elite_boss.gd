@@ -646,14 +646,16 @@ func _begin_evolution() -> void:
 	_cleanup_projectiles()
 	set_deferred("collision_layer", 0)
 	set_deferred("collision_mask", 0)
-	boss_animator.play_action("evolve", "idle")
+	# Hold evolve clip until form swap — play_action would cut to idle too early.
+	boss_animator.play("evolve")
 	boss_hud_controller.show_evolution(LocalizationSystem.tr_key("evolution"))
 	_show_text("区域Boss · 觉醒", Color(Palette.YELLOW_LIGHT))
-	await get_tree().create_timer(1.35).timeout
+	# 8 frames @ 5 fps = 1.6s; wait slightly longer so the peak is readable.
+	await get_tree().create_timer(1.85).timeout
 	_apply_form(form_index + 1, true)
 	set_deferred("collision_layer", 4)
 	set_deferred("collision_mask", 18)
-	await get_tree().create_timer(0.25).timeout
+	await get_tree().create_timer(0.35).timeout
 	boss_hud_controller.hide_evolution()
 	evolving = false
 	attacking = false

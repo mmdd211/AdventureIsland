@@ -7,7 +7,7 @@ const BOSS_FRAME_STATES := {
 	"attack": [7, 14.0, false],
 	"skill": [8, 12.0, false],
 	"hurt": [3, 14.0, false],
-	"evolve": [8, 8.0, false],
+	"evolve": [8, 5.0, false],
 	"death": [6, 8.0, false],
 }
 

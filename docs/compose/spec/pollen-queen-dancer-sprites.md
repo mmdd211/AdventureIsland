@@ -307,6 +307,14 @@ python tools/process_boss_sheet.py \
 | 若做 | 「王室觉醒」光爆收束 2×4；与 bee evolve 区分 |
 | 默认 | **本阶段不做**；在 Report 注明 PRESENT-BUT-OLD |
 
+### 进化节奏（实机反馈修正）
+
+| 项 | 旧 | 新 |
+|----|----|----|
+| evolve fps | 8.0（8 帧=1.0s） | **5.0**（8 帧=1.6s） |
+| 切形态等待 | 1.35s | **1.85s**（播完+可读峰值） |
+| 播放方式 | `play_action` 1.0s 后提前回 idle | **`play("evolve")` 持住**至切形态 |
+
 ### P4 — 全量验收
 
 1. 全状态并排审计图（idle/move/attack/skill/skill_bees/hurt/death）  
@@ -327,7 +335,11 @@ python tools/process_boss_sheet.py \
 - [x] R2: death 身份锁 6 帧写入 — acceptance: death_00..05 同一只，烟雾 death=6（covers: S2f; depends: R0）— 审计通过，待提交
 - [x] R3: 用户确认 hurt+death — acceptance: 并排过关（covers: S2f; depends: R1, R2）— 用户「所有动作已生成完毕」后提交 `c6cc13c`
 - [x] R4: 全状态审计 + 实机复核 — acceptance: 审计图全绿项；meadow_3 无换角（covers: S2f; depends: R3）— 离线：SMOKE_PASS×2、FACE_PASS、PIXEL 新态全过；evolve 旧帧贴边 PRE-EXISTING。实机 meadow_3 仍可由人复核
-- [ ] R5:（可选）evolve 重做 — acceptance: 仅当用户要求；否则跳过并在 Report 记旧帧（covers: S2f）
+- [x] R5:（可选）evolve 重做/删除 — **决定：都不做**（covers: S2f）
+  - 删文件会触发 `load_frames` 整包 null；再加 `OPTIONAL_LOAD_STATES` 是第三套特例（主表 + skill_bees 之后），与「保持精简」相反
+  - 正确契约：每形态交付七态；终形态 evolve 实战不播但文件保留
+  - 若将来要按形态裁动画：单独做「形态动画清单」，不在此补丁
+  - 现状：dancer evolve 仍为旧占位帧；烟雾通过
 
 ### 失败回退
 
