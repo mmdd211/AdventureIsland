@@ -237,160 +237,13 @@ func _physics_process(delta: float) -> void:
 	_update_health_bar()
 
 func _process_patrol(delta: float) -> void:
-	var player := _find_player()
-	if enemy_kind == "root_ambusher":
-		_process_ambusher(player)
-	elif _is_flying():
-		_process_flyer(player, delta)
-	elif data.front_guard:
-		_process_snail(player, delta)
-	elif enemy_kind == "slime":
-		_process_slime(player, delta)
-	elif enemy_kind == "thorn_roller" or enemy_kind == "sky_knight" or enemy_kind == "wind_falcon":
-		_process_charger(player, delta)
-	elif enemy_kind == "spore_lobber" or enemy_kind == "rock_thrower" or enemy_kind == "rune_weaver":
-		_process_caster(player, delta)
-	else:
-		velocity.x = direction * data.move_speed
-		_turn_at_terrain()
+	EnemyBehaviors.process_patrol(self, delta)
 
 func _is_flying() -> bool:
-	return enemy_kind in ["pollen_bee", "glow_bat", "wind_falcon", "star_wisp"]
-
-func _process_flyer(player: Node2D, delta: float) -> void:
-	var patrol_bounds := _patrol_bounds()
-	var local_x: float = global_position.x - patrol_bounds.x
-	if is_on_wall() and turn_cooldown <= 0.0:
-		direction = -1 if velocity.x > 0.0 else 1
-		turn_cooldown = 0.22
-	if local_x <= 120.0:
-		direction = 1
-	elif local_x >= patrol_bounds.y - 120.0:
-		direction = -1
-	if player == null:
-		velocity.x = direction * data.move_speed
-		return
-	var offset := player.global_position - global_position
-	if offset.length() < data.detection_range:
-		var desired_direction := 1 if offset.x > 0.0 else -1
-		direction = desired_direction
-		velocity.x = move_toward(velocity.x, signf(offset.x) * data.move_speed, 850.0 * delta)
-		velocity.y = sin(phase) * 70.0 + clampf(offset.y, -80.0, 80.0) * 0.8
-		if enemy_kind == "wind_falcon" and absf(offset.x) < 260.0:
-			velocity.x = signf(offset.x) * data.charge_speed
-	else:
-		velocity.x = direction * data.move_speed
-		velocity.y = sin(phase) * 55.0
+	return EnemyBehaviors.is_flying(self)
 
 func _patrol_bounds() -> Vector2:
-	var current := get_parent()
-	while current != null:
-		if current.is_in_group("world_zone"):
-			var origin := 0.0
-			var width := 2400.0
-			var origin_value = current.get("zone_offset_x")
-			var width_value = current.get("zone_width")
-			if origin_value != null:
-				origin = float(origin_value)
-			if width_value != null:
-				width = float(width_value)
-			return Vector2(origin, origin + width)
-		current = current.get_parent()
-	return Vector2(global_position.x - 1200.0, global_position.x + 1200.0)
-
-func _process_ambusher(player: Node2D) -> void:
-	if player == null:
-		velocity.x = 0.0
-		return
-	var distance := global_position.distance_to(player.global_position)
-	if is_hidden:
-		if distance < data.detection_range:
-			is_hidden = false
-			velocity.y = -360.0
-			_spawn_text("!", Palette.YELLOW_LIGHT)
-		else:
-			velocity.x = 0.0
-		return
-	if distance < 170.0:
-		velocity.x = direction * data.charge_speed
-		direction = 1 if player.global_position.x > global_position.x else -1
-	else:
-		velocity.x = move_toward(velocity.x, 0.0, 900.0)
-
-func _process_charger(player: Node2D, _delta: float) -> void:
-	if state != State.PATROL:
-		return
-	_turn_at_terrain(true)
-	velocity.x = direction * data.move_speed
-	if player != null and global_position.distance_to(player.global_position) < data.detection_range:
-		direction = 1 if player.global_position.x > global_position.x else -1
-		state = State.WINDUP
-		state_timer = 0.38
-
-func _process_caster(player: Node2D, _delta: float) -> void:
-	attack_cooldown = maxf(0.0, attack_cooldown - _delta)
-	velocity.x = move_toward(velocity.x, 0.0, 800.0)
-	if player != null and attack_cooldown <= 0.0 and global_position.distance_to(player.global_position) < data.detection_range:
-		direction = 1 if player.global_position.x > global_position.x else -1
-		_fire_enemy_projectile(player)
-		attack_cooldown = 1.8
-		if enemy_kind == "rune_weaver":
-			var teleport_offset := Vector2(direction * -180.0, 0.0)
-			if not test_move(global_transform, teleport_offset):
-				global_position += teleport_offset
-
-func _fire_enemy_projectile(player: Node2D) -> void:
-	var angle := global_position.angle_to_point(player.global_position)
-	var projectile := Area2D.new()
-	projectile.collision_layer = 0
-	projectile.collision_mask = 1
-	projectile.set_script(load("res://scripts/monsters/enemy_projectile.gd"))
-	projectile.set("direction", Vector2.from_angle(angle))
-	projectile.set("speed", 300.0 + float(data.contact_damage) * 2.0)
-	projectile.set("damage", maxi(5, data.contact_damage - 3))
-	projectile.set("lifetime", 2.0)
-	var shape := CollisionShape2D.new()
-	var rectangle := RectangleShape2D.new()
-	rectangle.size = Vector2(16, 16)
-	shape.shape = rectangle
-	projectile.add_child(shape)
-	var visual := ColorRect.new()
-	visual.position = Vector2(-7, -7)
-	visual.size = Vector2(14, 14)
-	visual.color = Color("ffd166")
-	projectile.add_child(visual)
-	projectile.global_position = global_position + Vector2(direction * 24.0, -12.0)
-	get_parent().add_child(projectile)
-
-func _process_snail(player: Node2D, _delta: float) -> void:
-	if state != State.PATROL:
-		return
-	_turn_at_terrain()
-	velocity.x = direction * data.move_speed
-	if player and global_position.distance_to(player.global_position) < data.detection_range and absf(global_position.y - player.global_position.y) < 70.0:
-		direction = 1 if player.global_position.x > global_position.x else -1
-		state = State.WINDUP
-		state_timer = data.windup_time
-		AudioManager.play_sfx("block")
-
-func _process_slime(player: Node2D, delta: float) -> void:
-	hop_timer -= delta
-	if player and global_position.distance_to(player.global_position) < data.detection_range:
-		var chase := signf(player.global_position.x - global_position.x)
-		if absf(chase) > 0.1 and is_on_floor() and hop_timer <= 0.0:
-			if is_mini:
-				velocity = Vector2(
-					chase * randf_range(MINI_CHASE_SPEED.x, MINI_CHASE_SPEED.y),
-					-400.0
-				)
-				hop_timer = randf_range(MINI_HOP_COOLDOWN.x, MINI_HOP_COOLDOWN.y)
-			else:
-				velocity = Vector2(chase * randf_range(130.0, 190.0), -430.0)
-				hop_timer = randf_range(0.85, 1.15)
-			AudioManager.play_sfx("jump")
-	elif is_on_floor():
-		velocity.x = direction * data.move_speed
-		_turn_at_terrain(true)
+	return EnemyBehaviors._patrol_bounds(self)
 
 func _turn_at_terrain(ignore_edges := false) -> void:
 	if turn_cooldown > 0.0:
@@ -519,8 +372,4 @@ func _create_death_effect() -> void:
 		"z_index": 120, "cleanup_time": 0.9,
 	})
 
-func _find_player() -> Node2D:
-	var players := get_tree().get_nodes_in_group("player")
-	if players.size() > 0:
-		return players[0] as Node2D
-	return null
+
