@@ -158,7 +158,7 @@ func _handle_jump() -> void:
 		velocity.y *= jump_cut_multiplier
 
 func _perform_jump(is_air_jump: bool) -> void:
-	velocity.y = jump_force * (0.88 if is_air_jump else 1.0)
+	velocity.y = jump_force * (BalanceConfig.AIR_JUMP_MULTIPLIER if is_air_jump else 1.0)
 	if is_air_jump:
 		air_jumps_left -= 1
 		AudioManager.play_sfx("double_jump")
@@ -175,7 +175,7 @@ func _handle_horizontal_movement(delta: float) -> void:
 		return
 
 	var axis := Input.get_axis("move_left", "move_right")
-	var slow_factor := 0.55 if status_component.has_effect("slow") else 1.0
+	var slow_factor := BalanceConfig.SLOW_FACTOR if status_component.has_effect("slow") else 1.0
 	var accel := (acceleration if is_on_floor() else air_acceleration) * slow_factor
 	if absf(axis) > 0.1:
 		velocity.x = move_toward(velocity.x, axis * move_speed * slow_factor, accel * delta)
@@ -236,11 +236,12 @@ func _start_attack(stage: int) -> void:
 	if shape_node and shape_node.shape is RectangleShape2D:
 		rectangle = shape_node.shape as RectangleShape2D
 	var reach := weapon.reach_bonus
+	var stage_idx := 0 if stage == 1 else 1
 	rectangle.size = Vector2(
-		(82.0 if stage == 1 else 116.0) + reach,
-		(52.0 if stage == 1 else 66.0) + reach * 0.25
+		BalanceConfig.ATTACK_BOX_WIDTH[stage_idx] + reach,
+		BalanceConfig.ATTACK_BOX_HEIGHT[stage_idx] + reach * 0.25
 	)
-	area.position.x = ((56.0 if stage == 1 else 68.0) + reach * 0.5) * facing_direction
+	area.position.x = (BalanceConfig.ATTACK_BOX_OFFSET_X[stage_idx] + reach * 0.5) * facing_direction
 	_create_slash_arc(stage)
 	attack_hitbox.set_damage(weapon.combo_damage[mini(stage, weapon.combo_damage.size()) - 1])
 
@@ -284,20 +285,7 @@ func _spawn_damage_number(value: int, target_position: Vector2) -> void:
 	_spawn_floating_text(str(value), target_position + Vector2(randf_range(-8.0, 8.0), -38.0), Palette.YELLOW)
 
 func _spawn_floating_text(text_value: String, world_position: Vector2, color: Color) -> void:
-	var label := Label.new()
-	label.text = text_value
-	label.z_index = 200
-	label.add_theme_font_size_override("font_size", 22)
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 6)
-	get_tree().current_scene.add_child(label)
-	label.global_position = world_position + Vector2(-14.0, -12.0)
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(label, "global_position:y", label.global_position.y - 54.0, 0.65)
-	tween.tween_property(label, "modulate:a", 0.0, 0.65).set_ease(Tween.EASE_IN)
-	tween.chain().tween_callback(label.queue_free)
+	FxUtil.spawn_floating_text(get_tree().current_scene, text_value, world_position, color)
 
 func _flash(color: Color, duration: float) -> void:
 	var target := get_node_or_null("PixelAnimator")
@@ -380,57 +368,18 @@ func _on_respawn_requested(_zone_id: String, spawn_position: Vector2) -> void:
 	_play_action("idle")
 
 func _create_land_dust() -> void:
-	var particles := CPUParticles2D.new()
-	particles.position = Vector2(0, 24)
-	particles.amount = 12
-	particles.lifetime = 0.34
-	particles.one_shot = true
-	particles.explosiveness = 1.0
-	particles.direction = Vector2.UP
-	particles.spread = 70.0
-	particles.initial_velocity_min = 35.0
-	particles.initial_velocity_max = 80.0
-	particles.gravity = Vector2(0, 320)
-	particles.color = Color("d9c79c")
-	particles.z_index = 90
-	add_child(particles)
-	particles.emitting = true
-	get_tree().create_timer(0.8).timeout.connect(particles.queue_free)
+	FxUtil.spawn_particles(self, Vector2(0, 24), {
+		"amount": 12, "lifetime": 0.34, "spread": 70.0,
+		"velocity_min": 35.0, "velocity_max": 80.0,
+		"gravity": Vector2(0, 320), "color": Color("d9c79c"),
+	})
 
 func _create_slash_arc(stage: int) -> void:
-	var arc := Line2D.new()
 	var weapon := _weapon()
-	arc.width = (12.0 if stage == 1 else 17.0) + weapon.reach_bonus * 0.08
-	arc.default_color = Color(weapon.icon_color.lightened(0.2), 0.88)
-	arc.z_index = 80
-	var points := PackedVector2Array()
-	var radius := (44.0 if stage == 1 else 62.0) + weapon.reach_bonus
-	for index in range(9):
-		var angle := lerpf(-1.15, 1.15, float(index) / 8.0)
-		points.append(Vector2(cos(angle), sin(angle)) * radius * facing_direction)
-	arc.points = points
-	add_child(arc)
-	var tween := create_tween()
-	tween.tween_property(arc, "modulate:a", 0.0, 0.16)
-	tween.tween_callback(arc.queue_free)
+	FxUtil.spawn_slash_arc(self, facing_direction, stage, weapon.icon_color, weapon.reach_bonus)
 
 func _create_star_impact(target_position: Vector2) -> void:
-	var ring := Line2D.new()
-	ring.closed = true
-	ring.width = 5.0
-	ring.default_color = Color("68d8ff")
-	ring.z_index = 90
-	var points := PackedVector2Array()
-	for index in range(12):
-		points.append(Vector2.from_angle(TAU * float(index) / 12.0) * 36.0)
-	ring.points = points
-	get_tree().current_scene.add_child(ring)
-	ring.global_position = target_position
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(ring, "scale", Vector2(2.4, 1.8), 0.25)
-	tween.tween_property(ring, "modulate:a", 0.0, 0.25)
-	tween.chain().tween_callback(ring.queue_free)
+	FxUtil.spawn_star_impact(get_tree().current_scene, target_position)
 
 func _refresh_equipment() -> void:
 	var weapon := _weapon()
@@ -466,33 +415,13 @@ func _refresh_equipment() -> void:
 			add_child(armor_sprite)
 
 func _create_ring_effect(color: Color) -> void:
-	var ring := Line2D.new()
-	ring.width = 4.0
-	ring.default_color = color
-	ring.closed = true
-	ring.z_index = 80
-	var points := PackedVector2Array()
-	for index in range(16):
-		points.append(Vector2.from_angle(TAU * float(index) / 16.0) * 18.0)
-	ring.points = points
-	add_child(ring)
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(ring, "scale", Vector2(2.4, 1.4), 0.24)
-	tween.tween_property(ring, "modulate:a", 0.0, 0.24)
-	tween.chain().tween_callback(ring.queue_free)
+	FxUtil.spawn_ring(self, Vector2.ZERO, color)
 
 func _create_dash_trail() -> void:
-	var particles := CPUParticles2D.new()
-	particles.amount = 16
-	particles.lifetime = 0.22
-	particles.direction = Vector2(-facing_direction, 0)
-	particles.spread = 18.0
-	particles.initial_velocity_min = 80.0
-	particles.initial_velocity_max = 180.0
-	particles.gravity = Vector2.ZERO
-	particles.color = Palette.CYAN
-	particles.z_index = 70
-	add_child(particles)
-	particles.emitting = true
-	get_tree().create_timer(0.45).timeout.connect(particles.queue_free)
+	FxUtil.spawn_particles(self, Vector2.ZERO, {
+		"amount": 16, "lifetime": 0.22, "spread": 18.0,
+		"direction": Vector2(-facing_direction, 0),
+		"velocity_min": 80.0, "velocity_max": 180.0,
+		"gravity": Vector2.ZERO, "color": Palette.CYAN,
+		"z_index": 70, "cleanup_time": 0.45,
+	})

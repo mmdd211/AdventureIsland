@@ -79,9 +79,10 @@ func _create_default_data(kind_value: String) -> EnemyData:
 
 func _apply_region_scaling() -> void:
 	var difficulty := int(get_meta("difficulty", 1))
-	var health_scale: float = [1.0, 1.22, 1.48, 1.80, 2.20, 2.70][mini(6, maxi(1, difficulty)) - 1]
-	var speed_scale: float = [1.0, 1.06, 1.12, 1.18, 1.25, 1.32][mini(6, maxi(1, difficulty)) - 1]
-	var damage_bonus: int = [0, 2, 4, 6, 9, 12][mini(6, maxi(1, difficulty)) - 1]
+	var idx := BalanceConfig.difficulty_index(difficulty)
+	var health_scale: float = BalanceConfig.DIFFICULTY_HEALTH_SCALE[idx]
+	var speed_scale: float = BalanceConfig.DIFFICULTY_SPEED_SCALE[idx]
+	var damage_bonus: int = BalanceConfig.DIFFICULTY_DAMAGE_BONUS[idx]
 	if not is_mini:
 		data.max_health = int(round(float(data.max_health) * health_scale))
 		data.move_speed *= speed_scale
@@ -508,38 +509,15 @@ func _update_health_bar() -> void:
 		health_fill.size.x = maxf(0.0, 36.0 * float(health_component.current_health) / float(health_component.max_health))
 
 func _spawn_text(text_value: String, color: Color) -> void:
-	var label := Label.new()
-	label.text = text_value
-	label.z_index = 180
-	label.add_theme_font_size_override("font_size", 17)
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 5)
-	get_tree().current_scene.add_child(label)
-	label.global_position = global_position + Vector2(-20.0, -52.0)
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(label, "global_position:y", label.global_position.y - 38.0, 0.48)
-	tween.tween_property(label, "modulate:a", 0.0, 0.48)
-	tween.chain().tween_callback(label.queue_free)
+	FxUtil.spawn_enemy_text(get_tree().current_scene, text_value, global_position + Vector2(-20.0, -52.0), color)
 
 func _create_death_effect() -> void:
-	var particles := CPUParticles2D.new()
-	particles.amount = 22
-	particles.lifetime = 0.55
-	particles.one_shot = true
-	particles.explosiveness = 1.0
-	particles.spread = 180.0
-	particles.initial_velocity_min = 90.0
-	particles.initial_velocity_max = 230.0
-	particles.gravity = Vector2(0, 520)
-	particles.color = Color("e07a3c")
-	particles.z_index = 120
-	var parent := get_parent()
-	particles.position = parent.to_local(global_position)
-	parent.call_deferred("add_child", particles)
-	particles.emitting = true
-	get_tree().create_timer(0.9).timeout.connect(particles.queue_free)
+	FxUtil.spawn_particles(get_parent(), get_parent().to_local(global_position), {
+		"amount": 22, "lifetime": 0.55, "spread": 180.0,
+		"velocity_min": 90.0, "velocity_max": 230.0,
+		"gravity": Vector2(0, 520), "color": Color("e07a3c"),
+		"z_index": 120, "cleanup_time": 0.9,
+	})
 
 func _find_player() -> Node2D:
 	var players := get_tree().get_nodes_in_group("player")

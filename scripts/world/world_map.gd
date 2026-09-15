@@ -34,11 +34,8 @@ func _ready() -> void:
 		return
 	AudioManager.play_music("level")
 	GameState.reset_run()
+	_build_common_scene()
 	_build_zones()
-	_build_camera()
-	_build_player()
-	_build_ui()
-	_build_transition_layer()
 	_connect_portals()
 	GameState.boss_defeated.connect(_unlock_region_portals)
 	# 初始 zone 不触发单 zone 像素化：紧随其后的 _apply_pixel_style 会统一处理活跃 zone，
@@ -75,9 +72,7 @@ func _build_one_zone(zone_id: String) -> void:
 	WORLD_MAPS.build(zone)
 	zones[zone_id] = zone
 
-func _start_loading_flow(restore_save := false) -> void:
-	# 先搭好摄像机/玩家/UI/过渡层，再暂停游戏并显示加载界面，
-	# 随后在 _run_loading_steps 里分阶段完成音乐、地形、唤醒、美术。
+func _build_common_scene() -> void:
 	zone_root = Node2D.new()
 	zone_root.name = "ZoneRoot"
 	add_child(zone_root)
@@ -85,6 +80,11 @@ func _start_loading_flow(restore_save := false) -> void:
 	_build_player()
 	_build_ui()
 	_build_transition_layer()
+
+func _start_loading_flow(restore_save := false) -> void:
+	# 先搭好摄像机/玩家/UI/过渡层，再暂停游戏并显示加载界面，
+	# 随后在 _run_loading_steps 里分阶段完成音乐、地形、唤醒、美术。
+	_build_common_scene()
 	player.control_enabled = false
 	get_tree().paused = true
 	loading_overlay = LOADING_OVERLAY.instantiate()
