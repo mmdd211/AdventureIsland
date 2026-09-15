@@ -67,7 +67,7 @@ var death_tween: Tween
 var hurtbox_component: HurtboxComponent
 var attack_hitbox: HitboxComponent
 var status_component: StatusEffectComponent
-var _apeak_y := 0.0
+var _apex_y := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -340,10 +340,10 @@ func _update_visual() -> void:
 		_play_action("run" if absf(velocity.x) > 0.1 else "idle")
 	else:
 		if velocity.y < 0.0:
-			_apeak_y = global_position.y
+			_apex_y = global_position.y
 			_play_action("jump")
 		else:
-			var fall_dist := global_position.y - _apeak_y
+			var fall_dist := global_position.y - _apex_y
 			_play_action("fall" if fall_dist > cape_unfold_fall_distance else "fall_short")
 	var alpha := 0.45 if invulnerable_timer > 0.0 and Engine.get_frames_drawn() % 8 < 4 else 1.0
 	modulate.a = alpha

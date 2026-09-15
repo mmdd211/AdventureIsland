@@ -4,8 +4,7 @@ const Palette := preload("res://scripts/systems/pixel_palette.gd")
 
 const ENEMY_DATA_SCRIPT := preload("res://scripts/monsters/enemy_data.gd")
 const ENEMY_LIBRARY := preload("res://scripts/monsters/enemy_library.gd")
-@export var data: Resource
-@export var enemy_data: EnemyData
+@export var data: EnemyData
 @export var enemy_kind := "mushroom"
 @export var is_mini := false
 @export var is_boss_minion := false
@@ -47,7 +46,6 @@ func _ready() -> void:
 	add_to_group("enemies")
 	if data == null:
 		data = _create_default_data(enemy_kind)
-	enemy_data = data as EnemyData
 	if is_mini:
 		data = _create_default_data("slime")
 		data.max_health = 12
@@ -69,11 +67,10 @@ func _ready() -> void:
 	_apply_region_scaling()
 	_apply_minion_profile()
 	_apply_enemy_range_profile()
-	enemy_data = data as EnemyData
 	_setup_combat_components()
 	_refresh_visual_scale()
 
-func _create_default_data(kind_value: String) -> Resource:
+func _create_default_data(kind_value: String) -> EnemyData:
 	var resource_enemy := DataCatalog.enemy(kind_value)
 	if resource_enemy:
 		# 共享资源必须复制后再改写，否则难度缩放会跨出生点累积。
@@ -283,7 +280,6 @@ func _process_flyer(player: Node2D, delta: float) -> void:
 	else:
 		velocity.x = direction * data.move_speed
 		velocity.y = sin(phase) * 55.0
-		move_and_slide()
 
 func _patrol_bounds() -> Vector2:
 	var current := get_parent()
