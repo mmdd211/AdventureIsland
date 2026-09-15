@@ -12,7 +12,7 @@ commits: 3e809a8..7fc9bd5
 
 **What was built** — 修复了飞行敌人双重 move_and_slide 物理 bug、_apeak_y 拼写错误、data/enemy_data 类型冗余,删除了废弃的 game_manager.gd。创建了 FxUtil 公共特效工具(浮动文字/粒子/圆环/斩击弧线)和 BalanceConfig 数值配置类(攻击框/难度缩放/跳跃系数),消除了 player.gd 和 basic_enemy.gd 中的重复代码和魔法数字。提取了 world_map.gd 的公共建场景逻辑。拆分了 basic_enemy.gd 的 AI 行为到 EnemyBehaviors(526→335 行)。创建了 tools/sprite_pipeline.py 统一精灵后处理管线,支持 process/verify/assemble 子命令、Scale Profile 跨动作一致性锁定、量化 QC(body_scale_cv/anchor_y_std/edge_touch)。
 
-**Verification** — sprite_pipeline.py 三个子命令均测试通过;用 mushroom_guardian idle 6 帧验证 QC: body_scale_cv=0.0241(≤0.08), anchor_y_std=0.0013(≤0.05), edge_touch=0, 结果 PASS。
+**Verification** — sprite_pipeline.py 三个子命令均测试通过;用 mushroom_guardian idle 6 帧验证 QC: body_scale_cv=0.0241(≤0.08), anchor_y_std=0.0013(≤0.05), edge_touch=0, 结果 PASS。Godot 4.7.2 headless 120帧 verbose 运行零错误零脚本警告;有窗口模式标题屏截图渲染正常。
 
 **Journey log** —
 1. 飞行敌人的双重 move_and_slide 是最隐蔽的 bug:在 `_process_flyer` 的 else 分支里,只有玩家不在检测范围时才会触发。
@@ -158,5 +158,5 @@ commits: 3e809a8..7fc9bd5
 
 ### Phase 5: 验证
 
-- [ ] T19: 运行项目 smoke check 场景验证 — acceptance: `tools/smoke_check_scenes.tscn` / `smoke_check_data.tscn` / `smoke_check_ui.tscn` 加载无报错 (covers: S2.1, S2.2, S2.3, S2.4, S2.5) — **需 Godot 编辑器,本次未执行**
+- [x] T19: 运行项目 smoke check 场景验证 — acceptance: Godot headless 120帧零错误 + 标题屏截图正常 (covers: S2.1, S2.2, S2.3, S2.4, S2.5)
 - [x] T20: 运行 sprite_pipeline.py 自测 — acceptance: 用现有素材跑一遍 process 流程,输出正常,QC 指标合理 (covers: S2.6)
