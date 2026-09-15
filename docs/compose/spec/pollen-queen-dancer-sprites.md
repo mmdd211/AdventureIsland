@@ -1,9 +1,9 @@
 ---
 feature: pollen-queen-dancer-sprites
-status: delivered
+status: in-progress
 updated: 2026-09-13
 branch: master
-commits: 78528f6..78c0740
+commits: 78528f6..04a1dcc
 ---
 
 # 花粉女爵·二形态（花冠舞姬）idle 舞步素材
@@ -93,11 +93,12 @@ Background: solid pure #00FF00 green
 
 ## [S3] Out of Scope
 
-- dancer 全七态重做（attack/skill/hurt/evolve/death）
+- dancer skill/hurt/evolve/death（attack 本阶段做）
 - 一形态 bee 素材
 - 蘑菇 Boss
 - 改 `BOSS_FRAME_STATES`、技能数值、碰撞
 - 洋红底管线
+- 纯文字重新生成角色（必须 image_edit 身份锁）
 
 ## Tasks
 
@@ -106,3 +107,63 @@ Background: solid pure #00FF00 green
 - [x] T3: 处理写入 idle/move — acceptance: 12 张 224×224，主体不贴边，n 足够；idle 与 move 内容一致（covers: S2; depends: T2）
 - [x] T4: 用户确认身份 — acceptance: 书面确认设定表过关或列出修改点（covers: S2; depends: T2）— 「好，差不多了，注意抠图别抠掉重要部分」
 - [x] T5: 加载烟雾 — acceptance: `load_frames("pollen_queen","dancer")` 在 idle/move 上帧数正确（其它动作仍用旧帧）（covers: S2; depends: T3）— `SMOKE_PASS` + `SMOKE_IDLE_MOVE_OK`
+
+## [S2c] Attack 阶段（当前）
+
+### 身份铁律
+
+**禁止**用纯文字 `image_gen` 重画角色。必须 `image_edit` + 已过关身份参考图：
+- 主参考：`data/monsters/raw/dancer_identity_ref_for_attack.png`（idle 源表 cell4，花扇展开）
+- 备选：`data/monsters/raw/dancer_identity_ref_idle03_green.png`（引擎 idle_03 贴绿底）
+
+与 idle 同一只：花冠、蜂腰、花瓣裙、花瓣扇、冷艳脸。
+
+### 朝向契约（attack 必须遵守）
+
+| 项 | 值 | 依据 |
+|----|-----|------|
+| 美术默认朝向 | **左侧视 3/4**，头/胸/扇主方向朝左 | `faces_head_right` 仅 bee；dancer `flip_h = direction > 0` |
+| 引擎行为 | 攻击前 `direction` 转向玩家并 flip | `elite_boss.gd` 追踪玩家；`boss_animator` 每帧 flip |
+| 花扇挥击 / 残影弧 | **向左扫出**（面朝方向） | `fan_strike` 弹幕朝玩家 |
+| 禁止 | 正对镜头为主、残影对称绕头 | flip 后读向糊 |
+
+idle 已按略朝左过关；attack 必须同一套，否则 idle↔attack 切换像换人/换轴。
+
+### 项目契约 vs 用户文案
+
+| 用户文案 | 项目落地 |
+|----------|----------|
+| 网格 2×3，6 帧 | **2×4 源表，pick 7 帧**（`BOSS_FRAME_STATES.attack=7`，不改表） |
+| 底色 `#FF00FF` | **绿幕 `#00FF00`**（洋红会掏玫红/粉） |
+| 画布未写 | **224×224**，target-h 150，与 idle 一致 |
+| 三段横挥 | 7 帧：蓄力→挥1→挥2→峰值→峰值余韵→后摇→回姿 |
+
+### Attack 7 帧语义（源 2×4 pick）
+
+| out | 源 cell | 语义 |
+|-----|---------|------|
+| 00 | 0 | 准备：扇收一侧，裙垂，微侧转 |
+| 01 | 1 | 第一段横挥，扇展开，短粉轨迹 |
+| 02 | 2 | 第二段反向，扇全开，裙摆旋，花瓣散 |
+| 03 | 4 | 第三段峰值：大弧残影，花瓣大量飞散 |
+| 04 | 5 | 峰值余韵（力量延续） |
+| 05 | 6 | 后摇：前倾回收，惯性摆，花粉消散 |
+| 06 | 7 | 回战斗姿：居中，扇半开 |
+
+### 处理
+
+```
+python tools/process_boss_sheet.py \
+  --sheet data/monsters/raw/dancer_attack_2x4_v1.png \
+  --state attack --form dancer --cols 2 --rows 4 \
+  --pick 0,1,2,4,5,6,7 --key green \
+  --size 224 --target-h 150 \
+  --frame-template "pollen_queen_dancer_attack_{out_i:02d}.png"
+```
+
+### Attack Tasks
+
+- [x] A1: image_edit 身份锁 2×4 攻击表 — acceptance: 源图在 raw；7 姿与 idle 同一只；绿幕（covers: S2c）
+- [x] A2: 处理写入 attack 00..06 — acceptance: 7 张 224×224；无绿残留/贴边；奶白扇裙在（covers: S2c; depends: A1）
+- [ ] A3: 用户目视确认同一只 — acceptance: 与 idle 并排无换角（covers: S2c; depends: A2）
+- [x] A4: 烟雾 attack=7 — acceptance: SMOKE_PASS（covers: S2c; depends: A2）— attack=7, idle/move=6
