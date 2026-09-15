@@ -317,7 +317,7 @@ func _play_action(action_name: String) -> void:
 	if config != null:
 		base_animator_scale = config["display_scale"]
 		base_animator_offset = config["display_offset"]
-		animator.scale = base_animator_scale
+		animator.scale = base_animator_scale if base_animator_scale is Vector2 else Vector2(base_animator_scale, base_animator_scale)
 		animator.offset = base_animator_offset
 
 func _update_visual() -> void:
