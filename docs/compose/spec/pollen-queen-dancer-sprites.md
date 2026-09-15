@@ -200,5 +200,138 @@ python tools/process_boss_sheet.py \
 
 - [x] S1: image_edit 身份锁 2×4 花瓣迷径 — acceptance: 与 idle 同一只；左侧视；绿幕（covers: S2d）
 - [x] S2: 处理写入 skill 00..07 — acceptance: 8 张 224×224；无绿/贴边（covers: S2d; depends: S1）
-- [ ] S3: 用户确认 — acceptance: 与 idle/attack 并排同一只（covers: S2d; depends: S2）
+- [x] S3: 用户确认 — acceptance: 与 idle/attack 并排同一只（covers: S2d; depends: S2）— 用户确认后进入 skill_bees
 - [x] S4: 烟雾 skill=8 — acceptance: SMOKE_PASS（covers: S2d; depends: S2）— skill=8, attack=7
+
+## [S2e] Skill_bees「王室蜂舞」+ 可选动画槽
+
+### 引擎契约（本阶段改代码）
+
+| 项 | 值 |
+|----|-----|
+| 问题 | `petal_paths` 与 `royal_bees` 原先共用 `skill` 贴图 |
+| 方案 | `OPTIONAL_ANIMATIONS["skill_bees"]`：文件齐全才挂载；缺文件不影响其它形态 |
+| 播放 | `elite_boss._skill_anim_for(attack)`：`royal_bees` 且存在 `skill_bees` 则播之，否则回退 `skill` |
+| 帧数 | 8（与 skill 相同），fps 12，不 loop |
+| 素材 | `pollen_queen_dancer_skill_bees_00..07.png`，224×224，绿幕，左侧视，身份锁 image_edit |
+| 不改 | `BOSS_FRAME_STATES` 主表、碰撞、伤害 |
+
+### 蜂舞 8 帧语义
+
+| out | 语义 |
+|-----|------|
+| 00 | 仪式开始：低头闭眼，双手持扇，裙收，脚下金粉升起 |
+| 01 | 扇全开抬头，背后花瓣环，首批小蜂出现 |
+| 02 | 高速旋转，瓣与蜂绕身，轨迹成环 |
+| 03 | 蜂密度上升，金粉增强 |
+| 04 | 峰值：双臂展，瓣环如冠，蜂群穿梭，金光最强，裙全开 |
+| 05 | 最后一旋，瓣与蜂外爆，金冲击 |
+| 06 | 消散：瓣缓落，蜂回归 |
+| 07 | 高傲站姿，扇半开 |
+
+蜂为**小型像素蜂轮廓**，禁止写实昆虫；特效中心始终是 Boss。
+
+### Bee-skill Tasks
+
+- [x] B0: 可选 skill_bees 加载与播放 — acceptance: 无文件时 load_frames 仍成功；有文件时 has_animation("skill_bees")（covers: S2e）
+- [x] B1: image_edit 身份锁 2×4 王室蜂舞 — acceptance: 同一只；左侧视；绿幕（covers: S2e; depends: B0）
+- [x] B2: 处理写入 skill_bees 00..07 — acceptance: 8 张 224×224 无绿/贴边（covers: S2e; depends: B1）
+- [x] B3: 用户确认 — acceptance: 与 idle/attack/skill 并排同一只（covers: S2e; depends: B2）— 进入总计划，待提交后实机复核
+- [x] B4: 烟雾 — acceptance: SMOKE_PASS 且报告 skill_bees present（covers: S2e; depends: B2）— loaded 8 animations
+
+## [S2f] 舞姬剩余动作总计划（Roadmap）
+
+### 状态总表（对照 `BOSS_FRAME_STATES`）
+
+| state | 帧数 | 素材现状 | 实战触发 | 优先级 |
+|-------|------|----------|----------|--------|
+| idle | 6 | 新·已提交 | 站立 | 完成 |
+| move | 6 | 新·已提交 | 移动（复用 idle 帧） | 完成 |
+| attack | 7 | 新·已提交 | `fan_strike` | 完成 |
+| skill | 8 | 新·已提交 | `petal_paths` | 完成 |
+| skill_bees | 8 可选 | 新·**待提交** | `royal_bees` | **P0** |
+| hurt | 3 | **旧** | `take_damage` 每次挨打 | **P1** |
+| death | 6 | **旧** | 终形态 `_defeat` | **P2** |
+| evolve | 8 | **旧** | 仅非终形态换形态；舞姬为终形态，实战几乎不播 | P3 可选 |
+
+判定「旧」：文件体积约 2.5KB（程序画/占位）；「新」约 30–45KB（身份锁素材）。
+
+### 全阶段共同契约（与已交付动作一致）
+
+| 项 | 值 |
+|----|-----|
+| 身份 | **禁止**纯文字 `image_gen` 换角；一律 `image_edit` + idle 母版 |
+| 朝向 | 3/4 **左侧视**；扇/FX 主向偏左；匹配 `flip_h = direction > 0` |
+| 底色 | 绿幕 `#00FF00`（禁止洋红） |
+| 画布 | 224×224，`--target-h 150`，LANCZOS 下采样 + despill + 补针孔 |
+| 抠图 | green 模式 **不 key near-white**（保奶白裙/扇） |
+| 禁止 | 改 `BOSS_FRAME_STATES` 主表、碰撞、技能数值 |
+| 网格 | 按引擎帧数选网格，**不照搬**外部文案的 2×3/6 帧 |
+
+### P0 — 提交王室蜂舞 + 可选槽（阻塞后续干净提交）
+
+- **范围**：`skill_bees_00..07.png`、`boss_asset_library.gd`、`elite_boss.gd`、`boss_animator.gd`、smoke、spec  
+- **验收**：烟雾 8 animations；bee 加载仍 PASS；`royal_bees` 有专用动画否则回退 `skill`  
+- **依赖**：B3 用户确认（可与本阶段提交同一用户回合完成）
+
+### P1 — hurt（3 帧）· 高优
+
+| 项 | 计划 |
+|----|------|
+| 为何优先 | 每次受击都播；旧帧与新身份切换突兀 |
+| 源网格 | **1×3** 或 **2×2 取 3**；单次 `image_edit` |
+| 分镜 | 00 后仰受击（扇挡/裙震）→ 01 恢复中（重心回正）→ 02 回战斗姿 |
+| 要求 | 左侧视；不改体型；无独立大特效；绿幕 |
+| 处理 | `--state hurt --pick ... --key green --size 224 --target-h 150` |
+| 验收 | 3 张 224；绿边/贴边 0；与 idle 并排同一只；烟雾 hurt=3 |
+| 提交 | 仅 hurt 帧 + spec 勾选 |
+
+### P2 — death（6 帧）· 高优
+
+| 项 | 计划 |
+|----|------|
+| 为何优先 | 击破演出；旧帧最伤沉浸 |
+| 源网格 | **2×3 全用 6** 或 2×4 取 6 |
+| 分镜 | 00 失衡/优雅半跪 → 01 裙摊开花冠歪 → 02 金光从冠散出 → 03 花瓣大量飘零 → 04 半透明衰减 → 05 残瓣消散 |
+| 要求 | 仍是舞姬身份；悲剧优雅；左侧视基准；禁止突然变成 bee/灰烬人 |
+| 处理 | `--state death --pick ... --key green` |
+| 验收 | 6 张；无绿/贴边；烟雾 death=6；并排同一只 |
+| 提交 | 仅 death 帧 + spec |
+
+### P3 — evolve（8 帧）· 低优 / 可选
+
+| 项 | 计划 |
+|----|------|
+| 事实 | 换形态播 **当前形态** 的 evolve；舞姬是 forms 末位，`_begin_evolution` 实战不进 |
+| 现状 | 旧帧已满足 `load_frames` 必过条件 |
+| 若做 | 「王室觉醒」光爆收束 2×4；与 bee evolve 区分 |
+| 默认 | **本阶段不做**；在 Report 注明 PRESENT-BUT-OLD |
+
+### P4 — 全量验收
+
+1. 全状态并排审计图（idle/move/attack/skill/skill_bees/hurt/death）  
+2. Godot 烟雾：7 主态 + skill_bees  
+3. 实机 `meadow_3`：切换动作不换角；挨打/击败用新帧  
+4. 可选：dancer `visual_scale` 1.0（只动显示）若游戏内偏糊  
+
+### P5 — 收尾
+
+- spec `status: delivered`，Report 写清交付范围与 journey  
+- **不**把蘑菇/player.gd 混入  
+- 不 auto-push  
+
+### Roadmap Tasks
+
+- [ ] R0: 提交 skill_bees + 可选动画槽代码 — acceptance: commit 后烟雾 8 animations；bee SMOKE_PASS（covers: S2e, S2f）
+- [ ] R1: hurt 身份锁 3 帧写入 — acceptance: hurt_00..02 与 idle 同一只，无绿/贴边（covers: S2f; depends: R0）
+- [ ] R2: death 身份锁 6 帧写入 — acceptance: death_00..05 同一只，烟雾 death=6（covers: S2f; depends: R0）
+- [ ] R3: 用户确认 hurt+death — acceptance: 并排过关（covers: S2f; depends: R1, R2）
+- [ ] R4: 全状态审计 + 实机复核 — acceptance: 审计图全绿项；meadow_3 无换角（covers: S2f; depends: R3）
+- [ ] R5:（可选）evolve 重做 — acceptance: 仅当用户要求；否则跳过并在 Report 记旧帧（covers: S2f）
+
+### 失败回退
+
+- hurt/death 身份漂 → 仅重出该动作网格（≤2 次）  
+- 死亡帧被 FX 吞没角色 → 收 FX、保主体 bbox 与 idle 同量级  
+- 抠图掏白 → 确认 green 模式未 key near-white  
+- 实机仍混旧帧 → 检查是否写错文件名前缀 `pollen_queen_dancer_`

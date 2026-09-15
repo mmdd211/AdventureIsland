@@ -214,13 +214,22 @@ func _follow_player(player: Node2D, delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0.0, 900.0 * delta)
 	move_and_slide()
 
+func _skill_anim_for(attack: String) -> String:
+	if attack == "royal_bees" and boss_animator.sprite_frames != null and boss_animator.sprite_frames.has_animation("skill_bees"):
+		return "skill_bees"
+	if attack == "barrel_spill" and boss_animator.sprite_frames != null and boss_animator.sprite_frames.has_animation("skill_barrel_spill"):
+		return "skill_barrel_spill"
+	if attack == "cap_bulwark" and boss_animator.sprite_frames != null and boss_animator.sprite_frames.has_animation("skill_cap_bulwark"):
+		return "skill_cap_bulwark"
+	return "skill"
+
 func _perform_attack(player: Node2D) -> void:
 	var use_skill := attack_index % 2 == 1
 	var attack := str(skills[attack_index % skills.size()]) if use_skill else basic_attack
 	attack_index += 1
 	attacking = true
 	state_timer = 0.82 if use_skill else 0.58
-	boss_animator.play_action("skill" if use_skill else "attack")
+	boss_animator.play_action(_skill_anim_for(attack) if use_skill else "attack")
 	await get_tree().create_timer(0.28 if use_skill else 0.20).timeout
 	if is_dead or evolving:
 		attacking = false

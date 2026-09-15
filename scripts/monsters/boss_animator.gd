@@ -85,7 +85,7 @@ func _process(_delta: float) -> void:
 	if aura:
 		aura.flip_h = flip_h
 		var pulse := 0.0
-		if visual_state == "skill":
+		if visual_state == "skill" or visual_state.begins_with("skill"):
 			pulse = 0.24 + sin(Time.get_ticks_msec() * 0.02) * 0.05
 		elif visual_state == "attack":
 			pulse = 0.18

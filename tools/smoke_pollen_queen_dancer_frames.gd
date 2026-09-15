@@ -37,4 +37,8 @@ func _init() -> void:
 			quit(1)
 			return
 	print("SMOKE_IDLE_MOVE_OK")
+	if frames.has_animation("skill_bees"):
+		print("  skill_bees frames=%d (optional present)" % frames.get_frame_count("skill_bees"))
+	else:
+		print("  skill_bees absent (optional)")
 	quit(0)
