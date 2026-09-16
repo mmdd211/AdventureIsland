@@ -303,9 +303,13 @@ func _play_action(action_name: String) -> void:
 		animator.play(action_name)
 	var config = PlayerAssetLibrary.animation_config(action_name)
 	if config != null:
-		base_animator_scale = config["display_scale"]
+		var display_scale = config["display_scale"]
 		base_animator_offset = config["display_offset"]
-		animator.scale = base_animator_scale if base_animator_scale is Vector2 else Vector2(base_animator_scale, base_animator_scale)
+		if display_scale is Vector2:
+			base_animator_scale = display_scale
+		else:
+			base_animator_scale = Vector2(display_scale, display_scale)
+		animator.scale = base_animator_scale
 		animator.offset = base_animator_offset
 
 func _update_visual() -> void:
