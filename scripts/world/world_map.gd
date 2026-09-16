@@ -46,9 +46,10 @@ func _ready() -> void:
 	call_deferred("_apply_pixel_style")
 
 func _build_zones() -> void:
-	zone_root = Node2D.new()
-	zone_root.name = "ZoneRoot"
-	add_child(zone_root)
+	if zone_root == null:
+		zone_root = Node2D.new()
+		zone_root.name = "ZoneRoot"
+		add_child(zone_root)
 	for zone_id in DataCatalog.map_order():
 		_build_one_zone(str(zone_id))
 
