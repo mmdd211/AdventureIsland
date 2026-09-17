@@ -59,6 +59,9 @@ func set_form(new_form_id: String) -> void:
 func _visual_scale() -> float:
 	if region_id == "forest":
 		return 1.15 if form_id == "turtle" else 0.90
+	if region_id == "grove":
+		# custom 224px nest art (painter fallback used 2.1)
+		return 1.08 if form_id == "nest" else 0.95
 	if region_id != "meadow":
 		return 2.1
 	return 0.88 if form_id == "dancer" else 0.82
@@ -77,6 +80,8 @@ func _aura_color() -> Color:
 		return Color("9a5bd6")
 	if region_id == "meadow":
 		return Color("ff6a70")
+	if region_id == "grove":
+		return Color("7ff4c9")
 	return Color("61d6ff")
 
 func _process(_delta: float) -> void:
