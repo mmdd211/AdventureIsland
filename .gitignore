@@ -12,11 +12,15 @@ data/player/raw/
 data/monsters/raw/
 generated-*.png
 
-# Scratch / one-off pipelines (not shipped)
+# Local scratch umbrella (temps, one-off pipelines, previews)
+.scratch/
+
+# Scratch / one-off pipelines (legacy root names; prefer .scratch/)
 _cast_frames_temp/
 _cast_preview_temp/
 _cast_temp_cells/
 tmp_banbu/
+output/
 tools/_*.py
 tools/scrub_ai_watermark.py
 tools/scrub_engine_watermark.py
