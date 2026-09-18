@@ -3,7 +3,7 @@ feature: whisper-root-sprites
 status: delivered
 updated: 2026-09-18
 branch: master
-commits: 9541687de86eba5e3d036185fde1636dbb0d1fd1..pending-whisper-256
+commits: 9541687de86eba5e3d036185fde1636dbb0d1fd1..43dd6581b06fc0687efaa62bf4cc6ce1648a72f8
 ---
 
 # 低语主教 whisper_root 两形态七态全量素材
