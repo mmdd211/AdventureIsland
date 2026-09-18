@@ -3,7 +3,7 @@ feature: canyon-eagle-sprites
 status: delivered
 updated: 2026-09-18
 branch: master
-commits: 9541687de86eba5e3d036185fde1636dbb0d1fd1..working-tree (uncommitted)
+commits: 9541687de86eba5e3d036185fde1636dbb0d1fd1..75d315e52ab22575b4bbe7e39ff8212d7cde53b7
 ---
 
 # 鹰哨统领 canyon_rock_eagle 两形态素材
@@ -97,7 +97,7 @@ commits: 9541687de86eba5e3d036185fde1636dbb0d1fd1..working-tree (uncommitted)
 | P1 | eagle 七态 + animator/smoke | 已完成 |
 | P2–P3 | hunter 七态 + smoke | 已完成 |
 | P3b | `blade_gale` + 母版归档 + 验证/review | 已完成 |
-| P4 | 只 stage canyon 相关 commit | **待用户确认** |
+| P4 | 只 stage canyon 相关 commit | `75d315e` 已完成 |
 
 ## [S3] Out of Scope
 
@@ -119,4 +119,4 @@ commits: 9541687de86eba5e3d036185fde1636dbb0d1fd1..working-tree (uncommitted)
 - [x] T7: 实现 `blade_gale` — acceptance: `_execute_basic_attack` 含显式分支；3 道风刃、扇形、`#ffe066`（covers: S2.3c）
 - [x] T8: 归档两形态母版 — acceptance: `data/monsters/raw/eagle_identity_master_v1.png` 与 `hunter_identity_master_v2.png` 存在且为引擎帧拷贝（covers: S2.2）
 - [x] T9: 回归验证 — acceptance: 双形态 smoke 通过 + grep 确认 `blade_gale` 分支；独立 review 无 critical（covers: S2.4）
-- [ ] T10: canyon 相关 commit — acceptance: 只 stage canyon 素材/spec/smoke/elite_boss；`boss_animator` 若含 grove 行需一并说明或拆分；不混 whisper_root/`edited-*.png`（covers: S2.4）
+- [x] T10: canyon 相关 commit — acceptance: `75d315e` 只含 canyon 素材/spec/smoke/elite_boss/animator；commit body 已注明 grove scale 行；whisper_root 与 `edited-*.png` 未混入（covers: S2.4）
