@@ -60,8 +60,11 @@ func _visual_scale() -> float:
 	if region_id == "forest":
 		return 1.15 if form_id == "turtle" else 0.90
 	if region_id == "grove":
-		# custom 224px nest art (painter fallback used 2.1)
-		return 1.08 if form_id == "nest" else 0.95
+		# 256px canvas with padded margins (was 224)
+		return 0.95 if form_id == "nest" else 0.85
+	if region_id == "canyon":
+		# 256px canvas; wide wings + FX need transparent padding
+		return 0.75 if form_id == "eagle" else 0.85
 	if region_id != "meadow":
 		return 2.1
 	return 0.88 if form_id == "dancer" else 0.82
@@ -82,6 +85,8 @@ func _aura_color() -> Color:
 		return Color("ff6a70")
 	if region_id == "grove":
 		return Color("7ff4c9")
+	if region_id == "canyon":
+		return Color("ffe066")
 	return Color("61d6ff")
 
 func _process(_delta: float) -> void:

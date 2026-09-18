@@ -270,6 +270,11 @@ func _execute_basic_attack(attack: String, player: Node2D) -> void:
 			global_position += Vector2(direction * 95.0, 0.0)
 			for index in range(4):
 				_spawn_projectile(global_position.angle_to_point(player.global_position) + (index - 1.5) * 0.15, 440.0, contact_damage - 2, global_position, Color("ffe066"))
+		"blade_gale":
+			var face_angle := 0.0 if direction > 0 else PI
+			global_position += Vector2(direction * 60.0, 0.0)
+			for index in range(3):
+				_spawn_projectile(face_angle + (index - 1) * 0.22, 480.0, contact_damage - 2, global_position + Vector2(direction * 30.0, -6.0), Color("ffe066"))
 		"stone_smash":
 			_spawn_telegraph("line", global_position + Vector2(direction * 150.0, 0), Vector2(240, 54), 0.40, Color("a9d36d"))
 			_delayed_call(0.40, func():
