@@ -1,0 +1,48 @@
+Use case: stylized-concept
+Asset type: game player sprite sheet
+Primary request: pixel art male young light swordsman ("光之剑士"), high-speed melee, continuous swordplay, light-attribute combat. This file archives the identity master prompt. Engine action grids must preserve this identity.
+
+Role name: 光之剑士 / Blade of Light
+Role: near-melee young swordsman, fast movement, chained sword arts, light attribute.
+
+Identity locks (must inherit, never redesign):
+- Young male hero (not adult, not female, not chibi child).
+- White fluffy short hair with pixel-layered tips and a small top tuft; bangs split slightly to the sides.
+- Bright blue eyes with clear highlight; calm, confident, determined face; no beard.
+- Palette: white / deep blue / bright blue primary; gold, light grey, dark grey secondary; ice-blue and white energy.
+- White light-knight top with blue+gold trim; small blue energy core allowed on chest.
+- White-blue pauldrons/chest armor with gold edges; light and flexible, not heavy plate.
+- Deep navy cape with gold piping; natural split hem; moderate size (not a huge cloak); slight rear flare at rest.
+- Gold belt with simple buckle; keep waist light.
+- Dark slim trousers; light leg armor; knees in blue-white-gold; white-blue-gold light knight boots (not heavy greaves).
+- Right-hand large light-attribute longsword: silver-white / light blue / deep blue blade with pale blue glow edge; gold-blue-white hilt; fantasy holy-sword guard. Not a katana, not a fantasy greatsword slab, not a sci-fi lightsaber, not a plain iron sword.
+- Optional restrained light motes only: few blue-white particles near blade, faint hilt glow, soft chest-core light. No huge halo, no pillars, no magic circles.
+
+Proportion: Japanese fantasy RPG young-hero (slightly large head, smaller torso, longer legs). NOT Q-version toddler, NOT adult heavy knight.
+
+Standard pose for identity master:
+- Standing, 3/4 view, body slightly turned to camera.
+- Right hand grips longsword, tip down; left arm relaxed.
+- Stable stance, cape falling and slightly flaring back, head slightly up, eyes forward.
+- No attack, swing, run, jump, or cast.
+
+Style/medium:
+- High-quality 2D pixel art, Japanese fantasy RPG protagonist sprite.
+- Hard pixel edges, consistent pixel grain, dark pixel outlines.
+- Cloth folds as clear pixel blocks; multi-stop hair highlights; clear blue eye specular; blue-white blade highlights.
+- Forbidden: anti-aliasing, smooth gradients, photo look, 3D model look, real person, oil paint, modern concept-art illustration, watercolor, blur.
+
+Composition/framing (identity master):
+- Single full body, hair top to boots, sword and cape fully visible, never cropped.
+- Character centered, ~60-70% of frame, safe margins.
+- Background for raw generation sheet only: solid #FF00FF.
+- Text/watermark/UI/border/labels/scene/other characters: none.
+
+Animation production notes (later engine grids):
+- Same identity in every frame; same scale and camera distance; full body in central 60-70% safe area; stable feet/bottom anchor.
+- No limbs, hair, cape, sword, dust or effects crossing cell edges.
+- Grounded melee with integrated weapon: scale_strategy=preserve, align=feet.
+- Actions to cover for playable set: idle, run, jump-takeoff, fall, landing, attack1, attack2, hurt, death.
+- Wide slash arcs stay out of body sheets; use separate fx when needed.
+
+Avoid: redesign, changed hair/eyes/palette/weapon type, adult bulk, female, chibi toddler, text, watermark, extra characters, anti-aliasing, blur, gradients, noise, cell-edge clipping, detached weapon or effects.
