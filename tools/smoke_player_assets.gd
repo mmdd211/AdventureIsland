@@ -31,8 +31,8 @@ func _init() -> void:
 				if frames.get_frame_texture(animation_name, frame_index) == null:
 					push_error("%s %s frame %d has no texture" % [hero_id, animation_name, frame_index])
 					failed = true
-			# 已交付角色必须帧数精确；未交付角色允许回退默认（仍 ≥1 帧）。
-			if hero_id == PlayerAssetLibrary.DEFAULT_HERO_ID and count != expected[animation_name]:
+			# 双角色均应帧数精确；缺帧走回退说明交付不完整。
+			if count != expected[animation_name]:
 				push_error("%s %s expected %d frames, got %d" % [hero_id, animation_name, expected[animation_name], count])
 				failed = true
 	# 默认角色必须可精确解析；未知 id 回退。

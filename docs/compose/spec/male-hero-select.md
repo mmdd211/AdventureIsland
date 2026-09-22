@@ -81,20 +81,28 @@ flowchart LR
 
 ### [S2.4] 光之剑士身份锚点（美术）
 
-权威描述在用户 prompt + `docs/pipeline/player-hero-light-swordsman.txt`。锁定识别五要素：
+权威参考：`data/player/raw/light_swordsman/identity-reference.png`（用户设定图：三视图/表情/配色/技能示意）。技能示意仅作气质参考，**不**做技能特效资产。
 
-1. 白色蓬松短发（像素层次、顶翘发束）
-2. 明亮蓝眼
-3. 白 / 深蓝 / 亮蓝 + 金点缀
-4. 深蓝披风 + 金色滚边
-5. 右手大型蓝白金光属性长剑
+锁定识别要素：
 
-- 比例：日系幻想 RPG 少年主角（头略大、腿修长）；**不要** Q 版儿童、**不要**成年重甲骑士。
-- 3/4 或侧视引擎帧与现有 256×256、`display_scale=0.25`、脚底锚点对齐；动作集与 `cat_girl` 同构。
-- 生成：`image_gen` 身份母版（用户参考图到位后 `identity-preserve` 锁定）→ 按态 `2x2`/`2x3` 网格 → `process_boss_sheet`/`sprite_pipeline`/`generate2dsprite` 后处理 → 目检 contact sheet → 进 `assets/sprites/player/light_swordsman/`。
-- 宽剑动作：`scale_strategy=preserve --align feet`，避免剑鞘/披风把 body bbox 缩小。
-- **门禁（AGENTS.md）**：源表目检网格 → 安全边 → 像素审计（edges 空、无空帧、无水印）→ contact sheet 目检 → 全部通过才进引擎 smoke。
-- 参考图未到：**不**锁身份、**不**批量出动作帧；可先做代码与选角 UI（预览可暂用 `cat_girl` 或占位图，占位不进 `assets/`）。
+1. 白色蓬松短发 + 顶部翘发束（像素层次）
+2. 明亮蓝色大眼 + 清晰高光
+3. 白 / 深蓝 / 亮蓝 + 金色点缀（参考图配色条）
+4. 深蓝披风 + 金色滚边（背面金色纹章）
+5. 右手大型蓝白金光属性长剑（银白刃身 + 蓝槽 + 金护手/蓝宝石）
+6. 白色轻甲上衣 + 蓝金饰边 + 胸口蓝宝石；深色长裤；白蓝金战靴
+
+- **比例以参考图为准**：Q 版约 2 头身少年，与 `cat_girl` 同一游戏体格；不要成年写实、不要更幼龄。
+- 引擎帧契约与 `cat_girl` 相同：256×256 RGBA、`display_scale=0.25`、侧视**面朝左**、脚底锚点；文件名 `ACTION_FRAME_FILES`。
+- 产出顺序（每步过门禁再下一步）：
+  1. 身份母版：侧视待机像素立绘（洋红底）→ 目检身份五要素
+  2. `make_anchor_layout` 锁尺度/脚线
+  3. 按态网格：idle `2x2` → run `2x4` → jump/fall/landing `2x2`/单帧 → attack1/attack2（**body-only**）→ hurt/death
+  4. `tools/sprite_pipeline.py process`：抠洋红、preserve+feet、256 画布、共享 Scale Profile
+  5. 像素审计 + contact sheet 目检（≥128px/格）
+  6. 写入 `assets/sprites/player/light_swordsman/`，再跑引擎 smoke
+- 宽剑/披风：`scale_strategy=preserve --align feet`，禁止 bbox 缩身。
+- **门禁（AGENTS.md）**：源表目检网格 → 安全边 → `edges` 空、无空帧、无水印 → contact sheet 头/剑/披风/双腿完整且同一只 → 才进引擎。
 
 ## [S3] Out of Scope
 
