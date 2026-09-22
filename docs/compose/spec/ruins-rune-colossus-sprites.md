@@ -252,7 +252,7 @@ Form1 沉默石像 → 觉醒**高阶石质贤者**（非人类法师/骑士/机
 | 棋子 | 少量抽象符文块/柱/晶，非写实国际象棋 |
 | 苔藓 | 比 Form1 少 |
 | 姿态 | 直立审视棋盘；禁攻击施法 |
-| 输出 | 单帧洋红底样图 → 确认后锁 `data/monsters/raw/sage_identity_master_v1.png` |
+| 输出 | 母版 **v2 已确认** → `data/monsters/raw/sage_identity_master_v2.png` |
 
 ### 2.15b sage v2 权威修订（用户反馈后）
 
@@ -271,8 +271,8 @@ v1 偏学徒/轻甲。v2 必须：
 - [x] Q3: move 六帧脚姿+伏笔 — 已签字  
 - [x] Q4: hurt / attack / skill / death / evolve — 均自检后入库  
 - [x] P11: `SMOKE_STATUE_ALL_STATES_OK`（44 帧）  
-- [ ] S1: Form2 `sage` 标准样图 — 用户确认后锁母版  
-- [ ] S2: Form2 七态 — depends: S1  
+- [x] S1: Form2 `sage` 标准样图 — **v2 已确认**（`sage_identity_master_v2.png`）
+- [ ] S2: Form2 七态 — idle/move/hurt/attack/`rune_slash`/skill/`board_pulse`+`rune_chain`/death/evolve；单帧+自检
 - [ ] P12b: gate — 另开  
 
 （旧批量七态任务作废）
