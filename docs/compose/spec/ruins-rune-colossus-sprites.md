@@ -240,10 +240,12 @@ commits:
 ## Tasks
 
 - [x] Q1: 确认最小闭环方法  
-- [x] Q2: idle 六张（v4 锁身份）— 用户认可「几乎一样」作 idle  
-- [ ] Q3: move 六帧脚姿+伏笔 — acceptance: strip 用户签字（covers: 2.13）  
-- [ ] Q4: hurt → attack → skill → death → evolve — 每态签字  
-- [ ] P11–P12: 全量 smoke + commit 只 stage ruins  
+- [x] Q2: idle 六张（v4 锁身份）— 已签字  
+- [x] Q3: move 六帧脚姿+伏笔 — 已签字  
+- [x] Q4: hurt / attack / skill / death / evolve — 均自检后入库  
+- [x] P11: `SMOKE_STATUE_ALL_STATES_OK`（44 帧）  
+- [ ] P12a: Form2 `sage` — 另开  
+- [ ] P12b: gate — 另开  
 
 （旧批量七态任务作废）
 
