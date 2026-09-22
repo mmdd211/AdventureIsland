@@ -202,13 +202,15 @@ func _portal(id: String, position_value: Vector2, destination_zone := "", destin
 	add_child(portal)
 
 func _darkness(target_zone: Node2D, amount: float) -> void:
+	# 环境压暗：只罩背景/地形（z<=3），不要盖住角色与特效（z>=10），
+	# 否则整屏像蒙了一层滤镜。alpha 由各图 darkness 数值控制，宜 0.10–0.22。
 	var overlay := ColorRect.new()
 	overlay.name = "RegionDarkness"
 	overlay.color = Color(0.02, 0.05, 0.09, amount)
 	overlay.size = Vector2(target_zone.zone_width + 520.0, 1280.0)
 	overlay.position = Vector2(-260.0, -420.0)
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	overlay.z_index = 80
+	overlay.z_index = 6
 	target_zone.add_child(overlay)
 
 func _boss() -> void:

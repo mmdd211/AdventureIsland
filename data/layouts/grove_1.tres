@@ -95,7 +95,7 @@ label = "slime"
 [sub_resource type="Resource" id="Resource_rqhd3"]
 script = ExtResource("1_ywyup")
 kind = "darkness"
-float_value = 0.3
+float_value = 0.12
 
 [sub_resource type="Resource" id="Resource_6oiot"]
 script = ExtResource("1_ywyup")

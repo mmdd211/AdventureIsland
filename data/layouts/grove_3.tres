@@ -74,7 +74,7 @@ kind = "boss"
 [sub_resource type="Resource" id="Resource_4ywcx"]
 script = ExtResource("1_ptmtl")
 kind = "darkness"
-float_value = 0.42
+float_value = 0.2
 
 [sub_resource type="Resource" id="Resource_8rqb7"]
 script = ExtResource("1_ptmtl")

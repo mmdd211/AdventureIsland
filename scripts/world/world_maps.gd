@@ -297,7 +297,7 @@ static func _build_grove_1(zone) -> void:
 	], [[480, 480], [760, 370], [1140, 270], [1560, 300]], [
 		[1, 480, 420, 140, true], [2, 760, 420, 150, true], [3, 1140, 320, 150, true], [4, 1560, 350, 150, true]
 	])
-	zone._darkness(zone, 0.30)
+	zone._darkness(zone, 0.12)
 	zone._portal("left", Vector2(95, 468), previous_map(str(zone.zone_id)), "right")
 	zone._portal("right", Vector2(zone.zone_width - 110, 468), next_map(str(zone.zone_id)), "left")
 
@@ -308,13 +308,13 @@ static func _build_grove_2(zone) -> void:
 		[1, 500, 410, 140, true], [2, 620, 420, 150, true], [3, 980, 330, 150, true], [4, 1380, 390, 150, true], [5, 1740, 310, 150, true]
 	])
 	zone._moving_platform("Grove", Vector2(1180, 420), Vector2(130, 55), 3.3)
-	zone._darkness(zone, 0.36)
+	zone._darkness(zone, 0.16)
 	zone._portal("left", Vector2(95, 468), previous_map(str(zone.zone_id)), "right")
 	zone._portal("right", Vector2(zone.zone_width - 110, 468), next_map(str(zone.zone_id)), "left")
 
 static func _build_grove_3(zone) -> void:
 	_boss_arena(zone, ["glow_bat", "root_ambusher"])
-	zone._darkness(zone, 0.42)
+	zone._darkness(zone, 0.20)
 	zone._portal("left", Vector2(95, 468), previous_map(str(zone.zone_id)), "right")
 	zone._portal("right", Vector2(zone.zone_width - 110, 468), next_map(str(zone.zone_id)), "left", false, "grove")
 

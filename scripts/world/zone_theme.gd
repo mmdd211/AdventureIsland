@@ -88,7 +88,7 @@ static func _add_ambient(zone: Node2D, theme: Dictionary) -> void:
 
 static func _add_region_lighting(zone: Node2D, theme: Dictionary) -> void:
 	var motif := _motif(theme)
-	if not motif in ["mushroom_canopy", "wind_mesas", "mossy_arches"]:
+	if not motif in ["mushroom_canopy", "wind_mesas", "mossy_arches", "glowing_roots"]:
 		return
 	var light_color := Color(str(theme.accent))
 	var light_positions: Array = []
@@ -110,6 +110,12 @@ static func _add_region_lighting(zone: Node2D, theme: Dictionary) -> void:
 			light_positions = [
 				Vector2(560, 340), Vector2(1280, 310), Vector2(1980, 350),
 				Vector2(2540, 310),
+			]
+		"glowing_roots":
+			light_color = Color("7ff4c9")
+			light_positions = [
+				Vector2(480, 380), Vector2(1120, 300), Vector2(1760, 360),
+				Vector2(2380, 310),
 			]
 	var root := Node2D.new()
 	root.name = "RegionLights"
