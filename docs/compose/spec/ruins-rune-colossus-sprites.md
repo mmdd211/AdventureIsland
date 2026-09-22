@@ -220,6 +220,23 @@ commits:
 
 禁止：六张仅整体水平位移；禁止脚不动只滑行。身份锁 v4。
 
+### 2.14 朝向 / 玩家左右（实际战斗因素）
+
+| 层 | 约定 |
+|----|------|
+| 美术默认 | **画面左侧为前方**（非 bee Boss 一律面向左） |
+| 运行时 | `flip_h = (direction > 0)`（`boss_animator.compute_flip_h`） |
+| 玩家在左 | `direction=-1`，不镜像；冲击画在原图**左前** |
+| 玩家在右 | `direction=+1`，水平镜像；左前冲击自动到右侧，仍打向玩家 |
+| `stone_smash` | 预告线 `global_position + Vector2(direction * 150, 0)`，始终在玩家一侧 |
+| 弹幕 | 多数 `angle_to_point(player)`，左右皆可 |
+
+**素材要求：** attack/skill 前摇与地面 FX 画在**原图左前**；禁止只画右后冲击（镜像后会砸向背对玩家侧）。
+
+**已核：** 当前 attack 00–03 冲击尘在原图左下，与引擎 `direction` 约定一致。
+
+**代码债（非本素材）：** `hawk_roar` 朝右扇形三元塌缩，属 `elite_boss` 逻辑问题。
+
 ## Tasks
 
 - [x] Q1: 确认最小闭环方法  
