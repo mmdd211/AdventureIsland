@@ -69,6 +69,21 @@ Boss 数值同时出现在：
 
 修改其一时必须同步另一处，或通过 `tools/generate_data_resources.gd` 等流程再生并在 PR/commit 中说明。
 
+## Boss 素材视觉 QC 门禁（强制）
+
+多步 Boss/角色引擎帧工作必须 **先 spec 计划，再按态串行实施**。禁止「生成→smoke 绿→直接 present」。
+
+对 **每一态** 交付前必须全部满足：
+
+1. **切片前目检源表**：肉眼确认网格 `cols/rows` 与角色完整，再调用 `process_boss_sheet.py`（禁止盲猜网格）。  
+2. Prompt 强制每格 **安全边**（角色不贴格边）；背景洋红；无文字水印。  
+3. 宽体 Boss：`--size 256` 时 `--target-h` 宜 **140–150**；验收内容 `bbox` 宽 **≤230**。  
+4. 像素审计：帧数正确；**贴边 `edges` 必须为空**；无空帧；右下无「AI生成」。  
+5. **目检 contact sheet（格宽≥128px）**：头 / 双拳 / 双腿（按动作语义）完整，与身份母版为同一只。  
+6. 任一项失败 → 重生该态网格，**不得**用 smoke 代替目检，**不得** commit 残缺帧。
+
+全量七态都过门禁后，才允许：Godot smoke → 更新 README → 小步 commit（只 stage 本 Boss 路径）。
+
 ## 执行工作流（多步任务）
 
 1. **设计**：需要交付的功能写入/更新 compose spec（`docs/compose/spec/`）。

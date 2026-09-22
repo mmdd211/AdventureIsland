@@ -65,6 +65,9 @@ func _visual_scale() -> float:
 	if region_id == "canyon":
 		# 256px canvas; wide wings + FX need transparent padding
 		return 0.75 if form_id == "eagle" else 0.85
+	if region_id == "ruins":
+		# 256px canvas; statue is extra-wide rubble mass
+		return 0.70 if form_id == "statue" else 0.85
 	if region_id != "meadow":
 		return 2.1
 	return 0.88 if form_id == "dancer" else 0.82
@@ -87,6 +90,8 @@ func _aura_color() -> Color:
 		return Color("7ff4c9")
 	if region_id == "canyon":
 		return Color("ffe066")
+	if region_id == "ruins":
+		return Color("a9d36d")
 	return Color("61d6ff")
 
 func _process(_delta: float) -> void:

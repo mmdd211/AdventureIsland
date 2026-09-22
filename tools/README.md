@@ -46,7 +46,9 @@ Boss 身份锁流水线（spec → 母版 → 网格 → `process_boss_sheet.py`
 godot --headless --path <项目根> --script res://tools/smoke_<boss>_<form>_frames.gd
 ```
 
-例如：`smoke_canyon_eagle_frames.gd`、`smoke_whisper_root_nest_frames.gd`。成功时打印 `SMOKE_*_ALL_STATES_OK`。
+例如：`smoke_canyon_eagle_frames.gd`、`smoke_rune_colossus_statue_frames.gd`。成功时打印 `SMOKE_*_ALL_STATES_OK`。
+
+**重要：** smoke 只验证「文件存在、能加载、张数符合 `BOSS_FRAME_STATES`」，**不能**证明角色肢体完整或未裁切。交付前必须过 `AGENTS.md`「Boss 素材视觉 QC 门禁」（目检源表格数、贴边审计、与母版并排）。
 
 ### 场景 / 数据 / UI / 存档
 
