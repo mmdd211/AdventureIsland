@@ -6,6 +6,9 @@ const UI_SCENES := {
 		"SettingsButton", "SettingsPanel", "SettingsBox", "KeybindsBox",
 		"CloseSettingsButton", "Scenery", "Decor", "Cloud1",
 	],
+	"res://scenes/ui/hero_select.tscn": [
+		"TitleLabel", "CardRow", "ConfirmButton", "BackButton",
+	],
 	"res://scenes/ui/game_hud.tscn": [
 		"HPBar", "HPValue", "EXPBar", "EXPValue", "LevelLabel", "CoinIcon",
 		"CoinLabel", "ScoreLabel", "TimeLabel", "WeaponIcon", "ArmorIcon",
