@@ -11,7 +11,7 @@
 - **双轨美术**：
   - 地形、传送门、部分装饰仍由 `PixelStyleManager` 等在加载阶段生成；
   - **主角与 Boss 使用外部引擎帧**，路径约定 `assets/sprites/monsters/<resource_prefix>/`，经 `BossAssetLibrary.load_frames` 加载；原稿与中间图放 `data/*/raw/` 或 `.scratch/`（勿堆在仓库根目录）。
-  - Boss 素材进度：meadow / forest / grove / canyon 两形态已齐；**ruins `statue` + `sage` 七态 88 帧已入库**；gate 待做。
+  - Boss 素材进度：meadow / forest / grove / canyon 两形态已齐；ruins `statue`+`sage` 七态已齐；**gate Form1 `whale` 七态已入库**（Form2 `judge` 待做）。
 - **程序化芯片音乐**：`AudioManager` 实时合成波形。
 - **完整局内体验**：暂停、死亡复活、检查点存档、金币与经验、Tab 世界地图。
 - **敌人传送门边界**：传送门两侧隐形边界仅对敌人生效。

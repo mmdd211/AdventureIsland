@@ -49,8 +49,8 @@ commits:
 
 ## Tasks
 
-- [ ] W1: 本 spec — covers: S2
-- [ ] W2: Form1 标准样图 + 自检 — acceptance: 鲸轮廓/核/星门/尾鳍完整；洋红底；无水印
-- [ ] W3: 用户确认锁母版 — depends: W2
-- [ ] W4: Form1 七态 — depends: W3
-- [ ] W5: smoke + README + commit — depends: W4
+- [x] W1: 本 spec
+- [x] W2: Form1 标准样图 + 自检
+- [x] W3: 用户确认锁母版 `whale_identity_master_v1.png`
+- [ ] W4: Form1 七态
+- [ ] W5: smoke + README + commit
