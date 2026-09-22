@@ -193,20 +193,29 @@ commits:
 - Form2  
 - commit 草稿帧  
 
+### 2.11 最小闭环（2026-09-18 用户拍板 · 优先于一切并行方案）
+
+1. **只认 v4**；禁止多套母版并行。  
+2. **一次 1 态、签字后才下一态**；顺序 idle → move → hurt → attack → skill → death → evolve。  
+3. **禁止**多格不同姿势网格；宁可少帧假变化，不要换角。  
+4. idle 优先：**v4 直接进引擎帧 + 仅核心亮度微变**（身份 100% 锁）；不够再逐张 `image_edit`。  
+5. 动作态：单张完整角色；透明底优先，失败再洋红。  
+6. 视频仅参考，不进主管线。  
+7. 合格才 commit；`assets` 不留未签字草稿当「已完成」。
+
+### 2.12 Out of Scope（本闭环）
+
+- Form2、gate、视频抽帧入库、批量七态、push
+
 ## Tasks
 
-### 计划与规矩
+- [x] Q1: 确认最小闭环方法  
+- [ ] Q2: idle 六张（v4 锁身份）— acceptance: strip 用户签字（covers: 2.11）  
+- [ ] Q3: move — depends: Q2  
+- [ ] Q4: hurt → attack → skill → death → evolve — 每态签字  
+- [ ] P11–P12: 全量 smoke + commit 只 stage ruins  
 
-- [x] P1–P3: 门禁/迁出残帧（已做）  
-- [ ] **Q1: 用户确认本 §2.10 方法**（单帧连续 + idle 先锁 v4）— acceptance: 用户点头或改点  
-- [ ] Q2: 实施 Phase 0 D1 idle（**待 Q1**）— acceptance: idle 与 v4 同一只并过用户签字  
-- [ ] Q3: 实施 Phase 1–2 动作 beat 表 + 单帧流水线 — acceptance: 七态均过 §2.10.3  
-- [ ] P11–P12: 全量门禁 + 用户终检 + 只 stage ruins commit  
-
-### 历史
-
-- [x] M1: v4 母版用户确认  
-- [ ] ~~P4–P10 批量网格七态~~ — **QC 失败作废**（`statue_qc_sheet_v2`）
+（以下旧任务以本节为准，批量七态作废）
 
 ## Tasks
 
