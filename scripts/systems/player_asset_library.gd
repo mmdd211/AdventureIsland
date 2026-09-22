@@ -3,125 +3,52 @@ extends RefCounted
 
 const Palette := preload("res://scripts/systems/pixel_palette.gd")
 
-const HERO_ANIMATIONS := {
-	"idle": {
-			"fps": 4.0,
-		"loop": true,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, -1),
-		"frames": [
-			"res://assets/sprites/player/frame-1.png",
-			"res://assets/sprites/player/frame-2.png",
-			"res://assets/sprites/player/frame-3.png",
-			"res://assets/sprites/player/frame-4.png",
-		],
-	},
-	"run": {
-		"fps": 12.0,
-		"loop": true,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, -1),
-		"frames": [
-			"res://assets/sprites/player/run-frame-1.png",
-			"res://assets/sprites/player/run-frame-2.png",
-			"res://assets/sprites/player/run-frame-3.png",
-			"res://assets/sprites/player/run-frame-4.png",
-			"res://assets/sprites/player/run-frame-5.png",
-			"res://assets/sprites/player/run-frame-6.png",
-			"res://assets/sprites/player/run-frame-7.png",
-			"res://assets/sprites/player/run-frame-8.png",
-		],
-	},
-	"jump": {
-		"fps": 12.0,
-		"loop": false,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, -1),
-		"frames": [
-			"res://assets/sprites/player/jump-takeoff-frame-1.png",
-			"res://assets/sprites/player/jump-takeoff-frame-2.png",
-			"res://assets/sprites/player/jump-takeoff-frame-3.png",
-			"res://assets/sprites/player/jump-takeoff-frame-4.png",
-		],
-	},
-	"fall": {
-		"fps": 1.0,
-		"loop": false,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, -1),
-		"frames": [
-			"res://assets/sprites/player/fall-frame-2.png",
-		],
-	},
-	"fall_short": {
-		"fps": 1.0,
-		"loop": false,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, -1),
-		"frames": [
-			"res://assets/sprites/player/fall-frame-1.png",
-		],
-	},
-	"landing": {
-		"fps": 14.0,
-		"loop": false,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, -3),
-		"frames": [
-			"res://assets/sprites/player/landing-frame-1.png",
-			"res://assets/sprites/player/landing-frame-2.png",
-			"res://assets/sprites/player/landing-frame-3.png",
-			"res://assets/sprites/player/landing-frame-4.png",
-		],
-	},
-	"attack1": {
-		"fps": 14.0,
-		"loop": false,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, -3),
-		"frames": [
-			"res://assets/sprites/player/attack1-frame-1.png",
-			"res://assets/sprites/player/attack1-frame-2.png",
-			"res://assets/sprites/player/attack1-frame-3.png",
-			"res://assets/sprites/player/attack1-frame-4.png",
-		],
-	},
-	"attack2": {
-		"fps": 14.0,
-		"loop": false,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, -3),
-		"frames": [
-			"res://assets/sprites/player/attack2-frame-1.png",
-			"res://assets/sprites/player/attack2-frame-2.png",
-			"res://assets/sprites/player/attack2-frame-3.png",
-			"res://assets/sprites/player/attack2-frame-4.png",
-		],
-	},
-	"hurt": {
-		"fps": 12.0,
-		"loop": false,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, -5),
-		"frames": [
-			"res://assets/sprites/player/hurt-frame-1.png",
-			"res://assets/sprites/player/hurt-frame-2.png",
-			"res://assets/sprites/player/hurt-frame-3.png",
-			"res://assets/sprites/player/hurt-frame-4.png",
-		],
-	},
-	"death": {
-		"fps": 6.0,
-		"loop": false,
-		"display_scale": 0.25,
-		"display_offset": Vector2(0, 0),
-		"frames": [
-			"res://assets/sprites/player/death-frame-1.png",
-			"res://assets/sprites/player/death-frame-2.png",
-			"res://assets/sprites/player/death-frame-3.png",
-			"res://assets/sprites/player/death-frame-4.png",
-		],
-	},
+const DEFAULT_HERO_ID := "cat_girl"
+const HERO_IDS := ["cat_girl", "light_swordsman"]
+const HERO_DIRS := {
+	"cat_girl": "res://assets/sprites/player/cat_girl",
+	"light_swordsman": "res://assets/sprites/player/light_swordsman",
+}
+const HERO_NAME_KEYS := {
+	"cat_girl": "hero_cat_girl",
+	"light_swordsman": "hero_light_swordsman",
+}
+
+# 纯换皮：动作时序/缩放全角色共用；仅帧路径随 hero_id 变。
+const ANIMATION_ORDER := [
+	"idle", "run", "jump", "fall", "fall_short", "landing", "attack1", "attack2", "hurt", "death",
+]
+
+const ANIMATION_META := {
+	"idle": {"fps": 4.0, "loop": true, "display_scale": 0.25, "display_offset": Vector2(0, -1)},
+	"run": {"fps": 12.0, "loop": true, "display_scale": 0.25, "display_offset": Vector2(0, -1)},
+	"jump": {"fps": 12.0, "loop": false, "display_scale": 0.25, "display_offset": Vector2(0, -1)},
+	"fall": {"fps": 1.0, "loop": false, "display_scale": 0.25, "display_offset": Vector2(0, -1)},
+	"fall_short": {"fps": 1.0, "loop": false, "display_scale": 0.25, "display_offset": Vector2(0, -1)},
+	"landing": {"fps": 14.0, "loop": false, "display_scale": 0.25, "display_offset": Vector2(0, -3)},
+	"attack1": {"fps": 14.0, "loop": false, "display_scale": 0.25, "display_offset": Vector2(0, -3)},
+	"attack2": {"fps": 14.0, "loop": false, "display_scale": 0.25, "display_offset": Vector2(0, -3)},
+	"hurt": {"fps": 12.0, "loop": false, "display_scale": 0.25, "display_offset": Vector2(0, -5)},
+	"death": {"fps": 6.0, "loop": false, "display_scale": 0.25, "display_offset": Vector2(0, 0)},
+}
+
+const ACTION_FRAME_FILES := {
+	"idle": ["frame-1.png", "frame-2.png", "frame-3.png", "frame-4.png"],
+	"run": [
+		"run-frame-1.png", "run-frame-2.png", "run-frame-3.png", "run-frame-4.png",
+		"run-frame-5.png", "run-frame-6.png", "run-frame-7.png", "run-frame-8.png",
+	],
+	"jump": [
+		"jump-takeoff-frame-1.png", "jump-takeoff-frame-2.png",
+		"jump-takeoff-frame-3.png", "jump-takeoff-frame-4.png",
+	],
+	"fall": ["fall-frame-2.png"],
+	"fall_short": ["fall-frame-1.png"],
+	"landing": ["landing-frame-1.png", "landing-frame-2.png", "landing-frame-3.png", "landing-frame-4.png"],
+	"attack1": ["attack1-frame-1.png", "attack1-frame-2.png", "attack1-frame-3.png", "attack1-frame-4.png"],
+	"attack2": ["attack2-frame-1.png", "attack2-frame-2.png", "attack2-frame-3.png", "attack2-frame-4.png"],
+	"hurt": ["hurt-frame-1.png", "hurt-frame-2.png", "hurt-frame-3.png", "hurt-frame-4.png"],
+	"death": ["death-frame-1.png", "death-frame-2.png", "death-frame-3.png", "death-frame-4.png"],
 }
 
 const HERO_FRAME_SIZE := Vector2(256, 256)
@@ -188,27 +115,84 @@ const HANDLE_COLOR := Color("5b3020")
 # 特效
 const SLASH_FX := Color("fff0a0")
 
-static func frames() -> SpriteFrames:
+static func has_hero(hero_id: String) -> bool:
+	return HERO_DIRS.has(hero_id)
+
+static func resolve_hero_id(hero_id: String = "") -> String:
+	var id := hero_id.strip_edges()
+	if id.is_empty():
+		var game_state := Engine.get_main_loop() as SceneTree
+		if game_state != null and game_state.root.has_node("GameState"):
+			var state := game_state.root.get_node("GameState")
+			if state != null and "selected_hero_id" in state:
+				id = str(state.selected_hero_id)
+	if id.is_empty():
+		id = DEFAULT_HERO_ID
+	if not has_hero(id):
+		push_warning("PlayerAssetLibrary: unknown hero_id '%s', fallback to %s" % [id, DEFAULT_HERO_ID])
+		return DEFAULT_HERO_ID
+	return id
+
+static func hero_name_key(hero_id: String) -> String:
+	var id := resolve_hero_id(hero_id)
+	return str(HERO_NAME_KEYS.get(id, "hero_cat_girl"))
+
+static func _frame_paths(hero_id: String, animation_name: String) -> Array:
+	var dir := str(HERO_DIRS.get(hero_id, HERO_DIRS[DEFAULT_HERO_ID]))
+	var files: Array = ACTION_FRAME_FILES.get(animation_name, [])
+	var paths: Array = []
+	for file_name in files:
+		paths.append("%s/%s" % [dir, file_name])
+	return paths
+
+static func _load_frames_into(sf: SpriteFrames, animation_name: String, hero_id: String) -> int:
+	var added := 0
+	for path in _frame_paths(hero_id, animation_name):
+		var global_path := ProjectSettings.globalize_path(str(path))
+		if not FileAccess.file_exists(global_path):
+			# 未交付动作帧属于正常回退路径，不刷屏；真正的坏文件仍报错。
+			continue
+		var image := Image.load_from_file(global_path)
+		if image == null or image.is_empty():
+			push_error("player frame could not be loaded: %s" % path)
+			continue
+		sf.add_frame(animation_name, ImageTexture.create_from_image(image))
+		added += 1
+	return added
+
+static func frames(hero_id: String = "") -> SpriteFrames:
+	var id := resolve_hero_id(hero_id)
 	var sf := SpriteFrames.new()
 	if sf.has_animation("default"):
 		sf.remove_animation("default")
-	for animation_name in HERO_ANIMATIONS:
-		var config: Dictionary = HERO_ANIMATIONS[animation_name]
+	var fallback_anims: Array = []
+	for animation_name in ANIMATION_ORDER:
+		var meta: Dictionary = ANIMATION_META[animation_name]
 		sf.add_animation(animation_name)
-		sf.set_animation_speed(animation_name, config["fps"])
-		sf.set_animation_loop(animation_name, config["loop"])
-		for path in config["frames"]:
-			var image := Image.load_from_file(ProjectSettings.globalize_path(path))
-			if image == null or image.is_empty():
-				push_error("player frame could not be loaded: %s" % path)
-				continue
-			sf.add_frame(animation_name, ImageTexture.create_from_image(image))
+		sf.set_animation_speed(animation_name, meta["fps"])
+		sf.set_animation_loop(animation_name, meta["loop"])
+		var added := _load_frames_into(sf, animation_name, id)
+		if added == 0 and id != DEFAULT_HERO_ID:
+			# 新角色动作帧未交付时回退默认角色，保证可玩不白屏。
+			fallback_anims.append(animation_name)
+			_load_frames_into(sf, animation_name, DEFAULT_HERO_ID)
+		if sf.get_frame_count(animation_name) == 0:
+			push_error("PlayerAssetLibrary: no frames for %s/%s" % [id, animation_name])
+	if not fallback_anims.is_empty():
+		push_warning("PlayerAssetLibrary: %s missing %s, fallback to %s" % [id, str(fallback_anims), DEFAULT_HERO_ID])
 	return sf
 
 static func animation_config(animation_name: String):
-	if not HERO_ANIMATIONS.has(animation_name):
+	if not ANIMATION_META.has(animation_name):
 		return null
-	return HERO_ANIMATIONS[animation_name]
+	var meta: Dictionary = ANIMATION_META[animation_name]
+	return {
+		"fps": meta["fps"],
+		"loop": meta["loop"],
+		"display_scale": meta["display_scale"],
+		"display_offset": meta["display_offset"],
+		"frames": _frame_paths(resolve_hero_id(), animation_name),
+	}
 
 static func texture() -> ImageTexture:
 	return pose_texture("idle_a")

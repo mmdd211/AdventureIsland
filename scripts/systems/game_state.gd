@@ -39,6 +39,8 @@ var checkpoint_position := Vector2(120, 460)
 var owned_equipment: Array[String] = ["grass_blade", "none_armor"]
 var equipped_weapon_id := "grass_blade"
 var equipped_armor_id := "none_armor"
+# 纯外观角色；非法/缺失一律回退 cat_girl。reset_run 保留本字段。
+var selected_hero_id := "cat_girl"
 var defeated_bosses: Array[String] = []
 var elapsed_time := 0.0
 var final_time := 0.0
@@ -83,7 +85,15 @@ func reset_run() -> void:
 	elapsed_time = 0.0
 	final_time = 0.0
 	level_finished = false
+	# selected_hero_id 故意不重置：新开局由选角页写入，继续读档由 restore 写入。
 	_emit_all()
+
+func set_selected_hero_id(hero_id: String) -> void:
+	var resolved := str(hero_id).strip_edges()
+	if resolved.is_empty() or not PlayerAssetLibrary.has_hero(resolved):
+		push_warning("GameState: invalid hero_id '%s', fallback to %s" % [hero_id, PlayerAssetLibrary.DEFAULT_HERO_ID])
+		resolved = PlayerAssetLibrary.DEFAULT_HERO_ID
+	selected_hero_id = resolved
 
 func _emit_all() -> void:
 	hp_changed.emit(current_hp, max_hp)
@@ -274,6 +284,7 @@ func create_snapshot() -> Dictionary:
 		"owned_equipment": owned_equipment.duplicate(),
 		"equipped_weapon_id": equipped_weapon_id,
 		"equipped_armor_id": equipped_armor_id,
+		"hero_id": selected_hero_id,
 		"defeated_bosses": defeated_bosses.duplicate(),
 		"elapsed_time": elapsed_time,
 		"final_time": final_time,
@@ -325,6 +336,7 @@ func restore_snapshot(data: Dictionary) -> bool:
 		owned_equipment.append("none_armor")
 	equipped_weapon_id = str(data.get("equipped_weapon_id", "grass_blade"))
 	equipped_armor_id = str(data.get("equipped_armor_id", "none_armor"))
+	set_selected_hero_id(str(data.get("hero_id", PlayerAssetLibrary.DEFAULT_HERO_ID)))
 	defeated_bosses.clear()
 	for region_id in data.get("defeated_bosses", []):
 		defeated_bosses.append(str(region_id))

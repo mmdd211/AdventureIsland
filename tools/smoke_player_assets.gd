@@ -2,32 +2,50 @@ extends SceneTree
 
 
 func _init() -> void:
-	var frames := PlayerAssetLibrary.frames()
+	var failed := false
 	var expected := {
 		"idle": 4,
 		"run": 8,
 		"jump": 4,
-		"fall": 4,
+		"fall": 1,
+		"fall_short": 1,
 		"landing": 4,
 		"attack1": 4,
 		"attack2": 4,
 		"hurt": 4,
 		"death": 4,
 	}
-	var failed := false
-	for animation_name in expected:
-		if not frames.has_animation(animation_name):
-			push_error("missing animation: %s" % animation_name)
-			failed = true
-			continue
-		var count := frames.get_frame_count(animation_name)
-		if count != expected[animation_name]:
-			push_error("%s expected %d frames, got %d" % [animation_name, expected[animation_name], count])
-			failed = true
-		for frame_index in range(count):
-			if frames.get_frame_texture(animation_name, frame_index) == null:
-				push_error("%s frame %d has no texture" % [animation_name, frame_index])
+	for hero_id in PlayerAssetLibrary.HERO_IDS:
+		var frames := PlayerAssetLibrary.frames(hero_id)
+		for animation_name in expected:
+			if not frames.has_animation(animation_name):
+				push_error("%s missing animation: %s" % [hero_id, animation_name])
 				failed = true
+				continue
+			var count := frames.get_frame_count(animation_name)
+			if count < 1:
+				push_error("%s %s has no frames" % [hero_id, animation_name])
+				failed = true
+				continue
+			for frame_index in range(count):
+				if frames.get_frame_texture(animation_name, frame_index) == null:
+					push_error("%s %s frame %d has no texture" % [hero_id, animation_name, frame_index])
+					failed = true
+			# 已交付角色必须帧数精确；未交付角色允许回退默认（仍 ≥1 帧）。
+			if hero_id == PlayerAssetLibrary.DEFAULT_HERO_ID and count != expected[animation_name]:
+				push_error("%s %s expected %d frames, got %d" % [hero_id, animation_name, expected[animation_name], count])
+				failed = true
+	# 默认角色必须可精确解析；未知 id 回退。
+	if PlayerAssetLibrary.resolve_hero_id("nope") != PlayerAssetLibrary.DEFAULT_HERO_ID:
+		push_error("resolve_hero_id should fallback to default")
+		failed = true
+	if PlayerAssetLibrary.resolve_hero_id("light_swordsman") != "light_swordsman":
+		push_error("resolve_hero_id should keep known hero")
+		failed = true
+	# hero_id 写入约定：快照键名固定（restore 缺省回退由 GameState 负责，此处只钉契约）。
+	if PlayerAssetLibrary.DEFAULT_HERO_ID != "cat_girl" or PlayerAssetLibrary.HERO_IDS.size() < 2:
+		push_error("hero catalog incomplete")
+		failed = true
 	if failed:
 		quit(1)
 		return
