@@ -190,8 +190,7 @@ static func frames(hero_id: String = "") -> SpriteFrames:
 			push_error("PlayerAssetLibrary: no frames for %s/%s" % [id, animation_name])
 	if not fallback_anims.is_empty():
 		push_warning("PlayerAssetLibrary: %s missing/incomplete %s, fallback to %s" % [id, str(fallback_anims), DEFAULT_HERO_ID])
-	# 动画完全空时回退 idle，避免 _play_action 播 0 帧。
-	if not sf.has_animation("idle") or sf.get_frame_count("idle") == 0:
+	if sf.get_frame_count("idle") == 0:
 		push_error("PlayerAssetLibrary: idle unavailable for %s" % id)
 	return sf
 

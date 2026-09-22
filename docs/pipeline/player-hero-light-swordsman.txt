@@ -1,87 +1,43 @@
 Use case: stylized-concept
 Asset type: game player sprite sheet
-Primary request: pixel art male young light swordsman ("光之剑士"), high-speed melee, continuous swordplay, light-attribute combat. Identity authority is data/player/raw/light_swordsman/identity-reference.png (user setting sheet). Engine action grids must preserve this identity.
+Primary request: pixel art male young light swordsman ("光之剑士"), high-speed melee. Identity authority is data/player/raw/light_swordsman/identity-reference.png. Engine action grids must preserve this identity.
 
 Role name: 光之剑士 / Blade of Light
 Role: near-melee young swordsman, fast movement, chained sword arts, light attribute.
 
-Identity locks from reference (must inherit, never redesign):
+Identity locks (from user reference sheet):
 - Chibi young male, about 2-head-tall (same game body scale as cat_girl).
 - White fluffy short hair with layered tips and a distinct top cowlick/tuft.
 - Bright blue large eyes with clear highlight; determined young face; no beard.
 - Palette: white / bright blue / deep navy primary; gold accents; dark charcoal pants; white-blue-gold boots/gloves.
 - White light-knight top with blue+gold trim; blue gem at chest.
-- Deep navy cape with gold piping; gold emblem on back; moderate cape (not a huge cloak).
+- Deep navy cape with gold piping; gold emblem on back; moderate cape.
 - Gold belt; slim dark trousers; white-blue-gold knight boots.
-- Right-hand large light-attribute longsword: silver-white blade with deep-blue fuller, gold crossguard, blue gems in hilt. Fantasy holy-sword, not katana/greatsword/lightsaber.
+- Right-hand large light-attribute longsword: silver-white blade with deep-blue fuller, gold crossguard, blue gems in hilt.
 - Optional restrained light motes near blade only.
 
+Proportion note: delivered engine frames match the reference's Q-style ~2-head hero (NOT adult realistic). Earlier free-text draft asking for "longer legs / not Q-version" is SUPERSEDED by the reference sheet.
+
 Standard engine pose:
-- Side view facing LEFT (match cat_girl frames); 3/4 side is acceptable if silhouette reads as side-scroller.
-- Standing idle first for identity master; sword held in right hand, tip down or ready.
-- No skill VFX sheets in this bundle (body-only attacks).
+- Side view facing LEFT (match cat_girl frames).
+- Neutral ready idle for identity master; sword in right hand.
+- Skill VFX sheets are out of scope (body-only attacks).
 
 Style/medium:
-- High-quality 2D pixel art, Japanese fantasy RPG protagonist sprite (same family as existing cat_girl engine frames).
-- Hard pixel edges, consistent pixel grain, dark pixel outlines, clear block shading.
+- High-quality 2D pixel art in the same family as cat_girl engine frames.
+- Hard pixel edges, consistent pixel grain, dark outlines, clear block shading.
 - Forbidden: anti-aliasing, smooth gradients, photo/3D/real person, oil, watercolor, blur.
 
 Composition/framing:
 - Single full body; hair top to boots; sword and cape fully visible.
 - Character centered, ~60-70% of cell, safe margins; feet/bottom anchor stable.
-- Background for raw generation only: solid #FF00FF.
+- Raw generation background: solid #FF00FF.
 - Text/watermark/UI/borders/other characters: none.
 
 Animation production notes:
 - Same identity every frame; same scale and camera distance; nothing crosses cell edges.
 - Grounded melee with integrated weapon: scale_strategy=preserve, align=feet.
-- Actions: idle 2x2, run 2x4, jump 2x2, fall short 1-2, landing 2x2, attack1/attack2 2x2 body-only, hurt 2x2, death 2x2.
+- Actions: idle 2x2, run 2x4, jump 2x2, fall 2x2, landing 2x2, attack1/attack2 2x2 body-only, hurt 2x2, death 2x2.
 - Wide slash arcs stay out of body sheets.
 
 Avoid: redesign, changed hair/eyes/palette/weapon type, adult bulk, female, text, watermark, extra characters, anti-aliasing, blur, gradients, noise, cell-edge clipping, detached weapon or effects.
-
-
-Role name: 光之剑士 / Blade of Light
-Role: near-melee young swordsman, fast movement, chained sword arts, light attribute.
-
-Identity locks (must inherit, never redesign):
-- Young male hero (not adult, not female, not chibi child).
-- White fluffy short hair with pixel-layered tips and a small top tuft; bangs split slightly to the sides.
-- Bright blue eyes with clear highlight; calm, confident, determined face; no beard.
-- Palette: white / deep blue / bright blue primary; gold, light grey, dark grey secondary; ice-blue and white energy.
-- White light-knight top with blue+gold trim; small blue energy core allowed on chest.
-- White-blue pauldrons/chest armor with gold edges; light and flexible, not heavy plate.
-- Deep navy cape with gold piping; natural split hem; moderate size (not a huge cloak); slight rear flare at rest.
-- Gold belt with simple buckle; keep waist light.
-- Dark slim trousers; light leg armor; knees in blue-white-gold; white-blue-gold light knight boots (not heavy greaves).
-- Right-hand large light-attribute longsword: silver-white / light blue / deep blue blade with pale blue glow edge; gold-blue-white hilt; fantasy holy-sword guard. Not a katana, not a fantasy greatsword slab, not a sci-fi lightsaber, not a plain iron sword.
-- Optional restrained light motes only: few blue-white particles near blade, faint hilt glow, soft chest-core light. No huge halo, no pillars, no magic circles.
-
-Proportion: Japanese fantasy RPG young-hero (slightly large head, smaller torso, longer legs). NOT Q-version toddler, NOT adult heavy knight.
-
-Standard pose for identity master:
-- Standing, 3/4 view, body slightly turned to camera.
-- Right hand grips longsword, tip down; left arm relaxed.
-- Stable stance, cape falling and slightly flaring back, head slightly up, eyes forward.
-- No attack, swing, run, jump, or cast.
-
-Style/medium:
-- High-quality 2D pixel art, Japanese fantasy RPG protagonist sprite.
-- Hard pixel edges, consistent pixel grain, dark pixel outlines.
-- Cloth folds as clear pixel blocks; multi-stop hair highlights; clear blue eye specular; blue-white blade highlights.
-- Forbidden: anti-aliasing, smooth gradients, photo look, 3D model look, real person, oil paint, modern concept-art illustration, watercolor, blur.
-
-Composition/framing (identity master):
-- Single full body, hair top to boots, sword and cape fully visible, never cropped.
-- Character centered, ~60-70% of frame, safe margins.
-- Background for raw generation sheet only: solid #FF00FF.
-- Text/watermark/UI/border/labels/scene/other characters: none.
-
-Animation production notes (later engine grids):
-- Same identity in every frame; same scale and camera distance; full body in central 60-70% safe area; stable feet/bottom anchor.
-- No limbs, hair, cape, sword, dust or effects crossing cell edges.
-- Grounded melee with integrated weapon: scale_strategy=preserve, align=feet.
-- Actions to cover for playable set: idle, run, jump-takeoff, fall, landing, attack1, attack2, hurt, death.
-- Wide slash arcs stay out of body sheets; use separate fx when needed.
-
-Avoid: redesign, changed hair/eyes/palette/weapon type, adult bulk, female, chibi toddler, text, watermark, extra characters, anti-aliasing, blur, gradients, noise, cell-edge clipping, detached weapon or effects.

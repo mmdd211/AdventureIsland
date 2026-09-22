@@ -1,14 +1,25 @@
 ---
 feature: male-hero-select
-status: in-progress
+status: delivered
 updated: 2026-02-14
 branch: feat/male-hero-select
-commits: # filled at delivery
+commits: bd4f4c5..5a9ae5a
 ---
 
 # 男性主角「光之剑士」与开局选角
 
 ## Report
+
+**What was built** — 标题「开始冒险」先进选角页（`hero_select`），可在猫耳少女 `cat_girl` 与光之剑士 `light_swordsman` 之间选择后进图；「继续冒险」仍读档且不重选。`PlayerAssetLibrary` 按 `hero_id` 加载 256 引擎帧，纯外观换皮（同一套动作时序/数值）；`GameState.selected_hero_id` 写入存档 `hero_id`，非法/旧档回退 `cat_girl`。`cat_girl` 40 帧仅迁路径、像素未改。光之剑士按用户参考图交付 40 张引擎帧（idle/run/jump/fall/landing/attack1/attack2/hurt/death），身份锁定白发蓝眼、蓝金轻甲、深蓝披风、光之长剑。
+
+**Verification** — `smoke_player_assets.gd` PASS（双角色帧数精确）；`smoke_check_ui.gd` PASS；`smoke_check_save.gd` PASS（hero_id 读写/非法/旧档）；40 帧像素审计 `issues []`；generate2dsprite QC `edge_touch` 全空，Scale Profile 共享；contact sheet 目检身份一致。独立 review：GO（0 critical）。
+
+**Journey log** —
+1. 沙箱禁止 `git worktree add`，改在当前检出切 `feat/male-hero-select`。
+2. 非默认角色半套帧会播残缺动画 → 整段回退默认动作后再收口。
+3. `smoke_check_save` 以 `--script` 编译期拿不到 autoload → 运行时从 root 取 `GameState`。
+4. death `body_scale_cv≈0.10` 来自倒地剪影，应以 `profile_body_scale_drift` 判定，不必当 scale bug。
+5. 分支区间夹入无关 `31f28dc`（sky_gatekeeper）；交付 staging 勿混兄弟区素材。
 
 ## [S1] Problem
 
@@ -118,5 +129,5 @@ flowchart LR
 - [x] T2: 写本 spec 并对齐决策 — acceptance: status=designed，决策与接口可实施，无 TBD (covers: S1; S2)
 - [x] T3: 多角色资产库与存档 hero_id — acceptance: `PlayerAssetLibrary.frames(hero_id)` 双角色可加载；`cat_girl` 帧迁入子目录后 smoke 通过；snapshot 含/可回退 hero_id (covers: S2; depends: T2)
 - [x] T4: 开局选角页并贯通标题流 — acceptance: 开始→选角→进图；继续仍读档；文案中英齐全；选角后 `selected_hero_id` 正确 (covers: S2; depends: T3)
-- [ ] T5: 光之剑士身份母版与全套引擎帧 — acceptance: 参考图锁定身份；idle/run/jump/fall/landing/attack1/attack2/hurt/death 帧齐；QC 门禁全过；路径进 `light_swordsman/` (covers: S2.4; depends: T3)
-- [ ] T6: smoke/自测 + review + finalize — acceptance: 相关 smoke 命令与结果入 Report；review 通过；status=delivered (covers: S1; S2; S2.4; depends: T3; T4; T5)
+- [x] T5: 光之剑士身份母版与全套引擎帧 — acceptance: 参考图锁定身份；idle/run/jump/fall/landing/attack1/attack2/hurt/death 帧齐；QC 门禁全过；路径进 `light_swordsman/` (covers: S2.4; depends: T3)
+- [x] T6: smoke/自测 + review + finalize — acceptance: 相关 smoke 命令与结果入 Report；review 通过；status=delivered (covers: S1; S2; S2.4; depends: T3; T4; T5)
