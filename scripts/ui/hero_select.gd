@@ -1,8 +1,5 @@
 extends Control
 
-const VIEW_W := 1280.0
-const VIEW_H := 720.0
-
 var _index := 0
 var _cards: Array = []
 

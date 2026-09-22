@@ -44,11 +44,10 @@ docs/pipeline/player-hero-light-swordsman.txt  # prompt 归档
 
 **`PlayerAssetLibrary`**
 
-- `HEROES: Dictionary`：`hero_id -> animation config`（与现 `HERO_ANIMATIONS` 同构：fps/loop/display_scale/display_offset/frames）。
+- 目录字段：`DEFAULT_HERO_ID`、`HERO_IDS`、`HERO_DIRS`、`HERO_NAME_KEYS`；动作时序共享 `ANIMATION_META` + `ACTION_FRAME_FILES`。
 - `frames(hero_id: String = "") -> SpriteFrames`：空 id 读 `GameState.selected_hero_id`；再失败回退 `cat_girl`。
 - `has_hero(hero_id) -> bool`
-- `DEFAULT_HERO_ID := "cat_girl"`
-- 缺帧：`push_error` 后跳过该帧，不崩溃；动画缺失时回退 `idle`。
+- 缺帧：默认角色缺文件 `push_error`；非默认角色缺文件/半套帧**整段回退**默认角色对应动作（身份与节奏完整）；解码失败 `push_error` 后跳过。
 - 现 `pose_texture` 程序化小图保留不动（非主路径）。
 
 **`GameState`**
@@ -107,9 +106,9 @@ flowchart LR
 
 ## Tasks
 
-- [ ] T1: 开分支与工具链确认 — acceptance: 功能分支就绪；记录 Godot/Python 入口与 worktree 覆盖原因 (covers: S2)
-- [ ] T2: 写本 spec 并对齐决策 — acceptance: status=designed，决策与接口可实施，无 TBD (covers: S1; S2)
-- [ ] T3: 多角色资产库与存档 hero_id — acceptance: `PlayerAssetLibrary.frames(hero_id)` 双角色可加载；`cat_girl` 帧迁入子目录后 smoke 通过；snapshot 含/可回退 hero_id (covers: S2; depends: T2)
-- [ ] T4: 开局选角页并贯通标题流 — acceptance: 开始→选角→进图；继续仍读档；文案中英齐全；选角后 `selected_hero_id` 正确 (covers: S2; depends: T3)
+- [x] T1: 开分支与工具链确认 — acceptance: 功能分支就绪；记录 Godot/Python 入口与 worktree 覆盖原因 (covers: S2)
+- [x] T2: 写本 spec 并对齐决策 — acceptance: status=designed，决策与接口可实施，无 TBD (covers: S1; S2)
+- [x] T3: 多角色资产库与存档 hero_id — acceptance: `PlayerAssetLibrary.frames(hero_id)` 双角色可加载；`cat_girl` 帧迁入子目录后 smoke 通过；snapshot 含/可回退 hero_id (covers: S2; depends: T2)
+- [x] T4: 开局选角页并贯通标题流 — acceptance: 开始→选角→进图；继续仍读档；文案中英齐全；选角后 `selected_hero_id` 正确 (covers: S2; depends: T3)
 - [ ] T5: 光之剑士身份母版与全套引擎帧 — acceptance: 参考图锁定身份；idle/run/jump/fall/landing/attack1/attack2/hurt/death 帧齐；QC 门禁全过；路径进 `light_swordsman/` (covers: S2.4; depends: T3)
 - [ ] T6: smoke/自测 + review + finalize — acceptance: 相关 smoke 命令与结果入 Report；review 通过；status=delivered (covers: S1; S2; S2.4; depends: T3; T4; T5)

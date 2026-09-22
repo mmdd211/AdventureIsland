@@ -147,10 +147,13 @@ static func _frame_paths(hero_id: String, animation_name: String) -> Array:
 
 static func _load_frames_into(sf: SpriteFrames, animation_name: String, hero_id: String) -> int:
 	var added := 0
+	var is_default := hero_id == DEFAULT_HERO_ID
 	for path in _frame_paths(hero_id, animation_name):
 		var global_path := ProjectSettings.globalize_path(str(path))
 		if not FileAccess.file_exists(global_path):
-			# 未交付动作帧属于正常回退路径，不刷屏；真正的坏文件仍报错。
+			# 非默认角色未交付帧属正常回退；默认角色缺文件必须可见。
+			if is_default:
+				push_error("player frame missing: %s" % path)
 			continue
 		var image := Image.load_from_file(global_path)
 		if image == null or image.is_empty():
@@ -159,6 +162,10 @@ static func _load_frames_into(sf: SpriteFrames, animation_name: String, hero_id:
 		sf.add_frame(animation_name, ImageTexture.create_from_image(image))
 		added += 1
 	return added
+
+static func _clear_animation_frames(sf: SpriteFrames, animation_name: String) -> void:
+	while sf.get_frame_count(animation_name) > 0:
+		sf.remove_frame(animation_name, 0)
 
 static func frames(hero_id: String = "") -> SpriteFrames:
 	var id := resolve_hero_id(hero_id)
@@ -171,15 +178,21 @@ static func frames(hero_id: String = "") -> SpriteFrames:
 		sf.add_animation(animation_name)
 		sf.set_animation_speed(animation_name, meta["fps"])
 		sf.set_animation_loop(animation_name, meta["loop"])
+		var expected: int = (ACTION_FRAME_FILES.get(animation_name, []) as Array).size()
 		var added := _load_frames_into(sf, animation_name, id)
-		if added == 0 and id != DEFAULT_HERO_ID:
-			# 新角色动作帧未交付时回退默认角色，保证可玩不白屏。
+		var incomplete := added < expected
+		if id != DEFAULT_HERO_ID and incomplete:
+			# 缺帧/半套帧整段回退默认，避免残缺动画破坏身份与节奏。
 			fallback_anims.append(animation_name)
+			_clear_animation_frames(sf, animation_name)
 			_load_frames_into(sf, animation_name, DEFAULT_HERO_ID)
 		if sf.get_frame_count(animation_name) == 0:
 			push_error("PlayerAssetLibrary: no frames for %s/%s" % [id, animation_name])
 	if not fallback_anims.is_empty():
-		push_warning("PlayerAssetLibrary: %s missing %s, fallback to %s" % [id, str(fallback_anims), DEFAULT_HERO_ID])
+		push_warning("PlayerAssetLibrary: %s missing/incomplete %s, fallback to %s" % [id, str(fallback_anims), DEFAULT_HERO_ID])
+	# 动画完全空时回退 idle，避免 _play_action 播 0 帧。
+	if not sf.has_animation("idle") or sf.get_frame_count("idle") == 0:
+		push_error("PlayerAssetLibrary: idle unavailable for %s" % id)
 	return sf
 
 static func animation_config(animation_name: String):

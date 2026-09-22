@@ -40,7 +40,7 @@ var owned_equipment: Array[String] = ["grass_blade", "none_armor"]
 var equipped_weapon_id := "grass_blade"
 var equipped_armor_id := "none_armor"
 # 纯外观角色；非法/缺失一律回退 cat_girl。reset_run 保留本字段。
-var selected_hero_id := "cat_girl"
+var selected_hero_id: String = PlayerAssetLibrary.DEFAULT_HERO_ID
 var defeated_bosses: Array[String] = []
 var elapsed_time := 0.0
 var final_time := 0.0
