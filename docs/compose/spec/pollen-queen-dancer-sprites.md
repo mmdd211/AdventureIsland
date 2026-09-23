@@ -1,25 +1,25 @@
 ---
 feature: pollen-queen-dancer-sprites
-status: in-progress
-updated: 2026-09-13
-branch: master
-commits: 78528f6..04a1dcc
+status: delivered
+updated: 2026-09-19
+branch: feat/male-hero-select
+commits: 78528f6..c6cc13c
 ---
 
 # 花粉女爵·二形态（花冠舞姬）idle 舞步素材
 
 ## Report
 
-**What was built** — 二形态「花冠舞姬」单次 3×3 舞步设定表锁定身份，绿幕抠图写入 `pollen_queen_dancer_{idle,move}_00..05.png`（224×224）。9→6 抽帧保留舞步弧线。管线修复：green 模式不再 key 奶白；LANCZOS 下采样 + despill + 补针孔。
+**What was built** — 二形态「花冠舞姬」七态主表 + 可选 `skill_bees` 引擎帧全量身份锁：idle/move/attack/skill/skill_bees/hurt/death 新帧；evolve 维持旧占位（PRESENT-BUT-OLD，终形态实战不播）。可选动画槽：`OPTIONAL_ANIMATIONS["skill_bees"]`，`royal_bees` 优先播专用动画否则回退 `skill`。画布 224×224 绿幕。
 
-**Verification** — 处理 6/6 OK；绿边 0；内洞 9–13；三段身体/奶白/金色均在；Godot `smoke_pollen_queen_dancer_frames.gd` → `SMOKE_PASS` / `SMOKE_IDLE_MOVE_OK`（idle=6, move=6）。
+**Verification** — `smoke_pollen_queen_dancer_frames.gd` → `SMOKE_PASS`（8 animations，含 skill_bees present）；像素/绿边审计过关。实机 meadow_3 可由人复核换角问题。
 
 **Journey log**
 - 绿幕模式 key near-white 会掏空奶白裙（内洞 120）→ green 只 key 纯绿。
 - AI 软边带绿 → `despill_green`；LANCZOS 后需 alpha 再硬化 + `fill_pinholes`。
-- 2× block + 限色会把细节压糊，比原图更糊 → 弃用。
+- 2× block + 限色会把细节压糊 → 弃用。
 - 单次 3×3 网格可锁同一只；分动作多次生图必换角。
-- 用户确认后只替换 idle/move；其它动作仍旧帧，进游戏切换会新旧混用。
+- skill_bees 作可选槽而非改主表；删 evolve 会触发 `load_frames` 整包 null，故保留旧帧。
 
 ## [S1] Problem
 
@@ -249,10 +249,10 @@ python tools/process_boss_sheet.py \
 | move | 6 | 新·已提交 | 移动（复用 idle 帧） | 完成 |
 | attack | 7 | 新·已提交 | `fan_strike` | 完成 |
 | skill | 8 | 新·已提交 | `petal_paths` | 完成 |
-| skill_bees | 8 可选 | 新·**待提交** | `royal_bees` | **P0** |
-| hurt | 3 | **旧** | `take_damage` 每次挨打 | **P1** |
-| death | 6 | **旧** | 终形态 `_defeat` | **P2** |
-| evolve | 8 | **旧** | 仅非终形态换形态；舞姬为终形态，实战几乎不播 | P3 可选 |
+| skill_bees | 8 可选 | 新·已提交 `b898cfc` | `royal_bees` | 完成 |
+| hurt | 3 | 新·已提交 `c6cc13c` | `take_damage` 每次挨打 | 完成 |
+| death | 6 | 新·已提交 `c6cc13c` | 终形态 `_defeat` | 完成 |
+| evolve | 8 | **旧占位 PRESENT-BUT-OLD** | 仅非终形态换形态；舞姬为终形态，实战几乎不播 | 按约不做 |
 
 判定「旧」：文件体积约 2.5KB（程序画/占位）；「新」约 30–45KB（身份锁素材）。
 
@@ -331,8 +331,8 @@ python tools/process_boss_sheet.py \
 ### Roadmap Tasks
 
 - [x] R0: 提交 skill_bees + 可选动画槽代码 — acceptance: commit 后烟雾 8 animations；bee SMOKE_PASS（covers: S2e, S2f）— `b898cfc`
-- [x] R1: hurt 身份锁 3 帧写入 — acceptance: hurt_00..02 与 idle 同一只，无绿/贴边（covers: S2f; depends: R0）— 审计通过，待提交
-- [x] R2: death 身份锁 6 帧写入 — acceptance: death_00..05 同一只，烟雾 death=6（covers: S2f; depends: R0）— 审计通过，待提交
+- [x] R1: hurt 身份锁 3 帧写入 — acceptance: hurt_00..02 与 idle 同一只，无绿/贴边（covers: S2f; depends: R0）— 已随 `c6cc13c` 提交
+- [x] R2: death 身份锁 6 帧写入 — acceptance: death_00..05 同一只，烟雾 death=6（covers: S2f; depends: R0）— 已随 `c6cc13c` 提交
 - [x] R3: 用户确认 hurt+death — acceptance: 并排过关（covers: S2f; depends: R1, R2）— 用户「所有动作已生成完毕」后提交 `c6cc13c`
 - [x] R4: 全状态审计 + 实机复核 — acceptance: 审计图全绿项；meadow_3 无换角（covers: S2f; depends: R3）— 离线：SMOKE_PASS×2、FACE_PASS、PIXEL 新态全过；evolve 旧帧贴边 PRE-EXISTING。实机 meadow_3 仍可由人复核
 - [x] R5:（可选）evolve 重做/删除 — **决定：都不做**（covers: S2f）

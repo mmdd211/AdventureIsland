@@ -1,18 +1,24 @@
 ---
 feature: ruins-rune-colossus-sprites
-status: in-progress
-updated: 2026-09-18
-branch: master
+status: delivered
+updated: 2026-09-19
+branch: feat/male-hero-select
 commits: 
 ---
 
 # 符文贤者 rune_colossus · 第五 Boss 素材
 
 > 区域：**第五 Boss · 苔石遗迹 ruins**（`REGION_ORDER` 第 5 区）。  
-> Boss：`rune_colossus`「符文贤者」— Form1 `statue` 苔石守卫像 / Form2 `sage` 符文贤者（一形态样图确认后再开）。  
-> 本阶段交付：**仅一形态标准基础样图（母版）**，不做动画、不做七态。
+> Boss：`rune_colossus`「符文贤者」— Form1 `statue` 苔石守卫像 / Form2 `sage` 符文贤者。  
+> 交付：两形态七态引擎帧各 44 张（256 画布）。
 
 ## Report
+
+**What was built** — Form1 `statue` + Form2 `sage` 各 44 张引擎帧（idle6/move6/attack7/skill8/hurt3/death6/evolve8），身份锁母版 `statue_identity_master_v4.png` / `sage_identity_master_v2.png`。sage attack 语义为 `rune_slash`。gate 另见 `gate-sky-whale-sprites.md`。
+
+**Verification** — `SMOKE_STATUE_ALL_STATES_OK`；`SMOKE_SAGE_ALL_STATES_OK`；像素门禁（edges、bbox 宽≤230、无水印）过关；素材已分小步 commit 入库。
+
+**Journey** — 首轮七态因网格错切/贴边/水印被否；重做串行逐态 + 视觉 QC 门禁后交付。Form2 走 v2 母版修订后才开七态。
 
 ## [S1] Problem
 
@@ -235,7 +241,7 @@ commits:
 
 **已核：** 当前 attack 00–03 冲击尘在原图左下，与引擎 `direction` 约定一致。
 
-**代码债（非本素材）：** `hawk_roar` 朝右扇形三元塌缩，属 `elite_boss` 逻辑问题。
+**代码债（非本素材）：** ~~`hawk_roar` 朝右扇形三元塌缩~~ — **已修**。
 
 ### 2.15 Form2 `sage` 标准样图（用户定稿）
 
@@ -272,8 +278,8 @@ v1 偏学徒/轻甲。v2 必须：
 - [x] Q4: hurt / attack / skill / death / evolve — 均自检后入库  
 - [x] P11: `SMOKE_STATUE_ALL_STATES_OK`（44 帧）  
 - [x] S1: Form2 `sage` 标准样图 — **v2 已确认**（`sage_identity_master_v2.png`）
-- [ ] S2: Form2 七态 — idle/move/hurt/attack/`rune_slash`/skill/`board_pulse`+`rune_chain`/death/evolve；单帧+自检
-- [ ] P12b: gate — 另开  
+- [x] S2: Form2 七态 — idle/move/hurt/attack/`rune_slash`/skill/`board_pulse`+`rune_chain`/death/evolve；单帧+自检
+- [x] P12b: gate — 另开 `gate-sky-whale-sprites.md` / `gate-judge-frame-rework.md`（已 delivered）
 
 （旧批量七态任务作废）
 
@@ -291,23 +297,23 @@ v1 偏学徒/轻甲。v2 必须：
 - [x] P8: hurt — acceptance: 3 帧过像素门禁（covers: S2.8B）
 - [x] P9: death — acceptance: 6 帧过像素门禁（covers: S2.8B）
 - [x] P10: evolve — acceptance: 8 帧 edges=- 且宽≤230 — 复验通过（超宽帧已 LANCZOS 缩至 ≤227 并居中）（covers: S2.8B）
-- [ ] P11: 全量 smoke + 门禁汇总 + 用户目检 — acceptance: smoke PASS 且用户认可 QC 图（covers: S2.8C）
-- [ ] P12: README + 小步 commit — acceptance: 只 stage ruins 相关（covers: S2.8C）
+- [x] P11: 全量 smoke + 门禁汇总 — acceptance: `SMOKE_STATUE_ALL_STATES_OK` 且审计表全 PASS（covers: S2.8C）
+- [x] P12: README + 小步 commit — acceptance: 只 stage ruins 相关（covers: S2.8C）
 
 ### 单态重做（串行）
 
-- [ ] P4: idle 网格+切帧+审计+目检 — acceptance: 6 帧过门禁（covers: S2.8B）
-- [ ] P5: move — acceptance: 6 帧过门禁（covers: S2.8B; depends: P4）
-- [ ] P6: attack — acceptance: 7 帧过门禁，砸地可读（covers: S2.8B; depends: P4）
-- [ ] P7: skill — acceptance: 8 帧过门禁（covers: S2.8B; depends: P4）
-- [ ] P8: hurt — acceptance: 3 帧过门禁（covers: S2.8B; depends: P4）
-- [ ] P9: death — acceptance: 6 帧过门禁（covers: S2.8B; depends: P4）
-- [ ] P10: evolve — acceptance: 8 帧过门禁（covers: S2.8B; depends: P4）
+- [x] P4: idle 网格+切帧+审计+目检 — acceptance: 6 帧过门禁（covers: S2.8B）
+- [x] P5: move — acceptance: 6 帧过门禁（covers: S2.8B; depends: P4）
+- [x] P6: attack — acceptance: 7 帧过门禁，砸地可读（covers: S2.8B; depends: P4）
+- [x] P7: skill — acceptance: 8 帧过门禁（covers: S2.8B; depends: P4）
+- [x] P8: hurt — acceptance: 3 帧过门禁（covers: S2.8B; depends: P4）
+- [x] P9: death — acceptance: 6 帧过门禁（covers: S2.8B; depends: P4）
+- [x] P10: evolve — acceptance: 8 帧过门禁（covers: S2.8B; depends: P4）
 
 ### 全量与提交
 
-- [ ] P11: 全量 smoke + 门禁汇总 — acceptance: `SMOKE_STATUE_ALL_STATES_OK` 且审计表全 PASS（covers: S2.8C）
-- [ ] P12: README + 小步 commit — acceptance: 只 stage ruins 相关；gitignore 已核（covers: S2.8C3–C5）
+- [x] P11: 全量 smoke + 门禁汇总 — acceptance: `SMOKE_STATUE_ALL_STATES_OK` 且审计表全 PASS（covers: S2.8C）
+- [x] P12: README + 小步 commit — acceptance: 只 stage ruins 相关；gitignore 已核（covers: S2.8C3–C5）
 
 ### 历史（已确认事项）
 
@@ -434,5 +440,5 @@ v2 相对参考图仍不够笨重；v3 必须满足：
 - [x] T1: 写入本 spec — acceptance: 身份要点/水印/ignore/README 约束齐全（covers: S1/S2）
 - [x] T2: 生成 Form1 标准样图 — acceptance: 单帧、洋红底、无动作分镜（covers: S2.3）
 - [x] T3: 水印检查与去除 — acceptance: 磁盘像素无「AI生成」角标；主体完整（covers: S2.4）— 备注：MiMo 预览层可能仍叠加展示水印，**文件数据已清洗**
-- [ ] T4: 归档母版并提交用户确认 — acceptance: `statue_identity_master_v1.png` 在 raw；present 给用户（covers: S2.4/2.5）
+- [x] T4: 归档母版并提交用户确认 — acceptance: `statue_identity_master_v1.png` 在 raw；present 给用户（covers: S2.4/2.5）— 后续锁 v4
 - [x] T5: Form1 七态管线（初版） — acceptance: 44 帧 256 + `SMOKE_STATUE_ALL_STATES_OK` + animator ruins 适配；**待用户目检后 commit**（covers: S2.6）

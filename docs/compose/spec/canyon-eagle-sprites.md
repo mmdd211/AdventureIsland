@@ -106,7 +106,7 @@ commits: 9541687de86eba5e3d036185fde1636dbb0d1fd1..75d315e52ab22575b4bbe7e39ff82
 - push 远程
 - 其它区域 Boss 与 whisper_root 未提交改动
 - 隔离 worktree（用户选择主工作区）
-- 修复 review 指出的既有 `hawk_roar` 朝右扇形塌缩（follow-up，非本阶段）
+- ~~修复 review 指出的既有 `hawk_roar` 朝右扇形塌缩~~ — **已修**（`face_angle` 先定朝向再加扇形偏移）
 
 ## Tasks
 

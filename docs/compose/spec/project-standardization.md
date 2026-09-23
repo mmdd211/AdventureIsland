@@ -66,7 +66,7 @@ commits: 0a0bdc819eaa89c80e1d8cc1000f6bd5ad3f3e21..b2f8737e87eb377996c7a4e33814a
 
 ### 2.6 Out of Scope
 
-- ruins/gate 素材、dancer 关账、大文件拆分、`hawk_roar`、push
+- 大文件拆分、push（用户网络/时机自定）
 
 ## Tasks
 
