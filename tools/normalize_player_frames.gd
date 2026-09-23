@@ -1,7 +1,7 @@
 extends SceneTree
 
 const SOURCE_DIR := "res://data/player/cleaned"
-const OUTPUT_DIR := "res://assets/sprites/player"
+const OUTPUT_DIR := "res://assets/sprites/player/cat_girl"
 const FRAME_SIZE := Vector2i(256, 256)
 const TARGET_BASELINE := 244
 const TARGET_HEAD_ANCHOR_X := 140

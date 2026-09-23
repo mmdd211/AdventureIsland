@@ -1,0 +1,43 @@
+Use case: stylized-concept
+Asset type: game player sprite sheet
+Primary request: pixel art male young light swordsman ("光之剑士"), high-speed melee. Identity authority is data/player/raw/light_swordsman/identity-reference.png. Engine action grids must preserve this identity.
+
+Role name: 光之剑士 / Blade of Light
+Role: near-melee young swordsman, fast movement, chained sword arts, light attribute.
+
+Identity locks (from user reference sheet):
+- Chibi young male, about 2-head-tall (same game body scale as cat_girl).
+- White fluffy short hair with layered tips and a distinct top cowlick/tuft.
+- Bright blue large eyes with clear highlight; determined young face; no beard.
+- Palette: white / bright blue / deep navy primary; gold accents; dark charcoal pants; white-blue-gold boots/gloves.
+- White light-knight top with blue+gold trim; blue gem at chest.
+- Deep navy cape with gold piping; gold emblem on back; moderate cape.
+- Gold belt; slim dark trousers; white-blue-gold knight boots.
+- Right-hand large light-attribute longsword: silver-white blade with deep-blue fuller, gold crossguard, blue gems in hilt.
+- Optional restrained light motes near blade only.
+
+Proportion note: delivered engine frames match the reference's Q-style ~2-head hero (NOT adult realistic). Earlier free-text draft asking for "longer legs / not Q-version" is SUPERSEDED by the reference sheet.
+
+Standard engine pose:
+- Side view facing LEFT (match cat_girl frames).
+- Neutral ready idle for identity master; sword in right hand.
+- Skill VFX sheets are out of scope (body-only attacks).
+
+Style/medium:
+- High-quality 2D pixel art in the same family as cat_girl engine frames.
+- Hard pixel edges, consistent pixel grain, dark outlines, clear block shading.
+- Forbidden: anti-aliasing, smooth gradients, photo/3D/real person, oil, watercolor, blur.
+
+Composition/framing:
+- Single full body; hair top to boots; sword and cape fully visible.
+- Character centered, ~60-70% of cell, safe margins; feet/bottom anchor stable.
+- Raw generation background: solid #FF00FF.
+- Text/watermark/UI/borders/other characters: none.
+
+Animation production notes:
+- Same identity every frame; same scale and camera distance; nothing crosses cell edges.
+- Grounded melee with integrated weapon: scale_strategy=preserve, align=feet.
+- Actions: idle 2x2, run 2x4, jump 2x2, fall 2x2, landing 2x2, attack1/attack2 2x2 body-only, hurt 2x2, death 2x2.
+- Wide slash arcs stay out of body sheets.
+
+Avoid: redesign, changed hair/eyes/palette/weapon type, adult bulk, female, text, watermark, extra characters, anti-aliasing, blur, gradients, noise, cell-edge clipping, detached weapon or effects.

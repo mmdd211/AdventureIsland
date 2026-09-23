@@ -265,10 +265,8 @@ func _animate_slimes() -> void:
 		node.scale = Vector2(1.0 + bounce * 0.04, 1.0 - bounce * 0.04)
 
 func _start_game() -> void:
-	GameState.reset_run()
-	# 标记走加载界面路径：world_map 会在加载层下分阶段搭建世界。
-	GameState.pending_loading_screen = true
-	get_tree().change_scene_to_file("res://scenes/levels/world_map.tscn")
+	# 新开局先进选角页；确认后由 hero_select 负责 reset_run 并进图。
+	get_tree().change_scene_to_file("res://scenes/ui/hero_select.tscn")
 
 func _toggle_settings() -> void:
 	%SettingsPanel.visible = not %SettingsPanel.visible

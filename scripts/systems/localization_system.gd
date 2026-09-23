@@ -72,6 +72,11 @@ const STRINGS := {
 		"close_map": "关闭地图",
 		"language": "语言",
 		"evolution": "进化",
+		"hero_select_title": "选择你的主角",
+		"hero_select_confirm": "踏上冒险",
+		"hero_select_back": "返回标题",
+		"hero_cat_girl": "猫耳少女",
+		"hero_light_swordsman": "光之剑士",
 	},
 	"en": {
 		"app_title": "Adventure Isle Tale",
@@ -142,6 +147,11 @@ const STRINGS := {
 		"close_map": "Close Map",
 		"language": "Language",
 		"evolution": "Evolve",
+		"hero_select_title": "Choose Your Hero",
+		"hero_select_confirm": "Begin Adventure",
+		"hero_select_back": "Back to Title",
+		"hero_cat_girl": "Cat-Ear Girl",
+		"hero_light_swordsman": "Blade of Light",
 	},
 }
 

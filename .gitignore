@@ -15,6 +15,20 @@ generated-*.png
 # Local scratch umbrella (temps, one-off pipelines, previews)
 .scratch/
 
+# Root-level one-off pipeline leftovers (always prefer .scratch/)
+/cells/
+/cells_*/
+/raw_judge/
+/raw_sheets/
+/raw_sheets_v2/
+/rejected_*/
+/single_out/
+/keying_qc/
+/generated/
+/pipelines/
+/video_test/
+*_signoff.png
+
 # Scratch / one-off pipelines (legacy root names; prefer .scratch/)
 _cast_frames_temp/
 _cast_preview_temp/
@@ -31,6 +45,8 @@ _check_banbu_v2.py
 # Temporary preview / verification images
 tools/run_previews/
 tools/player_previews/
+tools/cells_*/
+tools/*_previews/
 data/monsters/raw/qa_*.png
 data/monsters/raw/watermark_report.txt
 

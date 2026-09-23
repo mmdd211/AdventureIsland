@@ -1,0 +1,133 @@
+---
+feature: male-hero-select
+status: delivered
+updated: 2026-02-14
+branch: feat/male-hero-select
+commits: bd4f4c5..5a9ae5a
+---
+
+# 男性主角「光之剑士」与开局选角
+
+## Report
+
+**What was built** — 标题「开始冒险」先进选角页（`hero_select`），可在猫耳少女 `cat_girl` 与光之剑士 `light_swordsman` 之间选择后进图；「继续冒险」仍读档且不重选。`PlayerAssetLibrary` 按 `hero_id` 加载 256 引擎帧，纯外观换皮（同一套动作时序/数值）；`GameState.selected_hero_id` 写入存档 `hero_id`，非法/旧档回退 `cat_girl`。`cat_girl` 40 帧仅迁路径、像素未改。光之剑士按用户参考图交付 40 张引擎帧（idle/run/jump/fall/landing/attack1/attack2/hurt/death），身份锁定白发蓝眼、蓝金轻甲、深蓝披风、光之长剑。
+
+**Verification** — `smoke_player_assets.gd` PASS（双角色帧数精确）；`smoke_check_ui.gd` PASS；`smoke_check_save.gd` PASS（hero_id 读写/非法/旧档）；40 帧像素审计 `issues []`；generate2dsprite QC `edge_touch` 全空，Scale Profile 共享；contact sheet 目检身份一致。独立 review：GO（0 critical）。
+
+**Journey log** —
+1. 沙箱禁止 `git worktree add`，改在当前检出切 `feat/male-hero-select`。
+2. 非默认角色半套帧会播残缺动画 → 整段回退默认动作后再收口。
+3. `smoke_check_save` 以 `--script` 编译期拿不到 autoload → 运行时从 root 取 `GameState`。
+4. death `body_scale_cv≈0.10` 来自倒地剪影，应以 `profile_body_scale_drift` 判定，不必当 scale bug。
+5. 分支区间夹入无关 `31f28dc`（sky_gatekeeper）；交付 staging 勿混兄弟区素材。
+
+## [S1] Problem
+
+当前工程只有猫耳少女一套主角引擎帧，`PlayerAssetLibrary.frames()` / `PixelStyleManager` 写死单角色路径。用户要新增男性持剑主角「光之剑士」，**不得覆盖**现有少女；希望开局可选主角。玩法机制保持纯外观换皮，不引入数值/技能差异。
+
+## [S2] Design
+
+### 角色目录
+
+| hero_id | 显示名 | 状态 |
+|---------|--------|------|
+| `cat_girl` | 猫耳少女 | 现有 40 张引擎帧，默认/回退 |
+| `light_swordsman` | 光之剑士 | 新增；身份锚点见 [S2.4] |
+
+- 契约 id 稳定；显示名走 `LocalizationSystem`。
+- 未知 / 缺失 `hero_id` **一律回退** `cat_girl`（旧存档、缺帧、空字符串）。
+- 新增角色只扩展目录项，不改玩法数值：同一 `BalanceConfig`、同一技能/打击框。
+
+### 素材路径
+
+```
+assets/sprites/player/cat_girl/           # 现有帧迁入（不删不改像素）
+  frame-*.png, run-frame-*.png, ...
+assets/sprites/player/light_swordsman/    # 新角色
+  <prefix>_{action}_{ii}.png              # 与 PlayerAssetLibrary 命名一致
+docs/pipeline/player-hero-light-swordsman.txt  # prompt 归档
+```
+
+- 原稿/母版/QA 进 `data/player/raw/light_swordsman/` 或 `.scratch/`，**不进** `assets/`。
+- 迁移 `cat_girl` 仅改路径表；像素内容与动画名（idle/run/jump/fall/fall_short/landing/attack1/attack2/hurt/death）不变。
+
+### 运行时接口
+
+**`PlayerAssetLibrary`**
+
+- 目录字段：`DEFAULT_HERO_ID`、`HERO_IDS`、`HERO_DIRS`、`HERO_NAME_KEYS`；动作时序共享 `ANIMATION_META` + `ACTION_FRAME_FILES`。
+- `frames(hero_id: String = "") -> SpriteFrames`：空 id 读 `GameState.selected_hero_id`；再失败回退 `cat_girl`。
+- `has_hero(hero_id) -> bool`
+- 缺帧：默认角色缺文件 `push_error`；非默认角色缺文件/半套帧**整段回退**默认角色对应动作（身份与节奏完整）；解码失败 `push_error` 后跳过。
+- 现 `pose_texture` 程序化小图保留不动（非主路径）。
+
+**`GameState`**
+
+- `var selected_hero_id: String = PlayerAssetLibrary.DEFAULT_HERO_ID`
+- `set_selected_hero_id(id: String)`：非法 id 回退默认并 `push_warning`。
+- `reset_run()` **保留** `selected_hero_id`（新开局由选角页写入后再 `reset_run`）。
+- `create_snapshot()` 增加 `"hero_id": selected_hero_id`。
+- `restore_snapshot()`：读 `hero_id`，缺失/非法 → `cat_girl`。存档 `version` 保持 `1`（新字段可选，向后兼容）。
+
+**`PixelStyleManager`**
+
+- `animator.sprite_frames = PlayerAssetLibrary.frames(GameState.selected_hero_id)`（或等价显式传 id）。
+
+### 开局选角流
+
+```mermaid
+flowchart LR
+  Title[标题屏] -->|开始冒险| Select[选角页]
+  Select -->|确认| Reset[GameState.reset_run]
+  Reset --> World[world_map]
+  Title -->|继续冒险| Load[SaveSystem.load_game]
+  Load --> World
+```
+
+- 标题「开始冒险」→ `scenes/ui/hero_select.tscn`，**不再**直接进 `world_map`。
+- 「继续冒险」行为不变：读档进图，**不**再选角；`hero_id` 随存档恢复。
+- 选角页：并排两卡（预览 idle 帧 + 本地化名），左右/点击切换，确认后 `set_selected_hero_id` → 原 `_start_game` 后半（`reset_run` + loading + `world_map`）。
+- 返回标题；与现有 PixelUI / 标题按钮风格一致。
+- 新增文案 key（zh/en）：`hero_select_title`、`hero_select_confirm`、`hero_select_back`、`hero_cat_girl`、`hero_light_swordsman`。
+
+### [S2.4] 光之剑士身份锚点（美术）
+
+权威参考：`data/player/raw/light_swordsman/identity-reference.png`（用户设定图：三视图/表情/配色/技能示意）。技能示意仅作气质参考，**不**做技能特效资产。
+
+锁定识别要素：
+
+1. 白色蓬松短发 + 顶部翘发束（像素层次）
+2. 明亮蓝色大眼 + 清晰高光
+3. 白 / 深蓝 / 亮蓝 + 金色点缀（参考图配色条）
+4. 深蓝披风 + 金色滚边（背面金色纹章）
+5. 右手大型蓝白金光属性长剑（银白刃身 + 蓝槽 + 金护手/蓝宝石）
+6. 白色轻甲上衣 + 蓝金饰边 + 胸口蓝宝石；深色长裤；白蓝金战靴
+
+- **比例以参考图为准**：Q 版约 2 头身少年，与 `cat_girl` 同一游戏体格；不要成年写实、不要更幼龄。
+- 引擎帧契约与 `cat_girl` 相同：256×256 RGBA、`display_scale=0.25`、侧视**面朝左**、脚底锚点；文件名 `ACTION_FRAME_FILES`。
+- 产出顺序（每步过门禁再下一步）：
+  1. 身份母版：侧视待机像素立绘（洋红底）→ 目检身份五要素
+  2. `make_anchor_layout` 锁尺度/脚线
+  3. 按态网格：idle `2x2` → run `2x4` → jump/fall/landing `2x2`/单帧 → attack1/attack2（**body-only**）→ hurt/death
+  4. `tools/sprite_pipeline.py process`：抠洋红、preserve+feet、256 画布、共享 Scale Profile
+  5. 像素审计 + contact sheet 目检（≥128px/格）
+  6. 写入 `assets/sprites/player/light_swordsman/`，再跑引擎 smoke
+- 宽剑/披风：`scale_strategy=preserve --align feet`，禁止 bbox 缩身。
+- **门禁（AGENTS.md）**：源表目检网格 → 安全边 → `edges` 空、无空帧、无水印 → contact sheet 头/剑/披风/双腿完整且同一只 → 才进引擎。
+
+## [S3] Out of Scope
+
+- 数值 / 技能 / 打击框差异
+- 第三角色、局内换人、角色创建自定义
+- 按角色区分装备外观（装备叠加层仍共用）
+- 重绘或修改 `cat_girl` 像素内容
+- 光属性独立技能特效资产（本阶段攻击 FX 仍走现有 FxUtil 路径）
+
+## Tasks
+
+- [x] T1: 开分支与工具链确认 — acceptance: 功能分支就绪；记录 Godot/Python 入口与 worktree 覆盖原因 (covers: S2)
+- [x] T2: 写本 spec 并对齐决策 — acceptance: status=designed，决策与接口可实施，无 TBD (covers: S1; S2)
+- [x] T3: 多角色资产库与存档 hero_id — acceptance: `PlayerAssetLibrary.frames(hero_id)` 双角色可加载；`cat_girl` 帧迁入子目录后 smoke 通过；snapshot 含/可回退 hero_id (covers: S2; depends: T2)
+- [x] T4: 开局选角页并贯通标题流 — acceptance: 开始→选角→进图；继续仍读档；文案中英齐全；选角后 `selected_hero_id` 正确 (covers: S2; depends: T3)
+- [x] T5: 光之剑士身份母版与全套引擎帧 — acceptance: 参考图锁定身份；idle/run/jump/fall/landing/attack1/attack2/hurt/death 帧齐；QC 门禁全过；路径进 `light_swordsman/` (covers: S2.4; depends: T3)
+- [x] T6: smoke/自测 + review + finalize — acceptance: 相关 smoke 命令与结果入 Report；review 通过；status=delivered (covers: S1; S2; S2.4; depends: T3; T4; T5)
