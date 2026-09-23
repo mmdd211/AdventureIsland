@@ -389,10 +389,11 @@ func _execute_skill(skill: String, player: Node2D) -> void:
 			state_timer = 0.90
 		"hawk_roar":
 			_show_text("岩翼石鹰·鹰啸冲击", Color("ffe066"))
+			var roar_face := 0.0 if direction > 0 else PI
 			_spawn_telegraph("line", global_position + Vector2(direction * 180.0, 0), Vector2(330, 72), 0.45, Color("ffe066"))
 			_delayed_call(0.45, func():
 				for index in range(10):
-					_spawn_projectile(0.0 if direction > 0 else PI + (index - 5) * 0.045, 395.0, contact_damage - 2, global_position, Color("ffe066"))
+					_spawn_projectile(roar_face + (index - 5) * 0.045, 395.0, contact_damage - 2, global_position, Color("ffe066"))
 			)
 			state_timer = 0.82
 		"arrow_rain":
@@ -455,8 +456,9 @@ func _execute_skill(skill: String, player: Node2D) -> void:
 			for side in [-1.0, 1.0]:
 				_spawn_telegraph("line", global_position + Vector2(side * 210.0, -10), Vector2(70, 230), 0.55, Color("61d6ff"))
 				_delayed_call(0.55, func():
+					var rift_face := 0.0 if side > 0 else PI
 					for index in range(5):
-						_spawn_projectile(0.0 if side > 0 else PI + (index - 2) * 0.07, 430.0, contact_damage - 1, global_position + Vector2(side * 180.0, -10), Color("61d6ff"))
+						_spawn_projectile(rift_face + (index - 2) * 0.07, 430.0, contact_damage - 1, global_position + Vector2(side * 180.0, -10), Color("61d6ff"))
 				)
 			state_timer = 0.80
 		"judgment_pillars":
