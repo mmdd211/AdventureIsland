@@ -96,6 +96,7 @@ Boss 数值同时出现在：
 ## 提交约定
 
 - 只 stage 与本次功能相关的路径。
+- **message 一律中文**（标题 + body）。
 - message 示例：`低语主教 whisper_root 引擎帧升级 256 画布并收口 spec`
 - `boss_animator.gd` 等共享文件若含多区改动，body 必须逐条说明。
 
